@@ -54,28 +54,22 @@ public class TeslaBatteryBlock extends Block {
         ZPM(7, true),
         UV(8, true),
 
-        UHV(9, BigInteger.valueOf(10_000_000_000L).multiply(BigInteger.valueOf(100))),
-        UEV(10, BigInteger.valueOf(50_000_000_000L).multiply(BigInteger.valueOf(100))),
-        UIV(11, BigInteger.valueOf(250_000_000_000L).multiply(BigInteger.valueOf(100))),
-        UXV(12, BigInteger.valueOf(1_000_000_000_000L).multiply(BigInteger.valueOf(100))),
-        OPV(13, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(400))),
-        MAX(14, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(900000000)));
+        UHV(9, false),
+        UEV(10, false),
+        UIV(11, false),
+        UXV(12, false),
+        OPV(13, false),
+        MAX(14, false);
 
         private final int tier;
         private final Supplier<BigInteger> capacity;
         private final boolean placeholderTexture;
         private BigInteger stored = BigInteger.ZERO;
 
-        TeslaBatteryType(int tier, BigInteger capacity) {
-            this.tier = tier;
-            this.capacity = () -> capacity;
-            this.placeholderTexture = false;
-        }
-
-        TeslaBatteryType(int tier, boolean scaledCapacity) {
+        TeslaBatteryType(int tier, boolean placeholderTexture) {
             this.tier = tier;
             this.capacity = () -> TeslaBatteryCapacities.capacityFor(tier);
-            this.placeholderTexture = true;
+            this.placeholderTexture = placeholderTexture;
         }
 
         public boolean usesPlaceholderTexture() {

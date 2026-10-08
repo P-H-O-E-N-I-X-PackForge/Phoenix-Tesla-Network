@@ -77,11 +77,14 @@ public class PhoenixTeslaMachines {
                 .langValue(type.displayName())
                 .rotationState(RotationState.ALL)
                 .recipeType(PhoenixTeslaRecipeTypes.TESLA_TOWER)
-                .appearanceBlock(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING)
+                .appearanceBlock(type == TeslaTowerType.ADVANCED ? PhoenixTeslaBlocks.ADVANCED_TESLA_CASING :
+                        PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING)
                 .pattern(definition -> buildTowerPattern(definition, type))
                 .model(
                         createWorkableCasingMachineModel(
-                                PhoenixTeslaNetwork.id("block/casings/multiblock/tesla_casing"),
+                                PhoenixTeslaNetwork.id(type == TeslaTowerType.ADVANCED ?
+                                        "block/casings/multiblock/advanced_tesla_casing" :
+                                        "block/casings/multiblock/tesla_casing"),
                                 PhoenixTeslaNetwork.id("block/multiblock/tesla_tower"))
                                 .andThen(d -> d
                                         .addDynamicRenderer(
@@ -102,9 +105,16 @@ public class PhoenixTeslaMachines {
 
     private static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
                                                         PhoenixTeslaConfigs.TowerProfile profile) {
+        return hatchPredicate(definition, profile, PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get());
+    }
+
+    /** The tower's own casing, or any of the hatches the tier's profile allows. */
+    static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
+                                                PhoenixTeslaConfigs.TowerProfile profile,
+                                                net.minecraft.world.level.block.Block casing) {
         int min = profile.minHatchTier;
         int max = profile.maxHatchTier;
-        TraceabilityPredicate predicate = blocks(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get());
+        TraceabilityPredicate predicate = blocks(casing);
 
         if (profile.allowItemFluidHatches) {
             predicate = predicate.or(Predicates.autoAbilities(definition.getRecipeTypes(), false, false, true, true,
@@ -147,6 +157,9 @@ public class PhoenixTeslaMachines {
         var profile = type.profile();
         int minHatch = profile.minHatchTier;
         int maxHatch = profile.maxHatchTier;
+
+        if (type == TeslaTowerType.BASIC) return TowerPatterns.basic(definition, profile);
+        if (type == TeslaTowerType.ADVANCED) return TowerPatterns.advanced(definition, profile);
 
         return FactoryBlockPattern.start()
                 .aisle("                   ", "                   ", "                   ", "                   ",

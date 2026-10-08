@@ -906,7 +906,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
     @Override
     public net.minecraft.world.phys.Vec3 getLinkAnchor() {
-        return getSpireAxis().add(0, 50.5, 0);
+        return getSpireAxis().add(0, getTowerType().linkAnchorHeight(), 0);
     }
 
     public net.minecraft.world.phys.Vec3 getSpireAxis() {
@@ -915,8 +915,8 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         var back = front.getOpposite();
         var right = front.getClockWise();
         return net.minecraft.world.phys.Vec3.atCenterOf(getPos()).add(
-                back.getStepX() * 5.5 + right.getStepX() * 0.5, 0,
-                back.getStepZ() * 5.5 + right.getStepZ() * 0.5);
+                back.getStepX() * getTowerType().spireBackOffset() + right.getStepX() * 0.5, 0,
+                back.getStepZ() * getTowerType().spireBackOffset() + right.getStepZ() * 0.5);
     }
 
     @DescSynced

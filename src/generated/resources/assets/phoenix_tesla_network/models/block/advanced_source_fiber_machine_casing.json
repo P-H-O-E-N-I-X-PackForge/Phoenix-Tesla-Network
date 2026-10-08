@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "phoenix_tesla_network:block/casings/multiblock/advanced_machine_casing_source_fiber_mesh"
+  }
+}

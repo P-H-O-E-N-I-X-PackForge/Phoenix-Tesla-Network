@@ -4,6 +4,9 @@
     "phoenix_tesla_network:insanely_supercharged_tesla_casing",
     "phoenix_tesla_network:source_fiber_machine_casing",
     "phoenix_tesla_network:machine_casing_pristine_rhodium_plated_palladium",
-    "phoenix_tesla_network:machine_casing_invariant_naquadah_alloy"
+    "phoenix_tesla_network:machine_casing_invariant_naquadah_alloy",
+    "phoenix_tesla_network:advanced_invariant_naquadah_alloy_machine_casing",
+    "phoenix_tesla_network:advanced_source_fiber_machine_casing",
+    "phoenix_tesla_network:advanced_tesla_casing"
   ]
 }

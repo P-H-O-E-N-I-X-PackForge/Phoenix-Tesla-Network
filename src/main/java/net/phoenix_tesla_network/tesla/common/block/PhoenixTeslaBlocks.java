@@ -122,4 +122,15 @@ public class PhoenixTeslaBlocks {
     public static BlockEntry<Block> MACHINE_CASING_NAQUADAH_ALLOY = registerSimpleBlock(
             "Invariant Naquadah Alloy Machine Casing", "machine_casing_invariant_naquadah_alloy",
             "casings/multiblock/machine_casing_invariant_naquadah_alloy", BlockItem::new);
+
+    // the Advanced Tesla Tower's casings: the same families, a step up
+    public static BlockEntry<Block> ADVANCED_INVARIANT_NAQ_ALLOY_CASING = registerSimpleBlock(
+            "§bAdvanced Invariant Naquadah Alloy Machine Casing", "advanced_invariant_naquadah_alloy_machine_casing",
+            "casings/multiblock/advanced_machine_casing_invariant_naquadah_alloy", BlockItem::new);
+    public static BlockEntry<Block> ADVANCED_SOURCE_FIBER_CASING = registerSimpleBlock(
+            "§dAdvanced Source Fiber Machine Casing", "advanced_source_fiber_machine_casing",
+            "casings/multiblock/advanced_machine_casing_source_fiber_mesh", BlockItem::new);
+    public static BlockEntry<Block> ADVANCED_TESLA_CASING = registerSimpleBlock(
+            "§6Advanced Tesla Tower Casing", "advanced_tesla_casing",
+            "casings/multiblock/advanced_tesla_casing", BlockItem::new);
 }

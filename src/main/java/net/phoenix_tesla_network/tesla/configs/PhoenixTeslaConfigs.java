@@ -36,72 +36,99 @@ public class PhoenixTeslaConfigs {
 
     @Configurable
     @Configurable.Comment({
-            "Capacity of the LV - UV Tesla Batteries. Each one's capacity is:",
-            "    (reference capacity for that tier) x (that tier's multiplier below) x globalMultiplier",
-            "LV / MV / HV reference the highest-capacity GT battery of that tier (lithium by default:",
-            "120,000 / 420,000 / 1,800,000 EU). EV / IV / LuV / ZPM / UV reference GT's Power Substation",
-            "capacitor of that tier (Lapotronic: 150M / 1.5B / 6B / 24B / 96B EU).",
-            "The UHV - MAX Tesla Batteries have fixed capacities and are not affected."
+            "How much energy (EU) one Tesla Battery of each tier stores. A tower's buffer is the sum of its",
+            "batteries. Changing a value changes how much every existing battery of that tier holds."
     })
     public BatteryConfigs teslaBatteries = new BatteryConfigs();
 
     public static class BatteryConfigs {
 
         @Configurable
-        @Configurable.Comment({ "Multiplies every LV - UV Tesla Battery on top of the per-tier multipliers." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double globalMultiplier = 1.0;
+        @Configurable.Comment({ "LV Tesla Battery capacity, in EU. Default 960,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double lvCapacity = 960_000.0;
 
         @Configurable
-        @Configurable.Comment({ "LV: x this the highest LV battery. Default 8 (= 960,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double lvMultiplier = 8.0;
+        @Configurable.Comment({ "MV Tesla Battery capacity, in EU. Default 6,720,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double mvCapacity = 6_720_000.0;
 
         @Configurable
-        @Configurable.Comment({ "MV: x this the highest MV battery. Default 16 (= 6,720,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double mvMultiplier = 16.0;
+        @Configurable.Comment({ "HV Tesla Battery capacity, in EU. Default 57,600,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double hvCapacity = 57_600_000.0;
 
         @Configurable
-        @Configurable.Comment({ "HV: x this the highest HV battery. Default 32 (= 57,600,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double hvMultiplier = 32.0;
+        @Configurable.Comment({ "EV Tesla Battery capacity, in EU. Default 37,500,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double evCapacity = 37_500_000.0;
 
         @Configurable
-        @Configurable.Comment({ "EV: x this the EV Lapotronic capacitor. Default 0.25 (= 37,500,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double evMultiplier = 0.25;
+        @Configurable.Comment({ "IV Tesla Battery capacity, in EU. Default 750,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double ivCapacity = 750_000_000.0;
 
         @Configurable
-        @Configurable.Comment({ "IV: x this the IV Lapotronic capacitor. Default 0.5 (= 750,000,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double ivMultiplier = 0.5;
+        @Configurable.Comment({ "LuV Tesla Battery capacity, in EU. Default 6,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double luvCapacity = 6_000_000_000.0;
 
         @Configurable
-        @Configurable.Comment({ "LuV: x this the LuV Lapotronic capacitor. Default 1 (= 6,000,000,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double luvMultiplier = 1.0;
+        @Configurable.Comment({ "ZPM Tesla Battery capacity, in EU. Default 48,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double zpmCapacity = 48_000_000_000.0;
 
         @Configurable
-        @Configurable.Comment({ "ZPM: x this the ZPM Lapotronic capacitor. Default 2 (= 48,000,000,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double zpmMultiplier = 2.0;
+        @Configurable.Comment({ "UV Tesla Battery capacity, in EU. Default 384,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double uvCapacity = 384_000_000_000.0;
 
         @Configurable
-        @Configurable.Comment({ "UV: x this the UV Lapotronic capacitor. Default 4 (= 384,000,000,000 EU)." })
-        @Configurable.DecimalRange(min = 0.001, max = 1_000_000.0)
-        public double uvMultiplier = 4.0;
+        @Configurable.Comment({ "UHV Tesla Battery capacity, in EU. Default 1,000,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double uhvCapacity = 1_000_000_000_000.0;
 
-        public double multiplierFor(int tier) {
+        @Configurable
+        @Configurable.Comment({ "UEV Tesla Battery capacity, in EU. Default 5,000,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double uevCapacity = 5_000_000_000_000.0;
+
+        @Configurable
+        @Configurable.Comment({ "UIV Tesla Battery capacity, in EU. Default 25,000,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double uivCapacity = 25_000_000_000_000.0;
+
+        @Configurable
+        @Configurable.Comment({ "UXV Tesla Battery capacity, in EU. Default 100,000,000,000,000." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double uxvCapacity = 100_000_000_000_000.0;
+
+        @Configurable
+        @Configurable.Comment({ "OPV Tesla Battery capacity, in EU. Default 3.689349e+21." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double opvCapacity = 3.689349e+21;
+
+        @Configurable
+        @Configurable.Comment({ "MAX Tesla Battery capacity, in EU. Default 8.301035e+27." })
+        @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
+        public double maxCapacity = 8.301035e+27;
+
+        public double capacityFor(int tier) {
             return switch (tier) {
-                case 1 -> lvMultiplier;
-                case 2 -> mvMultiplier;
-                case 3 -> hvMultiplier;
-                case 4 -> evMultiplier;
-                case 5 -> ivMultiplier;
-                case 6 -> luvMultiplier;
-                case 7 -> zpmMultiplier;
-                case 8 -> uvMultiplier;
+                case 1 -> lvCapacity;
+                case 2 -> mvCapacity;
+                case 3 -> hvCapacity;
+                case 4 -> evCapacity;
+                case 5 -> ivCapacity;
+                case 6 -> luvCapacity;
+                case 7 -> zpmCapacity;
+                case 8 -> uvCapacity;
+                case 9 -> uhvCapacity;
+                case 10 -> uevCapacity;
+                case 11 -> uivCapacity;
+                case 12 -> uxvCapacity;
+                case 13 -> opvCapacity;
+                case 14 -> maxCapacity;
                 default -> 1.0;
             };
         }
@@ -484,14 +511,16 @@ public class PhoenixTeslaConfigs {
         @Configurable
         @Configurable.Comment({
                 "Max forward-accel boost for the leggings' sprint boost (at sprint-speed slider = 20).",
-                "Default: 0.25 (slider = 5 works out to the old hardcoded 0.085)"
+                "The slider is eased (slider^1.6), so the low and middle settings stay gentle.",
+                "Default: 0.6"
         })
-        public double sprintAccelMax = 0.25;
+        public double sprintAccelMax = 0.6;
 
         @Configurable
         @Configurable.Comment({
-                "Min upward-impulse strength for the boots' boosted jump (at jump-height slider = 0).",
-                "Actual impulse = jumpHeightMin + ((jumpHeight/20) * (jumpHeightMax - jumpHeightMin))",
+                "Min upward-impulse strength for the boots' boosted jump (at jump-height slider = 1).",
+                "The slider is on the Wing Flight Control screen; 0 turns the boosted jump off.",
+                "Actual impulse = jumpHeightMin + (((jumpHeight - 1)/19) * (jumpHeightMax - jumpHeightMin))",
                 "Default: 0.21"
         })
         public double jumpHeightMin = 0.21;
@@ -499,8 +528,17 @@ public class PhoenixTeslaConfigs {
         @Configurable
         @Configurable.Comment({
                 "Max upward-impulse strength for the boots' boosted jump (at jump-height slider = 20).",
-                "Default: 0.65 (slider = 5 works out to the old hardcoded 0.32)"
+                "Default: 0.65"
         })
         public double jumpHeightMax = 0.65;
+
+        @Configurable
+        @Configurable.Comment({
+                "How high (in blocks) the boots let you step up without jumping, at the step-height slider's",
+                "maximum (20). The slider runs: 0 = vanilla, 1 = just over one block (1.0023), up to this at 20.",
+                "Default: 6.0"
+        })
+        @Configurable.DecimalRange(min = 0.6, max = 10.0)
+        public double stepHeightMax = 6.0;
     }
 }

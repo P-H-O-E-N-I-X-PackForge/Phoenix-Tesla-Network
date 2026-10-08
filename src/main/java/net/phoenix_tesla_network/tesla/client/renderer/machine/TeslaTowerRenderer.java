@@ -100,11 +100,11 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         ring[0] += dt * ring[2];
         float ringPhase = ring[0];
 
-        float RING_RADIUS = 6.5f;
-        float TEEPEE_DROP = 2.5f;
+        float RING_RADIUS = machine.getTowerType().ringRadius();
+        float TEEPEE_DROP = machine.getTowerType().ringDrop();
         int ARC_POINTS = 30;
 
-        float[] yPositions = new float[] { 5.5f, 14.5f, 22.5f };
+        float[] yPositions = machine.getTowerType().ringHeights();
 
         Vec3 axis = machine.getSpireAxis().subtract(Vec3.atLowerCornerOf(machine.getPos()));
         float axisX = (float) axis.x;

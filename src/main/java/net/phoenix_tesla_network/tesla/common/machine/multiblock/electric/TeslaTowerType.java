@@ -26,6 +26,31 @@ public enum TeslaTowerType {
         this.displayName = displayName;
     }
 
+    /** How far behind the controller the tower's centre column is, in blocks (from the block's centre). */
+    public double spireBackOffset() {
+        return this == BASIC ? 3.5 : 5.5;
+    }
+
+    /** How high above the controller the tower's tip - where links attach - is. */
+    public double linkAnchorHeight() {
+        return this == BASIC ? 26.5 : 50.5;
+    }
+
+    /**
+     * The orbiting arc rings: radius, how far below its ring each arc lands, and the ring heights above the controller.
+     */
+    public float ringRadius() {
+        return this == BASIC ? 3.8f : 6.5f;
+    }
+
+    public float ringDrop() {
+        return this == BASIC ? 1.4f : 2.5f;
+    }
+
+    public float[] ringHeights() {
+        return this == BASIC ? new float[] { 3.0f, 7.5f, 12.0f } : new float[] { 5.5f, 14.5f, 22.5f };
+    }
+
     public String registryName() {
         return registryName;
     }

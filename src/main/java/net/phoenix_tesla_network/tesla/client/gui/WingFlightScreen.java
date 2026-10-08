@@ -25,10 +25,11 @@ public class WingFlightScreen extends Screen {
     private int flightVertical;
     private int sprintSpeed;
     private int jumpHeight;
+    private int stepHeight;
     private boolean keepFlyingOnLand;
 
     private static final int W = 210;
-    private static final int H = 375;
+    private static final int H = 420;
     private static final int STEPS = 10;
 
     private static final int SLIDER_SPEED = 0;
@@ -36,6 +37,7 @@ public class WingFlightScreen extends Screen {
     private static final int SLIDER_VERTICAL = 2;
     private static final int SLIDER_SPRINT = 3;
     private static final int SLIDER_JUMP = 4;
+    private static final int SLIDER_STEP = 5;
 
     private static final int COLOR_TITLE = 0xFFB000FF;
     private static final int COLOR_LABEL = 0xFFAAAAAA;
@@ -77,6 +79,7 @@ public class WingFlightScreen extends Screen {
         this.flightVertical = tag.contains("FlightVertical") ? tag.getInt("FlightVertical") : 5;
         this.sprintSpeed = tag.contains("SprintSpeed") ? tag.getInt("SprintSpeed") : 5;
         this.jumpHeight = tag.contains("JumpHeight") ? tag.getInt("JumpHeight") : 5;
+        this.stepHeight = tag.contains("StepHeight") ? tag.getInt("StepHeight") : 1;
         this.keepFlyingOnLand = tag.getBoolean("KeepFlyingOnLand");
     }
 
@@ -101,6 +104,7 @@ public class WingFlightScreen extends Screen {
             case SLIDER_VERTICAL -> flightVertical;
             case SLIDER_SPRINT -> sprintSpeed;
             case SLIDER_JUMP -> jumpHeight;
+            case SLIDER_STEP -> stepHeight;
             default -> flightDrift;
         };
     }
@@ -112,6 +116,7 @@ public class WingFlightScreen extends Screen {
             case SLIDER_VERTICAL -> flightVertical = value;
             case SLIDER_SPRINT -> sprintSpeed = value;
             case SLIDER_JUMP -> jumpHeight = value;
+            case SLIDER_STEP -> stepHeight = value;
             default -> flightDrift = value;
         }
         sendUpdate();
@@ -135,7 +140,7 @@ public class WingFlightScreen extends Screen {
         boolean showDrift = showSpeed;
         boolean showKeepFlying = isCreativeType;
 
-        int currentH = 190;
+        int currentH = 235;
         if (showSpeed) currentH += 45;
         if (showVertical) currentH += 45;
         if (showDrift) currentH += 45;
@@ -194,8 +199,12 @@ public class WingFlightScreen extends Screen {
         renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_SPRINT);
         rowY += 45;
 
-        gfx.drawString(font, "Jump Height", left + 8, rowY - 10, COLOR_LABEL, false);
+        gfx.drawString(font, "Jump Boost  (0 = off)", left + 8, rowY - 10, COLOR_LABEL, false);
         renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_JUMP);
+        rowY += 45;
+
+        gfx.drawString(font, "Step Height  (0 = vanilla)", left + 8, rowY - 10, COLOR_LABEL, false);
+        renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_STEP);
 
         gfx.pose().popPose();
     }
@@ -322,7 +331,7 @@ public class WingFlightScreen extends Screen {
     private void sendUpdate() {
         PhoenixNetwork.CHANNEL.sendToServer(
                 new UpdateWingSettingsPacket(flightMode, flightSpeed, flightDrift, flightVertical, sprintSpeed,
-                        jumpHeight, keepFlyingOnLand));
+                        jumpHeight, stepHeight, keepFlyingOnLand));
     }
 
     @Override

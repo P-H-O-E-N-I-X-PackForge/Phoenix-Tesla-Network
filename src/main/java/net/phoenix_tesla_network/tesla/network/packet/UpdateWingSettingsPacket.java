@@ -25,10 +25,12 @@ public class UpdateWingSettingsPacket {
     private final int flightVertical;
     private final int sprintSpeed;
     private final int jumpHeight;
+    private final int stepHeight;
     private final boolean keepFlyingOnLand;
 
     public UpdateWingSettingsPacket(String flightMode, int flightSpeed, int flightDrift, int flightVertical,
-                                    int sprintSpeed, int jumpHeight, boolean keepFlyingOnLand) {
+                                    int sprintSpeed, int jumpHeight, int stepHeight, boolean keepFlyingOnLand) {
+        this.stepHeight = stepHeight;
         this.flightMode = flightMode;
         this.flightSpeed = flightSpeed;
         this.flightDrift = flightDrift;
@@ -45,6 +47,7 @@ public class UpdateWingSettingsPacket {
         this.flightVertical = buf.readInt();
         this.sprintSpeed = buf.readInt();
         this.jumpHeight = buf.readInt();
+        this.stepHeight = buf.readInt();
         this.keepFlyingOnLand = buf.readBoolean();
     }
 
@@ -55,6 +58,7 @@ public class UpdateWingSettingsPacket {
         buf.writeInt(flightVertical);
         buf.writeInt(sprintSpeed);
         buf.writeInt(jumpHeight);
+        buf.writeInt(stepHeight);
         buf.writeBoolean(keepFlyingOnLand);
     }
 
@@ -80,6 +84,7 @@ public class UpdateWingSettingsPacket {
             tag.putInt("FlightVertical", vertical);
             tag.putInt("SprintSpeed", sprint);
             tag.putInt("JumpHeight", jump);
+            tag.putInt("StepHeight", Math.max(0, Math.min(20, stepHeight)));
             tag.putBoolean("KeepFlyingOnLand", keepFlyingOnLand);
 
             player.inventoryMenu.sendAllDataToRemote();
