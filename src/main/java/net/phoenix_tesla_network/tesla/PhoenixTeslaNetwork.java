@@ -56,7 +56,7 @@ public class PhoenixTeslaNetwork {
                                             REGISTRATE))
                             .title(REGISTRATE.addLang("itemGroup", PhoenixTeslaNetwork.id("creative_tab"),
                                     "PhoenixTeslaNetwork (CoreMod)"))
-                            .icon(PhoenixTeslaMachines.TESLA_TOWER::asStack)
+                            .icon(PhoenixTeslaMachines::getCreativeTabIcon)
                             .build())
             .register();
 
@@ -71,8 +71,6 @@ public class PhoenixTeslaNetwork {
 
             PhoenixTeslaClient.init(modEventBus);
         }
-
-        modEventBus.addListener(this::clientSetup);
 
         modEventBus.addListener(this::addMaterialRegistries);
         modEventBus.addListener(this::addMaterials);

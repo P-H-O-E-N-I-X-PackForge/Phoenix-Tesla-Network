@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTowerRenderer> {
 
@@ -25,6 +27,34 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
     public static final DynamicRenderType<TeslaTowerMachine, TeslaTowerRenderer> TYPE = new DynamicRenderType<>(CODEC);
 
     private TeslaTowerRenderer() {}
+
+    public record ArcStyle(float or, float og, float ob, float oa, float ir, float ig, float ib, float ia) {
+
+        public static final ArcStyle DEFAULT = new ArcStyle(1.0f, 0.7f, 0.8f, 0.3f, 0.6f, 0.1f, 0.9f, 1.0f);
+
+        private static final float[][] OUTER = { { 0.55f, 0.85f, 1.0f }, { 1.0f, 0.7f, 0.8f },
+                { 1.0f, 0.95f, 0.85f } };
+        private static final float[][] INNER = { { 0.2f, 0.5f, 1.0f }, { 0.6f, 0.1f, 0.9f },
+                { 1.0f, 0.35f, 0.75f } };
+
+        public static ArcStyle forCharge(float fill) {
+            float[] outer = blend(OUTER, fill);
+            float[] inner = blend(INNER, fill);
+            return new ArcStyle(outer[0], outer[1], outer[2], 0.3f, inner[0], inner[1], inner[2], 1.0f);
+        }
+
+        private static float[] blend(float[][] stops, float fill) {
+            float f = Math.max(0f, Math.min(1f, fill)) * 2f;
+            int i = Math.min(1, (int) f);
+            float t = f - i;
+            return new float[] {
+                    stops[i][0] + (stops[i + 1][0] - stops[i][0]) * t,
+                    stops[i][1] + (stops[i + 1][1] - stops[i][1]) * t,
+                    stops[i][2] + (stops[i + 1][2] - stops[i][2]) * t };
+        }
+    }
+
+    private static final Map<TeslaTowerMachine, float[]> RING_STATE = new WeakHashMap<>();
 
     @Override
     public @NotNull DynamicRenderType<TeslaTowerMachine, TeslaTowerRenderer> getType() {
@@ -58,24 +88,38 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         long time = machine.getLevel().getGameTime();
         VertexConsumer vc = buffer.getBuffer(PhoenixRenderTypes.LIGHT_RING());
 
+        float fill = machine.getNetworkFill();
+        ArcStyle style = ArcStyle.forCharge(fill);
+        float now = time + partialTick;
+        float targetSpeed = 0.35f + 1.65f * fill;
+        float[] ring = RING_STATE.computeIfAbsent(machine, m -> new float[] { 0f, now, targetSpeed });
+        float dt = now - ring[1];
+        if (dt < 0f || dt > 10f) dt = 0f;
+        ring[1] = now;
+        ring[2] += (targetSpeed - ring[2]) * Math.min(1f, dt * 0.1f);
+        ring[0] += dt * ring[2];
+        float ringPhase = ring[0];
+
         float RING_RADIUS = 6.5f;
         float TEEPEE_DROP = 2.5f;
         int ARC_POINTS = 30;
 
         float[] yPositions = new float[] { 5.5f, 14.5f, 22.5f };
-        float[] xPositions = new float[] { 1.0f, 1.0f, 1.0f };
-        float[] zPositions = new float[] { 6f, 6.0f, 6.0f };
+
+        Vec3 axis = machine.getSpireAxis().subtract(Vec3.atLowerCornerOf(machine.getPos()));
+        float axisX = (float) axis.x;
+        float axisZ = (float) axis.z;
 
         poseStack.pushPose();
 
         for (int ringIndex = 0; ringIndex < yPositions.length; ringIndex++) {
-            float xBase = xPositions[ringIndex];
+            float xBase = axisX;
             float yBase = yPositions[ringIndex];
-            float zBase = zPositions[ringIndex];
+            float zBase = axisZ;
             Vec3 currentTopCenter = new Vec3(xBase, yBase, zBase);
 
             for (int i = 0; i < ARC_POINTS; i++) {
-                double rotationSpeed = time * (0.02 + (ringIndex * 0.01));
+                double rotationSpeed = ringPhase * (0.02 + (ringIndex * 0.01));
                 double angle = (2 * Math.PI * i / ARC_POINTS) + rotationSpeed;
 
                 double x = xBase + Math.cos(angle) * RING_RADIUS;
@@ -86,14 +130,14 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                 Vec3 targetPos = new Vec3(x, y, z);
 
                 if ((time + i * 7 + ringIndex * 13) % 12 < 5) {
-                    renderArc(poseStack, vc, currentTopCenter, targetPos, time);
+                    drawArc(poseStack, vc, currentTopCenter, targetPos, time, 5, 0.18f, 1.0f, 0L, style);
 
                     if (machine.getLevel().isClientSide && machine.getLevel().random.nextFloat() < 0.05f) {
                         machine.getLevel().addParticle(
                                 PhoenixParticles.TESLA_SPARK.get(),
-                                targetPos.x + machine.getPos().getX() + 0.5,
-                                targetPos.y + machine.getPos().getY() + 0.5,
-                                targetPos.z + machine.getPos().getZ() + 0.5,
+                                targetPos.x + machine.getPos().getX(),
+                                targetPos.y + machine.getPos().getY(),
+                                targetPos.z + machine.getPos().getZ(),
                                 0.0, 0.0, 0.0);
                     }
                 }
@@ -176,26 +220,33 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         drawTeslaLine(vc, pose, mid, e, depth - 1, isCore, time);
     }
 
-    private static final Vec3[] POINT_CACHE = new Vec3[64];
+    private static final Vec3[] POINT_CACHE = new Vec3[260];
     static {
-        for (int i = 0; i < 64; i++) POINT_CACHE[i] = Vec3.ZERO;
+        for (int i = 0; i < POINT_CACHE.length; i++) POINT_CACHE[i] = Vec3.ZERO;
     }
 
-    private void renderArc(PoseStack stack, VertexConsumer vc, Vec3 start, Vec3 end, long time) {
+    public static void drawArc(PoseStack stack, VertexConsumer vc, Vec3 start, Vec3 end, long time, int depth,
+                               float jitter, float widthScale, long seedOffset) {
+        drawArc(stack, vc, start, end, time, depth, jitter, widthScale, seedOffset, ArcStyle.DEFAULT);
+    }
+
+    public static void drawArc(PoseStack stack, VertexConsumer vc, Vec3 start, Vec3 end, long time, int depth,
+                               float jitter, float widthScale, long seedOffset, ArcStyle style) {
         Matrix4f pose = stack.last().pose();
 
-        float smoothTime = time * 0.05f;
-        long snapTime = time / 4;
+        float smoothTime = time * 0.05f + seedOffset * 7.3f;
+        long snapTime = time / 4 + seedOffset * 31;
 
         POINT_CACHE[0] = start;
-        int totalPoints = generatePath(start, end, 1, 5, 0.18f, snapTime, smoothTime);
+        int totalPoints = generatePath(start, end, 1, Math.min(depth, 7), jitter, snapTime, smoothTime);
         POINT_CACHE[totalPoints - 1] = end;
 
-        drawRibbon(vc, pose, totalPoints, 0.08f, 1.0f, 0.7f, 0.8f, 0.3f, time);
-        drawRibbon(vc, pose, totalPoints, 0.02f, 0.6f, 0.1f, 0.9f, 1.0f, time);
+        drawRibbon(vc, pose, totalPoints, 0.08f * widthScale, style.or(), style.og(), style.ob(), style.oa(), time);
+        drawRibbon(vc, pose, totalPoints, 0.02f * widthScale, style.ir(), style.ig(), style.ib(), style.ia(), time);
     }
 
-    private int generatePath(Vec3 s, Vec3 e, int index, int depth, float jitter, long snapTime, float smoothTime) {
+    private static int generatePath(Vec3 s, Vec3 e, int index, int depth, float jitter, long snapTime,
+                                    float smoothTime) {
         if (depth == 0) {
             POINT_CACHE[index] = e;
             return index + 1;
@@ -216,8 +267,8 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         return generatePath(mid, e, nextIndex, depth - 1, jitter, snapTime, smoothTime);
     }
 
-    private void drawRibbon(VertexConsumer vc, Matrix4f pose, int count, float width, float r, float g, float b,
-                            float a, long time) {
+    private static void drawRibbon(VertexConsumer vc, Matrix4f pose, int count, float width, float r, float g, float b,
+                                   float a, long time) {
         for (int i = 0; i < count - 1; i++) {
             Vec3 s = POINT_CACHE[i];
             Vec3 e = POINT_CACHE[i + 1];
@@ -249,7 +300,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         }
     }
 
-    private float sinNoise(float n) {
+    private static float sinNoise(float n) {
         return (float) (Math.sin(n * 2137.123) * 43758.5453) % 1.0f;
     }
 }

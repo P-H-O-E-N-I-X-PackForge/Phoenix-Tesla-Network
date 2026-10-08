@@ -83,6 +83,22 @@ public class PhoenixRenderTypes extends RenderType {
                     .setCullState(RenderStateShard.NO_CULL)
                     .createCompositeState(false));
 
+    private static final RenderType COVERAGE_LINES = RenderType.create(
+            "phoenix_coverage_lines",
+            DefaultVertexFormat.POSITION_COLOR_NORMAL,
+            VertexFormat.Mode.LINES,
+            256,
+            false,
+            false,
+            CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
+                    .setLineState(new LineStateShard(java.util.OptionalDouble.of(2.0D)))
+                    .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .createCompositeState(false));
+
     private PhoenixRenderTypes(String name, VertexFormat format, VertexFormat.Mode mode,
                                int bufferSize, boolean affectsCrumbling, boolean sortOnUpload,
                                Runnable setupState, Runnable clearState) {
@@ -91,6 +107,10 @@ public class PhoenixRenderTypes extends RenderType {
 
     public static RenderType HONEY_FOG() {
         return HONEY_FOG;
+    }
+
+    public static RenderType COVERAGE_LINES() {
+        return COVERAGE_LINES;
     }
 
     public static RenderType LIGHT_RING() {

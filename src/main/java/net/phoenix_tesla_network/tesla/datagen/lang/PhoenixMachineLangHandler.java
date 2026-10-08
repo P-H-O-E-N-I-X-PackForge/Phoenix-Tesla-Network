@@ -130,17 +130,6 @@ public class PhoenixMachineLangHandler {
                 "Emits fixed strength on back face only.");
         provider.add("gui.phoenix_tesla_network.advanced_stability_sensor.hint2", "Pair with an Advanced SCRAM Hatch.");
 
-        provider.add("gui.phoenix_tesla_network.advanced_scram.title", "Advanced SCRAM Configuration");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.threshold", "Min Signal Strength (1–15)");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.sustain", "Sustain Duration (ticks)");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.status_armed", "§c● SCRAMMED — Reactor HALTED");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.status_arming", "§eArming: %d / %d ticks");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.status_standby", "§a● Standby — Reactor Permitted");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.status_triggered", "§cArmed and triggered.");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.status_waiting", "§7Waiting for signal...");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.hint1", "Signal must meet strength threshold");
-        provider.add("gui.phoenix_tesla_network.advanced_scram.hint2", "for the full sustain duration to SCRAM.");
-
         provider.add("phoenix_tesla_network.status.scram_basic", "§c§lSCRAM ACTIVE §8(Basic Hatch)");
         provider.add("phoenix_tesla_network.status.scram_advanced", "§6§lSCRAM ACTIVE §8(Advanced Hatch)");
         provider.add("phoenix_tesla_network.status.scram_arming", "§e§lSCRAM ARMING: §f%d / %d ticks");

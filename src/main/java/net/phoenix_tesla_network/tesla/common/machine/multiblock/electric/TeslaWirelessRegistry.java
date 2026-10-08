@@ -10,7 +10,7 @@ public final class TeslaWirelessRegistry {
 
     private static final Map<UUID, Set<TeslaEnergyHatchPartMachine>> TEAM_HATCHES = new HashMap<>();
 
-    private static final Map<UUID, TeslaTowerMachine> TEAM_TOWERS = new HashMap<>();
+    private static final Map<UUID, Set<TeslaTowerMachine>> OWNER_TOWERS = new HashMap<>();
 
     public static void registerHatch(TeslaEnergyHatchPartMachine hatch) {
         if (hatch.getOwnerTeamUUID() == null) return;
@@ -33,19 +33,25 @@ public final class TeslaWirelessRegistry {
 
     public static void registerTower(TeslaTowerMachine tower) {
         if (tower.getOwnerUUID() != null) {
-            TEAM_TOWERS.put(tower.getOwnerUUID(), tower);
+            OWNER_TOWERS.computeIfAbsent(tower.getOwnerUUID(), k -> new LinkedHashSet<>()).add(tower);
         }
     }
 
     public static void unregisterTower(TeslaTowerMachine tower) {
         if (tower.getOwnerUUID() != null) {
-            TEAM_TOWERS.remove(tower.getOwnerUUID());
+            Set<TeslaTowerMachine> towers = OWNER_TOWERS.get(tower.getOwnerUUID());
+            if (towers != null) {
+                towers.remove(tower);
+                if (towers.isEmpty()) OWNER_TOWERS.remove(tower.getOwnerUUID());
+            }
         }
     }
 
     @Nullable
     public static TeslaTowerMachine getTowerByTeam(UUID team) {
-        return TEAM_TOWERS.get(team);
+        Set<TeslaTowerMachine> towers = OWNER_TOWERS.get(team);
+        if (towers == null || towers.isEmpty()) return null;
+        return towers.iterator().next();
     }
 
     @Nullable

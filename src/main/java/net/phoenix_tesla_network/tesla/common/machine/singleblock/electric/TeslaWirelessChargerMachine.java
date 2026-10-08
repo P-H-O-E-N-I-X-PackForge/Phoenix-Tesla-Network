@@ -28,7 +28,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
+import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
+import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
@@ -85,6 +88,8 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
     }
 
     private void tickCharge() {
+        autoBindIfConfigured();
+
         if (!(getLevel() instanceof ServerLevel level) || boundTeam == null) {
             changeState(State.IDLE);
             return;
@@ -94,6 +99,13 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         TeslaTeamEnergyData.TeamEnergy network = data.getOrCreate(boundTeam);
 
         if (getOffsetTimer() % 10 == 0) {
+            if (!TeslaRange.isInRange(network, level.dimension(), getPos())) {
+                this.lastTransferred = 0L;
+                network.machineDisplayFlow.put(getPos(), 0L);
+                changeState(State.IDLE);
+                return;
+            }
+
             if (network.stored.signum() <= 0) {
                 this.lastTransferred = 0L;
                 network.machineDisplayFlow.put(getPos(), 0L);
@@ -103,7 +115,8 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
 
             List<Player> playersToCharge = new ArrayList<>();
             for (Player player : level.getServer().getPlayerList().getPlayers()) {
-                if (TeamUtils.isPlayerOnTeam(player, boundTeam)) {
+                if (TeamUtils.isPlayerOnTeam(player, boundTeam) &&
+                        TeslaRange.isInRange(network, player.level().dimension(), player.blockPosition())) {
                     playersToCharge.add(player);
                 }
             }
@@ -135,8 +148,11 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
                             long itemNeeded = electric.getMaxCharge() - electric.getCharge();
                             if (itemNeeded <= 0) continue;
 
-                            long networkAvailable = network.stored.min(BigInteger.valueOf(totalBatchBudget))
-                                    .longValue();
+                            double efficiency = TeslaLoss.efficiency(network, player.level().dimension(),
+                                    player.blockPosition());
+                            long networkAvailable = TeslaLoss.netLong(network.stored
+                                    .min(BigInteger.valueOf(TeslaLoss.grossLong(totalBatchBudget, efficiency)))
+                                    .longValue(), efficiency);
                             long offer = Math.min(itemNeeded, Math.min(totalBatchBudget, networkAvailable));
 
                             if (offer > 0) {
@@ -144,7 +160,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
                                 long accepted = electric.charge(offer, getTier(), true, false);
 
                                 if (accepted > 0) {
-                                    network.drain(BigInteger.valueOf(accepted));
+                                    network.drain(TeslaLoss.gross(BigInteger.valueOf(accepted), efficiency));
                                     movedInThisCycle += accepted;
                                     totalBatchBudget -= accepted;
                                 }
@@ -194,6 +210,27 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         if (boundTeam != null && getLevel() instanceof ServerLevel level) {
             TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).machineDisplayFlow.remove(getPos());
         }
+    }
+
+    private void autoBindIfConfigured() {
+        if (isRemote() || getOffsetTimer() % 20 != 0) return;
+        if (PhoenixTeslaConfigs.INSTANCE.features.teslaConnectionMode !=
+                PhoenixTeslaConfigs.FeatureConfigs.TeslaConnectionMode.TEAM_AUTO) {
+            return;
+        }
+
+        UUID owner = getOwnerUUID();
+        if (owner == null) return;
+
+        UUID team = TeamUtils.getTeamIdOrPlayerFallback(owner);
+        if (team == null) return;
+
+        if (team.equals(boundTeam)) return;
+
+        unregisterFromNetwork();
+        this.boundTeam = team;
+        registerToNetwork();
+        this.markDirty();
     }
 
     private void registerToNetwork() {
@@ -247,9 +284,10 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             text.add(Component.literal("STATUS: ").append(Component.literal("UNBOUND").withStyle(ChatFormatting.RED)));
         } else {
             text.add(Component.literal("NETWORK: ")
-                    .append(Component.literal(boundTeam.toString().substring(0, 8)).withStyle(ChatFormatting.AQUA)));
-            text.add(Component.literal("RANGE: ")
-                    .append(Component.literal("Omnipresent (Global)").withStyle(ChatFormatting.LIGHT_PURPLE)));
+                    .append(Component.literal(TeamUtils.getTeamName(boundTeam)).withStyle(ChatFormatting.AQUA)));
+            text.add(Component.literal("REACH: ")
+                    .append(Component.literal("Wherever the Tesla Network reaches")
+                            .withStyle(ChatFormatting.LIGHT_PURPLE)));
 
             String rate = com.gregtechceu.gtceu.utils.FormattingUtil.formatNumbers(lastTransferred);
             text.add(Component.literal("OUTPUT: ")

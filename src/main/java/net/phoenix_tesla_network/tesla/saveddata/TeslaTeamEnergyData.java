@@ -89,10 +89,105 @@ public class TeslaTeamEnergyData extends SavedData {
         }
     }
 
+    public enum RangeNodeType {
+
+        TOWER_BASIC,
+        TOWER_ADVANCED,
+        TOWER_ULTIMATE,
+        RELAY;
+
+        public boolean isTower() {
+            return this != RELAY;
+        }
+    }
+
+    public static class RangeNode {
+
+        public final RangeNodeType type;
+        public final BlockPos pos;
+        public final ResourceKey<Level> dimension;
+
+        public BigInteger capacity = BigInteger.ZERO;
+
+        public boolean working;
+
+        public RangeNode(RangeNodeType type, ResourceKey<Level> dimension, BlockPos pos) {
+            this.type = type;
+            this.dimension = dimension;
+            this.pos = pos.immutable();
+        }
+
+        public String key() {
+            return key(dimension, pos);
+        }
+
+        public static String key(ResourceKey<Level> dimension, BlockPos pos) {
+            return dimension.location() + "|" + pos.asLong();
+        }
+    }
+
     public static class TeamEnergy {
 
         public BigInteger stored = BigInteger.ZERO;
         public BigInteger capacity = BigInteger.ZERO;
+
+        public final Map<String, RangeNode> rangeNodes = new LinkedHashMap<>();
+
+        public boolean rangeManaged = false;
+
+        public int rangeVersion = 0;
+
+        public long lastWirelessPassTick = -1;
+        public long lastStatsTick = -1;
+        public long physicalNetIn = 0;
+        public long physicalNetOut = 0;
+
+        public boolean upsertNode(RangeNodeType type, ResourceKey<Level> dimension, BlockPos pos, BigInteger capacity,
+                                  boolean working) {
+            String key = RangeNode.key(dimension, pos);
+            RangeNode node = rangeNodes.get(key);
+            boolean changed = false;
+            if (node == null || node.type != type) {
+                node = new RangeNode(type, dimension, pos);
+                rangeNodes.put(key, node);
+                changed = true;
+            }
+            if (node.working != working) {
+                node.working = working;
+                changed = true;
+            }
+            node.capacity = capacity;
+
+            if (type.isTower()) rangeManaged = true;
+            if (changed) rangeVersion++;
+            recalculateCapacity();
+            return changed;
+        }
+
+        public boolean removeNode(ResourceKey<Level> dimension, BlockPos pos) {
+            boolean removed = rangeNodes.remove(RangeNode.key(dimension, pos)) != null;
+            if (removed) {
+                rangeVersion++;
+                recalculateCapacity();
+            }
+            return removed;
+        }
+
+        public void recalculateCapacity() {
+            if (!rangeManaged) return;
+            BigInteger total = BigInteger.ZERO;
+            for (RangeNode node : rangeNodes.values()) {
+                if (node.type.isTower() && node.working) total = total.add(node.capacity);
+            }
+            capacity = total;
+        }
+
+        public boolean anyTowerWorking() {
+            for (RangeNode node : rangeNodes.values()) {
+                if (node.type.isTower() && node.working) return true;
+            }
+            return false;
+        }
 
         public final Set<BlockPos> soulLinkedMachines = new HashSet<>();
         public final Set<BlockPos> activeChargers = new HashSet<>();
@@ -172,6 +267,19 @@ public class TeslaTeamEnergyData extends SavedData {
             });
             tag.put("PosDims", dimList);
 
+            tag.putBoolean("RangeManaged", rangeManaged);
+            ListTag nodeList = new ListTag();
+            for (RangeNode node : rangeNodes.values()) {
+                CompoundTag entry = new CompoundTag();
+                entry.putString("type", node.type.name());
+                entry.putLong("p", node.pos.asLong());
+                entry.putString("d", node.dimension.location().toString());
+                entry.putString("cap", node.capacity.toString());
+                entry.putBoolean("working", node.working);
+                nodeList.add(entry);
+            }
+            tag.put("RangeNodes", nodeList);
+
             return tag;
         }
 
@@ -198,6 +306,24 @@ public class TeslaTeamEnergyData extends SavedData {
                     ResourceLocation dimLoc = new ResourceLocation(entry.getString("d"));
                     e.posToDimension.put(pos, ResourceKey.create(Registries.DIMENSION, dimLoc));
                 }
+            }
+
+            e.rangeManaged = tag.getBoolean("RangeManaged");
+            ListTag nodeList = tag.getList("RangeNodes", Tag.TAG_COMPOUND);
+            for (int i = 0; i < nodeList.size(); i++) {
+                CompoundTag entry = nodeList.getCompound(i);
+                RangeNodeType type;
+                try {
+                    type = RangeNodeType.valueOf(entry.getString("type"));
+                } catch (IllegalArgumentException ex) {
+                    continue;
+                }
+                ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION,
+                        new ResourceLocation(entry.getString("d")));
+                RangeNode node = new RangeNode(type, dim, BlockPos.of(entry.getLong("p")));
+                node.capacity = entry.contains("cap") ? new BigInteger(entry.getString("cap")) : BigInteger.ZERO;
+                node.working = entry.getBoolean("working");
+                e.rangeNodes.put(node.key(), node);
             }
             return e;
         }
@@ -254,6 +380,11 @@ public class TeslaTeamEnergyData extends SavedData {
     @Nullable
     public UUID getOwnerTeam(BlockPos pos) {
         return machineToTeam.get(pos);
+    }
+
+    @Nullable
+    public TeamEnergy getIfPresent(UUID team) {
+        return networks.get(team);
     }
 
     public TeamEnergy getOrCreate(UUID team) {

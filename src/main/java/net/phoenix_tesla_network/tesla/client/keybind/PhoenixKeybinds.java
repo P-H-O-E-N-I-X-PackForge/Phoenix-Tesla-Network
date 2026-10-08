@@ -1,12 +1,16 @@
 package net.phoenix_tesla_network.tesla.client.keybind;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
+@Mod.EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PhoenixKeybinds {
 
     public static final KeyMapping OPEN_WING_GUI = new KeyMapping(

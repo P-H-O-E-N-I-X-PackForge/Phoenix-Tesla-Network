@@ -1,7 +1,0 @@
-﻿{
-  "parent": "gtceu:block/overlay/2_layer/front_emissive",
-  "textures": {
-    "overlay": "phoenix_tesla_network:block/overlay/machine/overlay_maintenance_blazing_cleaning",
-    "overlay_emissive": "phoenix_tesla_network:block/overlay/machine/overlay_maintenance_blazing_cleaning_emissive"
-  }
-}

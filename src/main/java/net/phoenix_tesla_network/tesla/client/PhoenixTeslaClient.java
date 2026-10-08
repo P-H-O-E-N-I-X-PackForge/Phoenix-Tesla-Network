@@ -16,6 +16,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.client.particle.PhoenixParticles;
 import net.phoenix_tesla_network.tesla.client.particles.TeslaSparkParticle;
+import net.phoenix_tesla_network.tesla.client.renderer.machine.TeslaLinkRenderer;
 import net.phoenix_tesla_network.tesla.client.renderer.machine.TeslaTowerRenderer;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ public class PhoenixTeslaClient {
 
     public static void init(IEventBus modBus) {
         DynamicRenderManager.register(PhoenixTeslaNetwork.id("tesla_tower"), TeslaTowerRenderer.TYPE);
+        DynamicRenderManager.register(PhoenixTeslaNetwork.id("tesla_link"), TeslaLinkRenderer.TYPE);
     }
 
     @SubscribeEvent

@@ -25,6 +25,10 @@ sourceSets {
 repositories {
     mavenLocal()
     mavenCentral()
+    // Phoenix Guilds dev jar lives in libs/ (see the runtime-only dependency below)
+    flatDir {
+        dir 'libs'
+    }
     maven {
         name = 'GTCEu Maven'
         url = 'https://maven.gtceu.com'
@@ -171,6 +175,11 @@ dependencies {
     modRuntimeOnly("dev.architectury:architectury-forge:${architectury_version}")
     modImplementation("dev.ftb.mods:ftb-library-forge:${ftblibrary_version}")
     modImplementation("dev.ftb.mods:ftb-teams-forge:${ftbteams_version}")
+
+    // Phoenix Guilds is optional at runtime (reached by reflection from TeamUtils), so it is only on the dev
+    // runtime classpath - for testing the integration - and never a compile dependency. It needs Phoenix Wiki.
+    modRuntimeOnly("net.phoenixvine.guilds:phoenix_guilds:1.6.5")
+    modRuntimeOnly("net.phoenixvine.wiki:phoenix_wiki:0.5.5")
 
     modImplementation "software.bernie.geckolib:geckolib-neoforge-1.20.1:${geckolib_version}"
     modImplementation "top.theillusivec4.curios:curios-forge:${curios_version}"

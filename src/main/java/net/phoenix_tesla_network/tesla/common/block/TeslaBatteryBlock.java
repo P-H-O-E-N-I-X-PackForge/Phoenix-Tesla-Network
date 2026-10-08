@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 
 @Getter
 @MethodsReturnNonnullByDefault
@@ -44,6 +45,15 @@ public class TeslaBatteryBlock extends Block {
 
     public enum TeslaBatteryType implements ITeslaBattery {
 
+        LV(1, true),
+        MV(2, true),
+        HV(3, true),
+        EV(4, true),
+        IV(5, true),
+        LuV(6, true),
+        ZPM(7, true),
+        UV(8, true),
+
         UHV(9, BigInteger.valueOf(10_000_000_000L).multiply(BigInteger.valueOf(100))),
         UEV(10, BigInteger.valueOf(50_000_000_000L).multiply(BigInteger.valueOf(100))),
         UIV(11, BigInteger.valueOf(250_000_000_000L).multiply(BigInteger.valueOf(100))),
@@ -52,12 +62,24 @@ public class TeslaBatteryBlock extends Block {
         MAX(14, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(900000000)));
 
         private final int tier;
-        private final BigInteger capacity;
+        private final Supplier<BigInteger> capacity;
+        private final boolean placeholderTexture;
         private BigInteger stored = BigInteger.ZERO;
 
         TeslaBatteryType(int tier, BigInteger capacity) {
             this.tier = tier;
-            this.capacity = capacity;
+            this.capacity = () -> capacity;
+            this.placeholderTexture = false;
+        }
+
+        TeslaBatteryType(int tier, boolean scaledCapacity) {
+            this.tier = tier;
+            this.capacity = () -> TeslaBatteryCapacities.capacityFor(tier);
+            this.placeholderTexture = true;
+        }
+
+        public boolean usesPlaceholderTexture() {
+            return placeholderTexture;
         }
 
         @Override
@@ -67,7 +89,7 @@ public class TeslaBatteryBlock extends Block {
 
         @Override
         public BigInteger getCapacity() {
-            return capacity;
+            return capacity.get();
         }
 
         @Override

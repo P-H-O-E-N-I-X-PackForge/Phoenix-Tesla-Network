@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "phoenix_tesla_network:block/machine/uxv_tesla_laser_input_hatch_4194304a_4194304a",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "phoenix_tesla_network:block/machine/uxv_tesla_laser_input_hatch_4194304a_4194304a",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "phoenix_tesla_network:block/machine/uxv_tesla_laser_input_hatch_4194304a_4194304a"
+    },
+    "facing=south": {
+      "model": "phoenix_tesla_network:block/machine/uxv_tesla_laser_input_hatch_4194304a_4194304a",
+      "y": 180
+    },
+    "facing=up": {
+      "gtceu:z": 180,
+      "model": "phoenix_tesla_network:block/machine/uxv_tesla_laser_input_hatch_4194304a_4194304a",
+      "x": 270
+    },
+    "facing=west": {
+      "model": "phoenix_tesla_network:block/machine/uxv_tesla_laser_input_hatch_4194304a_4194304a",
+      "y": 270
+    }
+  }
+}

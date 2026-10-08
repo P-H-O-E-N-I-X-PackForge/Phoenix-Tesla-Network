@@ -18,7 +18,7 @@ displayURL = "${mod_url}"
 # credits="Thanks to Mojang for making this great game" #optional
 # Some more fluff displayed in the Mods panel. Plug your stuff here!
 authors="${mod_author}"
-description = '''This is the Core mod for phoenix_core'''
+description = '''A small wireless eu GTM addon.'''
 
 [[dependencies.phoenix_tesla_network]]
 modId = "forge"
@@ -42,5 +42,26 @@ side = "BOTH"
 modId = "jade"
 mandatory = true
 versionRange = "[${gtceu_version},)"
+ordering = "AFTER"
+side = "BOTH"
+[[dependencies.phoenix_tesla_network]]
+modId = "geckolib"
+mandatory = true
+versionRange = "[0,)"
+ordering = "BEFORE"
+side = "BOTH"
+
+# Optional team providers. Tesla networks belong to a team; whichever of these is present decides what a
+# "team" is (Phoenix Guilds first, then FTB Teams, otherwise each player is their own team).
+[[dependencies.phoenix_tesla_network]]
+modId = "phoenix_guilds"
+mandatory = false
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+[[dependencies.phoenix_tesla_network]]
+modId = "ftbteams"
+mandatory = false
+versionRange = "[0,)"
 ordering = "AFTER"
 side = "BOTH"

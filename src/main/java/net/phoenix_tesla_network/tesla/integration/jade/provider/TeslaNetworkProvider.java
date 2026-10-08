@@ -14,8 +14,12 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
+import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
+import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
+import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaRelayMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine;
+import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
@@ -55,6 +59,12 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                     }
                 } else if (machine instanceof TeslaTowerMachine tower) {
                     team = tower.getOwnerUUID();
+                } else if (machine instanceof TeslaRelayMachine relay) {
+                    team = relay.getOwnerTeamUUID();
+                    if (team != null) {
+                        tag.putBoolean("RelayActive",
+                                TeslaRange.isRelayActive(data.getOrCreate(team), sl.dimension(), pos));
+                    }
                 }
 
                 else {
@@ -88,6 +98,16 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                     tag.putString("Capacity", FormattingUtil.formatNumbers(teamData.capacity));
                     tag.putLong("LocalTransfer", transferRate);
                     tag.putInt("TransferMode", mode);
+                    tag.putBoolean("InRange", TeslaRange.isInRange(teamData, sl.dimension(), pos));
+                    if (PhoenixTeslaConfigs.get().towers.loss.enabled) {
+                        var reach = TeslaRange.reach(teamData, sl.dimension(), pos);
+                        if (reach != null) {
+                            tag.putDouble("LossPercent", TeslaLoss.lossFraction(
+                                    PhoenixTeslaConfigs.get().towers.loss, reach) * 100.0);
+                            tag.putBoolean("LossCrossDim", reach.crossDimension());
+                            tag.putDouble("LossDistance", reach.distance());
+                        }
+                    }
 
                     int physicalHatches = 0;
                     for (TeslaTeamEnergyData.HatchInfo hatch : data.getHatches(team)) {
@@ -115,10 +135,30 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
         tooltip.add(Component.literal("Network: ").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(data.getString("TeamName")).withStyle(ChatFormatting.AQUA)));
 
-        tooltip.add(Component.literal("Cloud: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.literal("Tesla Network: ").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(data.getString("Stored")).withStyle(ChatFormatting.GOLD))
                 .append(Component.literal(" / " + data.getString("Capacity") + " EU")
                         .withStyle(ChatFormatting.YELLOW)));
+
+        if (data.contains("RelayActive")) {
+            boolean active = data.getBoolean("RelayActive");
+            tooltip.add(Component.literal("Range Extender: ").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(active ? "Extending" : "Not connected")
+                            .withStyle(active ? ChatFormatting.GREEN : ChatFormatting.RED)));
+        } else if (data.contains("InRange") && !data.getBoolean("InRange")) {
+            tooltip.add(Component.literal("Out of network range").withStyle(ChatFormatting.RED));
+        }
+
+        if (data.contains("LossPercent")) {
+            double loss = data.getDouble("LossPercent");
+            ChatFormatting lossColor = loss < 1.0 ? ChatFormatting.GREEN :
+                    loss < 15.0 ? ChatFormatting.YELLOW : ChatFormatting.RED;
+            String where = data.getBoolean("LossCrossDim") ? "cross-dimension" :
+                    Math.round(data.getDouble("LossDistance")) + " blocks";
+            tooltip.add(Component.literal("Link loss: ").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(String.format("%.1f%%", loss)).withStyle(lossColor))
+                    .append(Component.literal(" (" + where + ")").withStyle(ChatFormatting.DARK_GRAY)));
+        }
 
         int connections = data.getInt("TotalConnections");
         tooltip.add(Component.literal("Connections: ").withStyle(ChatFormatting.GRAY)
@@ -138,9 +178,8 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                     color = ChatFormatting.GREEN;
                 }
                 case 2 -> {
-                    label = Component.literal("Broadcasting: ");
+                    label = Component.literal("Transmitting: ");
                     color = ChatFormatting.AQUA;
-                    icon = "§3波 ";
                 }
                 case 3 -> {
                     label = Component.literal("Generating: ");

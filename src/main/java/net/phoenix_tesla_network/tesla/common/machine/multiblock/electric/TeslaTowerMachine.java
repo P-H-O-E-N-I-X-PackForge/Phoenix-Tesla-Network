@@ -44,6 +44,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.gui.PhoenixGuiTextures;
 import net.phoenix_tesla_network.tesla.api.machine.trait.ITeslaBattery;
+import net.phoenix_tesla_network.tesla.api.range.ITeslaLinkNode;
+import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
+import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.unique.UniqueWorkableElectricMultiblockMachine;
@@ -64,7 +67,7 @@ import javax.annotation.Nullable;
 import static net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine.TESLA_DEBUG;
 
 public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
-                               implements IEnergyInfoProvider, IFancyUIMachine, IDataStickInteractable {
+                               implements IEnergyInfoProvider, IFancyUIMachine, IDataStickInteractable, ITeslaLinkNode {
 
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
             TeslaTowerMachine.class, UniqueWorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
@@ -76,6 +79,24 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
     }
 
     public static final String TTB_BATTERY_HEADER = "TTBatteries_";
+
+    private TeslaTowerType towerType;
+
+    public TeslaTowerType getTowerType() {
+        if (towerType == null) {
+            towerType = TeslaTowerType.fromId(getDefinition().getId());
+            if (towerType == null) towerType = TeslaTowerType.ULTIMATE;
+        }
+        return towerType;
+    }
+
+    private TeslaTeamEnergyData.RangeNodeType getRangeNodeType() {
+        return switch (getTowerType()) {
+            case BASIC -> TeslaTeamEnergyData.RangeNodeType.TOWER_BASIC;
+            case ADVANCED -> TeslaTeamEnergyData.RangeNodeType.TOWER_ADVANCED;
+            case ULTIMATE -> TeslaTeamEnergyData.RangeNodeType.TOWER_ULTIMATE;
+        };
+    }
 
     private static final BigInteger BIG_INTEGER_MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
 
@@ -213,10 +234,12 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             ServerLevel targetLevel = level.getServer().getLevel(dimKey);
 
             if (targetLevel == null || !targetLevel.isLoaded(targetPos)) continue;
+            if (!TeslaRange.isInRange(team, dimKey, targetPos)) continue;
 
             team.markHatchActive(targetPos, targetLevel.getGameTime());
 
             if (team.stored.signum() == 0) continue;
+            double efficiency = TeslaLoss.efficiency(team, dimKey, targetPos);
 
             MetaMachine machine = MetaMachine.getMachine(targetLevel, targetPos);
             if (machine == null) continue;
@@ -227,7 +250,8 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                 var energy = charger.energyContainer;
                 if (energy != null) {
                     long voltage = energy.getInputVoltage();
-                    long available = team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+                    long available = TeslaLoss.netLong(
+                            team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue(), efficiency);
                     long maxTransfer = voltage * energy.getInputAmperage();
                     long toPush = Math.min(available, maxTransfer);
 
@@ -236,7 +260,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
                     if (accepted > 0) {
                         injectedThisTick = accepted * voltage;
-                        team.drain(BigInteger.valueOf(injectedThisTick));
+                        team.drain(TeslaLoss.gross(BigInteger.valueOf(injectedThisTick), efficiency));
                     }
                 }
             } else if (machine instanceof TieredEnergyMachine tieredMachine) {
@@ -247,11 +271,12 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                         long voltage = energy.getInputVoltage();
                         long transferLimit = voltage * energy.getInputAmperage();
                         long toInject = Math.min(demand, transferLimit);
-                        long available = team.stored.min(BigInteger.valueOf(toInject)).longValue();
+                        long available = team.stored.min(BigInteger.valueOf(
+                                TeslaLoss.grossLong(toInject, efficiency))).longValue();
 
                         if (available > 0) {
                             BigInteger drained = team.drain(BigInteger.valueOf(available));
-                            injectedThisTick = drained.longValue();
+                            injectedThisTick = TeslaLoss.net(drained, efficiency).longValue();
                             if (injectedThisTick > 0) {
                                 energy.addEnergy(injectedThisTick);
 
@@ -281,6 +306,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             ServerLevel targetLevel = level.getServer().getLevel(dimKey);
 
             if (targetLevel == null || !targetLevel.isLoaded(targetPos)) continue;
+            if (!TeslaRange.isInRange(team, dimKey, targetPos)) continue;
 
             team.markHatchActive(targetPos, targetLevel.getGameTime());
 
@@ -299,11 +325,13 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                     long toPull = Math.min(available, maxTransfer);
 
                     if (toPull > 0) {
-                        BigInteger accepted = team.fill(BigInteger.valueOf(toPull));
+                        double efficiency = TeslaLoss.efficiency(team, dimKey, targetPos);
+                        BigInteger accepted = team.fill(BigInteger.valueOf(TeslaLoss.netLong(toPull, efficiency)));
                         long acceptedLong = accepted.longValue();
                         if (acceptedLong > 0) {
-                            energy.removeEnergy(acceptedLong);
-                            pulledThisTick = acceptedLong;
+                            long taken = Math.min(toPull, TeslaLoss.grossLong(acceptedLong, efficiency));
+                            energy.removeEnergy(taken);
+                            pulledThisTick = taken;
                         }
                     }
                 }
@@ -325,6 +353,8 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         if (getLevel().isClientSide) return;
         if (!isWorkingEnabled() || !isFormed()) {
             if (recipeLogic.isActive()) recipeLogic.setStatus(RecipeLogic.Status.IDLE);
+
+            if (isFormed() && getLevel().getGameTime() % 20 == 0) syncToTeslaSavedData();
             return;
         }
 
@@ -338,37 +368,48 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                 TeslaTeamEnergyData data = TeslaTeamEnergyData.get(sl);
                 TeslaTeamEnergyData.TeamEnergy team = data.getOrCreate(ownerTeamUUID);
 
-                long totalWirelessInput = 0;
-                long totalWirelessOutput = 0;
+                TeslaRange.pruneStaleNodes(sl.getServer(), data, team);
 
-                for (var entry : team.energyOutput.entrySet()) {
-                    totalWirelessInput += entry.getValue().longValue();
-                    team.machineDisplayFlow.put(entry.getKey(), entry.getValue().longValue() / 20);
-                }
-                for (var entry : team.energyInput.entrySet()) {
-                    totalWirelessOutput += entry.getValue().longValue();
-                    team.machineDisplayFlow.put(entry.getKey(), -entry.getValue().longValue() / 20);
-                }
+                team.physicalNetIn += netInLastSec;
+                team.physicalNetOut += netOutLastSec;
 
-                for (BlockPos mPos : new HashSet<>(team.soulLinkedMachines)) {
-                    long accumulated = team.machineCurrentFlow.getOrDefault(mPos, 0L);
+                if (team.lastStatsTick != sl.getGameTime()) {
+                    team.lastStatsTick = sl.getGameTime();
 
-                    team.machineDisplayFlow.put(mPos, accumulated / 20);
+                    long totalWirelessInput = 0;
+                    long totalWirelessOutput = 0;
 
-                    if (accumulated < 0) {
-                        totalWirelessInput += Math.abs(accumulated);
-                    } else {
-                        totalWirelessOutput += accumulated;
+                    for (var entry : team.energyOutput.entrySet()) {
+                        totalWirelessInput += entry.getValue().longValue();
+                        team.machineDisplayFlow.put(entry.getKey(), entry.getValue().longValue() / 20);
+                    }
+                    for (var entry : team.energyInput.entrySet()) {
+                        totalWirelessOutput += entry.getValue().longValue();
+                        team.machineDisplayFlow.put(entry.getKey(), -entry.getValue().longValue() / 20);
                     }
 
-                    team.machineCurrentFlow.put(mPos, 0L);
+                    for (BlockPos mPos : new HashSet<>(team.soulLinkedMachines)) {
+                        long accumulated = team.machineCurrentFlow.getOrDefault(mPos, 0L);
+
+                        team.machineDisplayFlow.put(mPos, accumulated / 20);
+
+                        if (accumulated < 0) {
+                            totalWirelessInput += Math.abs(accumulated);
+                        } else {
+                            totalWirelessOutput += accumulated;
+                        }
+
+                        team.machineCurrentFlow.put(mPos, 0L);
+                    }
+
+                    team.lastNetInput = (team.physicalNetIn + totalWirelessInput) / 20;
+                    team.lastNetOutput = (team.physicalNetOut + totalWirelessOutput) / 20;
+                    team.physicalNetIn = 0;
+                    team.physicalNetOut = 0;
+
+                    team.energyInput.clear();
+                    team.energyOutput.clear();
                 }
-
-                team.lastNetInput = (netInLastSec + totalWirelessInput) / 20;
-                team.lastNetOutput = (netOutLastSec + totalWirelessOutput) / 20;
-
-                team.energyInput.clear();
-                team.energyOutput.clear();
                 data.setDirty();
             }
 
@@ -394,12 +435,16 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                 }
             }
 
-            pullFromSoulLinkedGenerators(sl, team);
+            if (team.lastWirelessPassTick != sl.getGameTime()) {
+                team.lastWirelessPassTick = sl.getGameTime();
 
-            if (!team.soulLinkedMachines.isEmpty() && team.stored.signum() > 0) {
-                pushToSoulLinkedMachines(sl, team);
+                pullFromSoulLinkedGenerators(sl, team);
 
-                isDoingWork = true;
+                if (!team.soulLinkedMachines.isEmpty() && team.stored.signum() > 0) {
+                    pushToSoulLinkedMachines(sl, team);
+
+                    isDoingWork = true;
+                }
             }
 
             data.setDirty();
@@ -408,22 +453,30 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         recipeLogic.setStatus(isDoingWork ? RecipeLogic.Status.WORKING : RecipeLogic.Status.IDLE);
     }
 
-    private static final Map<UUID, TeslaTowerMachine> TEAM_TOWER_MAP = new HashMap<>();
+    private static final Map<UUID, Set<TeslaTowerMachine>> TEAM_TOWER_MAP = new HashMap<>();
 
     public static void registerTower(TeslaTowerMachine tower) {
         if (tower.ownerTeamUUID != null) {
-            TEAM_TOWER_MAP.put(tower.ownerTeamUUID, tower);
+            TEAM_TOWER_MAP.computeIfAbsent(tower.ownerTeamUUID, k -> new LinkedHashSet<>()).add(tower);
         }
     }
 
     public static void unregisterTower(TeslaTowerMachine tower) {
         if (tower.ownerTeamUUID != null) {
-            TEAM_TOWER_MAP.remove(tower.ownerTeamUUID);
+            Set<TeslaTowerMachine> towers = TEAM_TOWER_MAP.get(tower.ownerTeamUUID);
+            if (towers != null) {
+                towers.remove(tower);
+                if (towers.isEmpty()) TEAM_TOWER_MAP.remove(tower.ownerTeamUUID);
+            }
         }
     }
 
+    public static Set<TeslaTowerMachine> getTowersByTeam(UUID team) {
+        return TEAM_TOWER_MAP.getOrDefault(team, Set.of());
+    }
+
     public static TeslaTowerMachine getTowerByTeam(UUID team) {
-        return TEAM_TOWER_MAP.get(team);
+        return getTowersByTeam(team).stream().findFirst().orElse(null);
     }
 
     @Override
@@ -434,6 +487,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         TeslaWirelessRegistry.unregisterTower(this);
 
         unregisterTower(this);
+        removeRangeNode(ownerTeamUUID);
 
         netInLastSec = 0;
         inputPerSec = 0;
@@ -593,11 +647,35 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             TeslaTeamEnergyData data = TeslaTeamEnergyData.get(serverLevel);
             TeslaTeamEnergyData.TeamEnergy teamData = data.getOrCreate(ownerTeamUUID);
 
-            teamData.capacity = this.energyBank.getCapacity();
+            teamData.upsertNode(getRangeNodeType(), serverLevel.dimension(), getPos(),
+                    this.energyBank.getCapacity(), isWorkingEnabled() && isFormed() && !isDuplicate);
 
-            this.energyBank.setStored(teamData.stored);
+            BigInteger share = teamData.capacity.signum() > 0 ?
+                    teamData.stored.multiply(this.energyBank.getCapacity()).divide(teamData.capacity) :
+                    BigInteger.ZERO;
+            this.energyBank.setStored(share);
 
-            data.setOnline(ownerTeamUUID, isWorkingEnabled() && isFormed());
+            if (teamData.capacity.signum() > 0) {
+                float fill = new java.math.BigDecimal(teamData.stored)
+                        .divide(new java.math.BigDecimal(teamData.capacity), 4, java.math.RoundingMode.HALF_UP)
+                        .floatValue();
+                this.networkFill = Math.round(Math.max(0f, Math.min(1f, fill)) * 32f) / 32f;
+            } else {
+                this.networkFill = 0f;
+            }
+
+            data.setOnline(ownerTeamUUID, teamData.anyTowerWorking());
+            data.setDirty();
+        }
+    }
+
+    private void removeRangeNode(@Nullable UUID team) {
+        if (team == null || !(getLevel() instanceof ServerLevel serverLevel)) return;
+
+        TeslaTeamEnergyData data = TeslaTeamEnergyData.get(serverLevel);
+        TeslaTeamEnergyData.TeamEnergy teamData = data.getOrCreate(team);
+        if (teamData.removeNode(serverLevel.dimension(), getPos())) {
+            data.setOnline(team, teamData.anyTowerWorking());
             data.setDirty();
         }
     }
@@ -779,6 +857,12 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         var tag = binder.getTag();
         if (!getLevel().isClientSide && tag != null && tag.hasUUID("TargetTeam")) {
 
+            UUID previousTeam = this.ownerTeamUUID;
+            if (previousTeam != null && !previousTeam.equals(tag.getUUID("TargetTeam"))) {
+                unregisterTower(this);
+                removeRangeNode(previousTeam);
+            }
+
             this.ownerTeamUUID = tag.getUUID("TargetTeam");
 
             registerTower(this);
@@ -789,7 +873,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             }
 
             player.sendSystemMessage(
-                    Component.literal("Tower frequency set to: " + ownerTeamUUID.toString().substring(0, 8))
+                    Component.literal("Tower frequency set to: " + TeamUtils.getTeamName(ownerTeamUUID))
                             .withStyle(ChatFormatting.AQUA));
             return InteractionResult.SUCCESS;
         }
@@ -818,6 +902,28 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             }
         }
         return InteractionResult.sidedSuccess(getLevel().isClientSide);
+    }
+
+    @Override
+    public net.minecraft.world.phys.Vec3 getLinkAnchor() {
+        return getSpireAxis().add(0, 50.5, 0);
+    }
+
+    public net.minecraft.world.phys.Vec3 getSpireAxis() {
+        net.minecraft.core.Direction front = getFrontFacing();
+        if (front.getAxis().isVertical()) front = net.minecraft.core.Direction.NORTH;
+        var back = front.getOpposite();
+        var right = front.getClockWise();
+        return net.minecraft.world.phys.Vec3.atCenterOf(getPos()).add(
+                back.getStepX() * 5.5 + right.getStepX() * 0.5, 0,
+                back.getStepZ() * 5.5 + right.getStepZ() * 0.5);
+    }
+
+    @DescSynced
+    private float networkFill;
+
+    public float getNetworkFill() {
+        return networkFill;
     }
 
     @Persisted
@@ -860,6 +966,18 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         textList.add(Component.literal("Tesla Network: ")
                 .append(Component.literal(isWorkingEnabled() ? "ONLINE" : "OFFLINE")
                         .withStyle(isWorkingEnabled() ? ChatFormatting.GREEN : ChatFormatting.RED)));
+
+        textList.add(Component.literal("Tower: ")
+                .append(Component.literal(getTowerType().displayName()).withStyle(AQUA)));
+
+        var profile = getTowerType().profile();
+        String rangeText;
+        if (profile.infiniteRange) {
+            rangeText = profile.crossDimension ? "Infinite, all dimensions" : "Infinite, this dimension";
+        } else {
+            rangeText = profile.rangeBlocks + " blocks" + (profile.crossDimension ? ", all dimensions" : "");
+        }
+        textList.add(Component.literal("Range: ").append(Component.literal(rangeText).withStyle(GOLD)));
 
         textList.add(Component.literal("Team: ")
                 .append(Component.literal(ownerTeamUUID == null ? "None" : TeamUtils.getTeamName(ownerTeamUUID))

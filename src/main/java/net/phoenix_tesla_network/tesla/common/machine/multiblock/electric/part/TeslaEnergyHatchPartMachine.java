@@ -19,6 +19,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
+import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
+import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaWirelessRegistry;
@@ -131,11 +133,14 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
     private void updateTickSubscription() {
         boolean shouldTick = false;
 
+        boolean awaitingAutoLink = ownerTeamUUID == null && PhoenixTeslaConfigs.INSTANCE.features.teslaConnectionMode ==
+                PhoenixTeslaConfigs.FeatureConfigs.TeslaConnectionMode.TEAM_AUTO;
+
         if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] updateTickSubscription called at {}", getPos());
         if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] isWireless={}, controllers={}",
                 isWireless(), getControllers().size());
 
-        if (isWireless()) {
+        if (isWireless() || awaitingAutoLink) {
             if (getControllers().isEmpty()) {
 
                 shouldTick = true;
@@ -201,18 +206,30 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
     }
 
     @Getter
+    private boolean networkInRange = true;
+
+    @Getter
     private long lastTransferRate = 0;
     @Getter
     private long lastTransferAmount = 0;
 
     public void tickWireless() {
-        if (getLevel() == null || getLevel().isClientSide || ownerTeamUUID == null) return;
+        if (getLevel() == null || getLevel().isClientSide) return;
+        if (ownerTeamUUID == null) {
+            if (getLevel().getGameTime() % 20 == 0) autoLinkTeamIfNeeded();
+            return;
+        }
         if (!isWireless()) return;
+
+        if (getLevel().getGameTime() % 100 == 0) autoLinkTeamIfNeeded();
 
         ServerLevel sl = (ServerLevel) getLevel();
         TeslaTeamEnergyData data = TeslaTeamEnergyData.get(sl);
         TeslaTeamEnergyData.TeamEnergy teamData = data.getOrCreate(ownerTeamUUID);
         if (!data.isOnline(ownerTeamUUID)) return;
+
+        networkInRange = TeslaRange.isInRange(teamData, sl.dimension(), getPos());
+        if (!networkInRange) return;
 
         teamData.markHatchActive(getPos(), sl.getGameTime());
 
@@ -220,14 +237,17 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
         long transferLimit = voltage * getAmperage();
 
         BigInteger moved = BigInteger.ZERO;
+        double efficiency = TeslaLoss.efficiency(teamData, sl.dimension(), getPos());
 
         if (getIO() == IO.IN) {
             long space = energyContainer.getEnergyCapacity() - energyContainer.getEnergyStored();
             if (space > 0) {
-                BigInteger toPull = BigInteger.valueOf(Math.min(transferLimit, space));
+
+                BigInteger toPull = TeslaLoss.gross(BigInteger.valueOf(Math.min(transferLimit, space)), efficiency);
                 moved = teamData.drain(toPull);
-                if (moved.signum() > 0) {
-                    energyContainer.changeEnergy(moved.longValue());
+                BigInteger delivered = TeslaLoss.net(moved, efficiency);
+                if (delivered.signum() > 0) {
+                    energyContainer.changeEnergy(delivered.longValue());
 
                     teamData.energyInput.merge(getPos(), moved, BigInteger::add);
                 }
@@ -235,10 +255,11 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
         } else {
             long stored = energyContainer.getEnergyStored();
             if (stored > 0) {
-                BigInteger toPush = BigInteger.valueOf(Math.min(transferLimit, stored));
-                moved = teamData.fill(toPush);
+                long offered = Math.min(transferLimit, stored);
+                moved = teamData.fill(TeslaLoss.net(BigInteger.valueOf(offered), efficiency));
                 if (moved.signum() > 0) {
-                    energyContainer.changeEnergy(-moved.longValue());
+                    long taken = Math.min(offered, TeslaLoss.gross(moved, efficiency).longValue());
+                    energyContainer.changeEnergy(-taken);
 
                     teamData.energyOutput.merge(getPos(), moved, BigInteger::add);
                 }
@@ -315,7 +336,7 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
                             getIO() == IO.OUT);
 
                     player.sendSystemMessage(Component
-                            .literal("Tesla Hatch: Connected to frequency " + ownerTeamUUID.toString().substring(0, 8) +
+                            .literal("Tesla Hatch: Connected to frequency " + TeamUtils.getTeamName(ownerTeamUUID) +
                                     "...")
                             .withStyle(ChatFormatting.AQUA));
                 } else {

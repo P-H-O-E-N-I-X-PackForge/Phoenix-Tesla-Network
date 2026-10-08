@@ -1,7 +1,9 @@
 package net.phoenix_tesla_network.tesla.common.block;
 
+import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -40,6 +42,22 @@ public class PhoenixTeslaBlocks {
                 .register();
     }
 
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_LV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.LV);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_MV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.MV);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_HV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.HV);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_EV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.EV);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_IV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.IV);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_LUV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.LuV);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_ZPM = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.ZPM);
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_UV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.UV);
     public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_UHV = createTeslaBattery(
             TeslaBatteryBlock.TeslaBatteryType.UHV);
     public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_UEV = createTeslaBattery(
@@ -53,18 +71,30 @@ public class PhoenixTeslaBlocks {
     public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_MAX = createTeslaBattery(
             TeslaBatteryBlock.TeslaBatteryType.MAX);
 
+    private static final String PLACEHOLDER_TEXTURE_DIR = "block/casings/battery/zpm_lapotronic/";
+
     private static BlockEntry<TeslaBatteryBlock> createTeslaBattery(ITeslaBattery batteryData) {
         String tierName = batteryData.getBatteryName();
 
         var battery = REGISTRATE
                 .block("tesla_battery_%s".formatted(tierName), p -> new TeslaBatteryBlock(p, batteryData))
                 .initialProperties(() -> Blocks.IRON_BLOCK)
-                .lang("Tesla Battery " + (tierName.equalsIgnoreCase("opv") ? "OpV" : tierName.toUpperCase()))
+                .lang("Tesla Battery " + GTValues.VN[batteryData.getTier()])
                 .blockstate((ctx, prov) -> {
-                    String folderPath = "block/casings/batteries/tesla_" + tierName + "/";
-                    var side = PhoenixTeslaNetwork.id(folderPath + "side");
-                    var top = PhoenixTeslaNetwork.id(folderPath + "top");
-                    var bottom = PhoenixTeslaNetwork.id(folderPath + "bottom");
+                    boolean placeholder = batteryData instanceof TeslaBatteryBlock.TeslaBatteryType type &&
+                            type.usesPlaceholderTexture();
+
+                    ResourceLocation side, top, bottom;
+                    if (placeholder) {
+                        side = new ResourceLocation("gtceu", PLACEHOLDER_TEXTURE_DIR + "side");
+                        top = new ResourceLocation("gtceu", PLACEHOLDER_TEXTURE_DIR + "top");
+                        bottom = top;
+                    } else {
+                        String folderPath = "block/casings/batteries/tesla_" + tierName + "/";
+                        side = PhoenixTeslaNetwork.id(folderPath + "side");
+                        top = PhoenixTeslaNetwork.id(folderPath + "top");
+                        bottom = PhoenixTeslaNetwork.id(folderPath + "bottom");
+                    }
 
                     prov.simpleBlock(ctx.getEntry(),
                             prov.models().cubeBottomTop(ctx.getName(), side, bottom, top));
