@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "phoenix_tesla_network:block/tesla_battery_lv"
+    }
+  }
+}
