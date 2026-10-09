@@ -90,9 +90,10 @@ public class PhoenixTeslaMachines {
                 .pattern(definition -> buildTowerPattern(definition, type))
                 .model(
                         createWorkableCasingMachineModel(
-                                PhoenixTeslaNetwork.id(type == TeslaTowerType.ADVANCED || type == TeslaTowerType.ULTIMATE ?
-                                        "block/casings/multiblock/advanced_tesla_casing" :
-                                        "block/casings/multiblock/tesla_casing"),
+                                PhoenixTeslaNetwork
+                                        .id(type == TeslaTowerType.ADVANCED || type == TeslaTowerType.ULTIMATE ?
+                                                "block/casings/multiblock/advanced_tesla_casing" :
+                                                "block/casings/multiblock/tesla_casing"),
                                 PhoenixTeslaNetwork.id("block/multiblock/tesla_tower"))
                                 .andThen(d -> d
                                         .addDynamicRenderer(
@@ -349,7 +350,9 @@ public class PhoenixTeslaMachines {
                 .where('B', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
                 .where('C', hatchPredicate(definition, profile,
                         PhoenixTeslaBlocks.ADVANCED_TESLA_CASING.get()))
-                .where('E', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, PhoenixProgressionMaterials.RESONANT_RHODIUM_ALLOY)))
+                .where('E',
+                        blocks(ChemicalHelper.getBlock(TagPrefix.frameGt,
+                                PhoenixProgressionMaterials.RESONANT_RHODIUM_ALLOY)))
                 .where('F', glass(profile))
                 .where('G', blocks(PhoenixTeslaBlocks.MACHINE_CASING_RHODIUM_PLATED_PALLADIUM.get()))
                 .where('H', lamp(DyeColor.PURPLE))
@@ -684,9 +687,11 @@ public class PhoenixTeslaMachines {
                 .tooltipBuilder((stack, list) -> {
                     list.add(Component.literal("Extends the Range of your Tesla Network")
                             .withStyle(TeslaTowerMachine.NEBULA_HSL));
-                    list.add(Component.literal("Adds a radius of " + PhoenixTeslaConfigs.get().towers.relay.rangeBlocks +
-                            " Blocks around itself").withStyle(ChatFormatting.GRAY));
-                    list.add(Component.literal("Only works while in range from Tesla Tower's or other Range Extender's (chainable)"));
+                    list.add(
+                            Component.literal("Adds a radius of " + PhoenixTeslaConfigs.get().towers.relay.rangeBlocks +
+                                    " Blocks around itself").withStyle(ChatFormatting.GRAY));
+                    list.add(Component.literal(
+                            "Only works while in range from Tesla Tower's or other Range Extender's (chainable)"));
                 })
                 .register();
     }
