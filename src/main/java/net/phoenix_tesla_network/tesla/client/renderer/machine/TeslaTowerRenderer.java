@@ -9,6 +9,7 @@ import net.minecraft.world.phys.Vec3;
 import net.phoenix_tesla_network.tesla.client.PhoenixRenderTypes;
 import net.phoenix_tesla_network.tesla.client.particle.PhoenixParticles;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine;
+import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerType;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -16,6 +17,8 @@ import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -55,6 +58,42 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
     }
 
     private static final Map<TeslaTowerMachine, float[]> RING_STATE = new WeakHashMap<>();
+
+
+    private record RingLayout(float radius, float drop, float[] heights) {}
+
+    private static final Map<TeslaTowerType, RingLayout> LAYOUTS = new EnumMap<>(TeslaTowerType.class);
+
+    private static final int BIG_CONTROLLER_Y = 2;
+    private static final int[] BIG_CHAMBER_BOTTOMS = { 5, 14, 22 };
+    private static final int BASIC_CONTROLLER_Y = 1;
+    private static final int[] BASIC_CHAMBER_BOTTOMS = { 4 };
+    private static final int ADVANCED_CONTROLLER_Y = 1;
+    private static final int[] ADVANCED_CHAMBER_BOTTOMS = { 4, 11 };
+
+    private static RingLayout layoutFor(TeslaTowerType type) {
+        return LAYOUTS.computeIfAbsent(type, t -> {
+            TeslaTowerType big = TeslaTowerType.ULTIMATE;
+            if (t == TeslaTowerType.ULTIMATE) {
+                return new RingLayout(big.ringRadius(), big.ringDrop(), big.ringHeights());
+            }
+
+            boolean basic = t == TeslaTowerType.BASIC;
+            int[] bottoms = basic ? BASIC_CHAMBER_BOTTOMS : ADVANCED_CHAMBER_BOTTOMS;
+            int controllerY = basic ? BASIC_CONTROLLER_Y : ADVANCED_CONTROLLER_Y;
+
+            float[] bigRings = big.ringHeights().clone();
+            Arrays.sort(bigRings);
+
+            float[] heights = new float[bottoms.length];
+            for (int i = 0; i < heights.length; i++) {
+                int j = Math.min(i, Math.min(bigRings.length, BIG_CHAMBER_BOTTOMS.length) - 1);
+                float offsetInChamber = bigRings[j] + BIG_CONTROLLER_Y - BIG_CHAMBER_BOTTOMS[j];
+                heights[i] = bottoms[i] + offsetInChamber - controllerY;
+            }
+            return new RingLayout(big.ringRadius(), big.ringDrop(), heights);
+        });
+    }
 
     @Override
     public @NotNull DynamicRenderType<TeslaTowerMachine, TeslaTowerRenderer> getType() {
@@ -100,11 +139,12 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         ring[0] += dt * ring[2];
         float ringPhase = ring[0];
 
-        float RING_RADIUS = machine.getTowerType().ringRadius();
-        float TEEPEE_DROP = machine.getTowerType().ringDrop();
+        RingLayout layout = layoutFor(machine.getTowerType());
+        float RING_RADIUS = layout.radius();
+        float TEEPEE_DROP = layout.drop();
         int ARC_POINTS = 30;
 
-        float[] yPositions = machine.getTowerType().ringHeights();
+        float[] yPositions = layout.heights();
 
         Vec3 axis = machine.getSpireAxis().subtract(Vec3.atLowerCornerOf(machine.getPos()));
         float axisX = (float) axis.x;

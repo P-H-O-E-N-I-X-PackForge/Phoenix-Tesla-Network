@@ -42,6 +42,8 @@ public class PhoenixTeslaBlocks {
                 .register();
     }
 
+    public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_ULV = createTeslaBattery(
+            TeslaBatteryBlock.TeslaBatteryType.ULV);
     public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_LV = createTeslaBattery(
             TeslaBatteryBlock.TeslaBatteryType.LV);
     public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_MV = createTeslaBattery(

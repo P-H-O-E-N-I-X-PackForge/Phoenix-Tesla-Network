@@ -8,14 +8,14 @@
   "loader": "gtceu:machine",
   "machine": "phoenix_tesla_network:tesla_tower",
   "texture_overrides": {
-    "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing"
+    "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing"
   },
   "variants": {
     "is_formed=false,recipe_logic_status=idle": {
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front"
         }
       }
@@ -24,7 +24,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front"
         }
       }
@@ -33,7 +33,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active",
           "overlay_front_emissive": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active_emissive"
         }
@@ -43,7 +43,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active",
           "overlay_front_emissive": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active_emissive"
         }
@@ -53,7 +53,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front"
         }
       }
@@ -62,7 +62,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front"
         }
       }
@@ -71,7 +71,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active",
           "overlay_front_emissive": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active_emissive"
         }
@@ -81,7 +81,7 @@
       "model": {
         "parent": "gtceu:block/machine/template/cube_all/sided",
         "textures": {
-          "all": "phoenix_tesla_network:block/casings/multiblock/tesla_casing",
+          "all": "phoenix_tesla_network:block/casings/multiblock/advanced_tesla_casing",
           "overlay_front": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active",
           "overlay_front_emissive": "phoenix_tesla_network:block/multiblock/tesla_tower/overlay_front_active_emissive"
         }

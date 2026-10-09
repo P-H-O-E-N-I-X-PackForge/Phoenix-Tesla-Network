@@ -45,6 +45,7 @@ public class TeslaBatteryBlock extends Block {
 
     public enum TeslaBatteryType implements ITeslaBattery {
 
+        ULV(0, true),
         LV(1, true),
         MV(2, true),
         HV(3, true),

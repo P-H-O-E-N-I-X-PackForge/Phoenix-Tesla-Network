@@ -90,7 +90,7 @@ public class PhoenixTeslaMachines {
                 .pattern(definition -> buildTowerPattern(definition, type))
                 .model(
                         createWorkableCasingMachineModel(
-                                PhoenixTeslaNetwork.id(type == TeslaTowerType.ADVANCED ?
+                                PhoenixTeslaNetwork.id(type == TeslaTowerType.ADVANCED || type == TeslaTowerType.ULTIMATE ?
                                         "block/casings/multiblock/advanced_tesla_casing" :
                                         "block/casings/multiblock/tesla_casing"),
                                 PhoenixTeslaNetwork.id("block/multiblock/tesla_tower"))
@@ -101,7 +101,7 @@ public class PhoenixTeslaMachines {
                 .tooltipBuilder((stack, list) -> {
                     list.add(Component.literal("The pulsating heart of your Tesla Network.")
                             .withStyle(TeslaTowerMachine.NEBULA_HSL));
-                    list.add(towerRangeLine(type.profile()));
+                    addTowerRangeLines(list, type.profile());
                     list.add(Component.literal("Tesla Network is shared with your Team's other Tesla Towers"));
                     list.add(Component.literal(
                             "Tesla Network size is §7determined§f by the §7Tesla Battery§f Tier"));
@@ -109,21 +109,21 @@ public class PhoenixTeslaMachines {
                 .register();
     }
 
-    private static Component towerRangeLine(PhoenixTeslaConfigs.TowerProfile profile) {
-        MutableComponent line = Component.literal("Range: ").withStyle(ChatFormatting.GRAY);
+    private static void addTowerRangeLines(List<Component> list, PhoenixTeslaConfigs.TowerProfile profile) {
+        MutableComponent range = Component.literal("Range: ").withStyle(ChatFormatting.GRAY);
         if (profile.infiniteRange) {
-            line.append(Component.literal("Infinite").withStyle(ChatFormatting.AQUA));
-            line.append(Component.literal(profile.crossDimension ?
-                    " : interdimensional network transfer" :
-                    " : same Dimension only").withStyle(ChatFormatting.GRAY));
+            range.append(Component.literal("Infinite").withStyle(ChatFormatting.AQUA));
         } else {
-            line.append(Component.literal(profile.rangeBlocks + " Blocks").withStyle(ChatFormatting.AQUA));
-            line.append(Component.literal((profile.crossDimension ?
-                    " : works across Dimensions" :
-                    " : same Dimension only") + " (extendable with Tesla Range Extenders)")
+            range.append(Component.literal(profile.rangeBlocks + " Blocks").withStyle(ChatFormatting.AQUA));
+            range.append(Component.literal(" (extendable with Tesla Range Extenders)")
                     .withStyle(ChatFormatting.GRAY));
         }
-        return line;
+        list.add(range);
+
+        list.add(Component.literal("Interdimensional Transfer: ").withStyle(ChatFormatting.GRAY)
+                .append(profile.crossDimension ?
+                        Component.literal("Allowed").withStyle(ChatFormatting.GREEN) :
+                        Component.literal("Not allowed").withStyle(ChatFormatting.RED)));
     }
 
     private static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
@@ -184,16 +184,9 @@ public class PhoenixTeslaMachines {
     }
 
     private static final String MOD = "phoenix_tesla_network:";
-    private static final String ID_RESONANT_RHODIUM_FRAME = MOD + "resonant_rhodium_alloy_frame";
-    private static final String ID_PRISTINE_RHODIUM_PALLADIUM = MOD +
-            "machine_casing_pristine_rhodium_plated_palladium";
-    private static final String ID_RELIABLE_NAQUADAH_CASING = MOD + "reliable_naquadah_alloy_machine_casing";
-    private static final String ID_ADVANCED_INVARIANT_CASING = MOD + "advanced_invariant_machine_casing";
-    private static final String ID_ADVANCED_SOURCE_FIBER_CASING = MOD + "advanced_source_fiber_machine_casing";
-    private static final String ID_ADVANCED_TESLA_CASING = MOD + "advanced_tesla_casing";
 
     private static Block byId(String id) {
-        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id));
+        Block block = ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse(id));
         if (block == null || block == Blocks.AIR) {
             throw new IllegalStateException("Missing block '" + id + "' while building a Tesla Tower pattern");
         }
@@ -353,9 +346,9 @@ public class PhoenixTeslaMachines {
                 .where('B', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
                 .where('C', hatchPredicate(definition, profile,
                         PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get()))
-                .where('E', blocks(byId(ID_RESONANT_RHODIUM_FRAME)))
+                .where('E', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, PhoenixProgressionMaterials.RESONANT_RHODIUM_ALLOY)))
                 .where('F', glass(profile))
-                .where('G', blocks(byId(ID_PRISTINE_RHODIUM_PALLADIUM)))
+                .where('G', blocks(PhoenixTeslaBlocks.MACHINE_CASING_RHODIUM_PLATED_PALLADIUM.get()))
                 .where('H', lamp(DyeColor.PURPLE))
                 .where('I', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
                 .where('J', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
@@ -634,17 +627,17 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
                 .where('A', Predicates.any())
-                .where('B', blocks(byId(ID_ADVANCED_INVARIANT_CASING)))
+                .where('B', blocks(PhoenixTeslaBlocks.ADVANCED_INVARIANT_NAQ_ALLOY_CASING.get()))
                 .where('C', glass(profile))
                 .where('E', lamp(DyeColor.PURPLE))
                 .where('F', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt,
                         PhoenixProgressionMaterials.ADVANCED_QUIN_NAQUADIAN_ALLOY)))
-                .where('G', blocks(byId(ID_PRISTINE_RHODIUM_PALLADIUM)))
+                .where('G', blocks(PhoenixTeslaBlocks.MACHINE_CASING_RHODIUM_PLATED_PALLADIUM.get()))
                 .where('H', lamp(DyeColor.BLACK))
-                .where('I', blocks(byId(ID_ADVANCED_SOURCE_FIBER_CASING)))
-                .where('J', hatchPredicate(definition, profile, byId(ID_ADVANCED_TESLA_CASING)))
+                .where('I', blocks(PhoenixTeslaBlocks.ADVANCED_SOURCE_FIBER_CASING.get()))
+                .where('J', hatchPredicate(definition, profile, PhoenixTeslaBlocks.ADVANCED_TESLA_CASING.get()))
                 .where('K', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
-                .where('L', blocks(byId(ID_RELIABLE_NAQUADAH_CASING)))
+                .where('L', blocks(PhoenixTeslaBlocks.RELIABLE_NAQUADAH_ALLOY_MACHINE_CASING.get()))
                 .where('M', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
                 .where('N', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
                 .where('O', controller(blocks(definition.get())))
