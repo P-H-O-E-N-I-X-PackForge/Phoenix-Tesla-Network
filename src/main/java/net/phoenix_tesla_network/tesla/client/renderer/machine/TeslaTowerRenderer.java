@@ -59,8 +59,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
 
     private static final Map<TeslaTowerMachine, float[]> RING_STATE = new WeakHashMap<>();
 
-
-    private record RingLayout(float radius, float drop, float[] heights) {}
+    private record RingLayout(float drop, float[] heights) {}
 
     private static final Map<TeslaTowerType, RingLayout> LAYOUTS = new EnumMap<>(TeslaTowerType.class);
 
@@ -75,7 +74,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         return LAYOUTS.computeIfAbsent(type, t -> {
             TeslaTowerType big = TeslaTowerType.ULTIMATE;
             if (t == TeslaTowerType.ULTIMATE) {
-                return new RingLayout(big.ringRadius(), big.ringDrop(), big.ringHeights());
+                return new RingLayout(big.ringDrop(), big.ringHeights());
             }
 
             boolean basic = t == TeslaTowerType.BASIC;
@@ -91,9 +90,21 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                 float offsetInChamber = bigRings[j] + BIG_CONTROLLER_Y - BIG_CHAMBER_BOTTOMS[j];
                 heights[i] = bottoms[i] + offsetInChamber - controllerY;
             }
-            return new RingLayout(big.ringRadius(), big.ringDrop(), heights);
+            return new RingLayout(t.ringDrop(), heights);
         });
     }
+
+    // ------------- SIZE OVERRIDES -------------
+    private static float getRadiusForRing(TeslaTowerType type, int ringIndex) {
+        if (type == TeslaTowerType.BASIC) {
+            return 2.5f;
+        } else if (type == TeslaTowerType.ADVANCED) {
+            return ringIndex == 0 ? 3.5f : 3.5f;
+        } else {
+            return type.ringRadius();
+        }
+    }
+    // ------------------------------------------
 
     @Override
     public @NotNull DynamicRenderType<TeslaTowerMachine, TeslaTowerRenderer> getType() {
@@ -140,7 +151,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         float ringPhase = ring[0];
 
         RingLayout layout = layoutFor(machine.getTowerType());
-        float RING_RADIUS = layout.radius();
+
         float TEEPEE_DROP = layout.drop();
         int ARC_POINTS = 30;
 
@@ -150,6 +161,11 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         float axisX = (float) axis.x;
         float axisZ = (float) axis.z;
 
+        // Push offset one block north for the Advanced Tower
+        if (machine.getTowerType() == TeslaTowerType.ADVANCED) {
+            axisZ -= 1.0f;
+        }
+
         poseStack.pushPose();
 
         for (int ringIndex = 0; ringIndex < yPositions.length; ringIndex++) {
@@ -158,13 +174,18 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
             float zBase = axisZ;
             Vec3 currentTopCenter = new Vec3(xBase, yBase, zBase);
 
+            // Fetch the specific radius for this exact container
+            float currentRadius = getRadiusForRing(machine.getTowerType(), ringIndex);
+
             for (int i = 0; i < ARC_POINTS; i++) {
                 double rotationSpeed = ringPhase * (0.02 + (ringIndex * 0.01));
                 double angle = (2 * Math.PI * i / ARC_POINTS) + rotationSpeed;
 
-                double x = xBase + Math.cos(angle) * RING_RADIUS;
-                double z = zBase + Math.sin(angle) * RING_RADIUS;
+                double x = xBase + Math.cos(angle) * currentRadius;
+                double z = zBase + Math.sin(angle) * currentRadius;
                 double pulse = Math.sin((time + ringIndex * 10 + i) * 0.1) * 0.2;
+
+                // Keep the corrected negative operator to fix upside down
                 double y = yBase - TEEPEE_DROP + pulse;
 
                 Vec3 targetPos = new Vec3(x, y, z);
@@ -251,8 +272,8 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         float jitter = 0.25f * depth;
 
         double jX = (sinNoise(seed) - 0.5) * jitter;
-        double jY = (sinNoise(seed * 1.2f) - 0.5) * jitter;
-        double jZ = (sinNoise(seed * 1.5f) - 0.5) * jitter;
+        double jY = (sinNoise(seed - 1.2f) - 0.5) * jitter;
+        double jZ = (sinNoise(seed - 1.5f) - 0.5) * jitter;
 
         mid = mid.add(jX, jY, jZ);
 
