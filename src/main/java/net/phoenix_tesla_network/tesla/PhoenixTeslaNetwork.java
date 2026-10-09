@@ -53,7 +53,7 @@ public class PhoenixTeslaNetwork {
                                     new GTCreativeModeTabs.RegistrateDisplayItemsGenerator(PhoenixTeslaNetwork.MOD_ID,
                                             REGISTRATE))
                             .title(REGISTRATE.addLang("itemGroup", PhoenixTeslaNetwork.id("creative_tab"),
-                                    "PhoenixTeslaNetwork (CoreMod)"))
+                                    "PhoenixTeslaNetwork"))
                             .icon(PhoenixTeslaMachines::getCreativeTabIcon)
                             .build())
             .register();
