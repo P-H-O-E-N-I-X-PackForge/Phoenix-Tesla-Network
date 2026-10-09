@@ -20,13 +20,19 @@ import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
 import com.gregtechceu.gtceu.common.data.GCYMBlocks;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.pattern.PhoenixPredicates;
 import net.phoenix_tesla_network.tesla.client.renderer.machine.multiblock.PhoenixDynamicRenderHelpers;
@@ -41,6 +47,8 @@ import net.phoenix_tesla_network.tesla.common.machine.singleblock.electric.Tesla
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.datagen.models.PhoenixMachineModels;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.BiFunction;
 
@@ -93,14 +101,29 @@ public class PhoenixTeslaMachines {
                 .tooltipBuilder((stack, list) -> {
                     list.add(Component.literal("The pulsating heart of your Tesla Network.")
                             .withStyle(TeslaTowerMachine.NEBULA_HSL));
-                    for (Component line : type.describeLimits()) {
-                        list.add(line.copy().withStyle(ChatFormatting.GRAY));
-                    }
-                    list.add(Component.literal("Shares one energy network with your team's other Tesla Towers."));
+                    list.add(towerRangeLine(type.profile()));
+                    list.add(Component.literal("Tesla Network is shared with your Team's other Tesla Towers"));
                     list.add(Component.literal(
-                            "Internal buffer is §7determined§f by the tier of §7Tesla Battery§f it has."));
+                            "Tesla Network size is §7determined§f by the §7Tesla Battery§f Tier"));
                 })
                 .register();
+    }
+
+    private static Component towerRangeLine(PhoenixTeslaConfigs.TowerProfile profile) {
+        MutableComponent line = Component.literal("Range: ").withStyle(ChatFormatting.GRAY);
+        if (profile.infiniteRange) {
+            line.append(Component.literal("Infinite").withStyle(ChatFormatting.AQUA));
+            line.append(Component.literal(profile.crossDimension ?
+                    " : interdimensional network transfer" :
+                    " : same Dimension only").withStyle(ChatFormatting.GRAY));
+        } else {
+            line.append(Component.literal(profile.rangeBlocks + " Blocks").withStyle(ChatFormatting.AQUA));
+            line.append(Component.literal((profile.crossDimension ?
+                    " : works across Dimensions" :
+                    " : same Dimension only") + " (extendable with Tesla Range Extenders)")
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        return line;
     }
 
     private static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
@@ -108,10 +131,9 @@ public class PhoenixTeslaMachines {
         return hatchPredicate(definition, profile, PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get());
     }
 
-    /** The tower's own casing, or any of the hatches the tier's profile allows. */
     static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
                                                 PhoenixTeslaConfigs.TowerProfile profile,
-                                                net.minecraft.world.level.block.Block casing) {
+                                                Block casing) {
         int min = profile.minHatchTier;
         int max = profile.maxHatchTier;
         TraceabilityPredicate predicate = blocks(casing);
@@ -155,295 +177,475 @@ public class PhoenixTeslaMachines {
 
     private static BlockPattern buildTowerPattern(MultiblockMachineDefinition definition, TeslaTowerType type) {
         var profile = type.profile();
-        int minHatch = profile.minHatchTier;
-        int maxHatch = profile.maxHatchTier;
 
-        if (type == TeslaTowerType.BASIC) return TowerPatterns.basic(definition, profile);
-        if (type == TeslaTowerType.ADVANCED) return TowerPatterns.advanced(definition, profile);
+        if (type == TeslaTowerType.BASIC) return basicTowerPattern(definition, profile);
+        if (type == TeslaTowerType.ADVANCED) return advancedTowerPattern(definition, profile);
+        return ultimateTowerPattern(definition, profile);
+    }
 
+    private static final String MOD = "phoenix_tesla_network:";
+    private static final String ID_RESONANT_RHODIUM_FRAME = MOD + "resonant_rhodium_alloy_frame";
+    private static final String ID_PRISTINE_RHODIUM_PALLADIUM = MOD +
+            "machine_casing_pristine_rhodium_plated_palladium";
+    private static final String ID_RELIABLE_NAQUADAH_CASING = MOD + "reliable_naquadah_alloy_machine_casing";
+    private static final String ID_ADVANCED_INVARIANT_CASING = MOD + "advanced_invariant_machine_casing";
+    private static final String ID_ADVANCED_SOURCE_FIBER_CASING = MOD + "advanced_source_fiber_machine_casing";
+    private static final String ID_ADVANCED_TESLA_CASING = MOD + "advanced_tesla_casing";
+
+    private static Block byId(String id) {
+        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id));
+        if (block == null || block == Blocks.AIR) {
+            throw new IllegalStateException("Missing block '" + id + "' while building a Tesla Tower pattern");
+        }
+        return block;
+    }
+
+    private static TraceabilityPredicate lamp(DyeColor color) {
+        return Predicates.lampsByColor(color);
+    }
+
+    private static TraceabilityPredicate glass(PhoenixTeslaConfigs.TowerProfile profile) {
+        List<Block> allowed = new ArrayList<>(3);
+        if (profile.allowTemperedGlass) allowed.add(GTBlocks.CASING_TEMPERED_GLASS.get());
+        if (profile.allowLaminatedGlass) allowed.add(GTBlocks.CASING_LAMINATED_GLASS.get());
+        if (profile.allowFusionGlass) allowed.add(GTBlocks.FUSION_GLASS.get());
+        if (allowed.isEmpty()) {
+            allowed.add(GTBlocks.CASING_TEMPERED_GLASS.get());
+            allowed.add(GTBlocks.CASING_LAMINATED_GLASS.get());
+            allowed.add(GTBlocks.FUSION_GLASS.get());
+        }
+        return blocks(allowed.toArray(new Block[0]));
+    }
+
+    private static BlockPattern basicTowerPattern(MultiblockMachineDefinition definition,
+                                                  PhoenixTeslaConfigs.TowerProfile profile) {
         return FactoryBlockPattern.start()
-                .aisle("                   ", "                   ", "                   ", "                   ",
-                        "       CCCCC       ", "       DDCDD       ", "       DDCDD       ", "       DDCDD       ",
-                        "       CCCCC       ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("                   ", "                   ", "                   ", "                   ",
-                        "     CCCEFECCC     ", "     GDD   DDG     ", "     GDD   DDG     ", "     GDD   DDG     ",
-                        "     CCCHFHCCC     ", "       F   F       ", "       F   F       ", "       F   F       ",
-                        "       F   F       ", "       CCCCC       ", "       DDCDD       ", "       DDCDD       ",
-                        "       DDCDD       ", "       CCCCC       ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("     IIIIIIIII     ", "                   ", "                   ", "                   ",
-                        "    CCEEEFEEECC    ", "    DD       DD    ", "    DD       DD    ", "    DD       DD    ",
-                        "    CCHHJFJHHCC    ", "                   ", "                   ", "                   ",
-                        "                   ", "     CCCEFECCC     ", "     GDD   DDG     ", "     GDD   DDG     ",
-                        "     GDD   DDG     ", "     CCCHFHCCC     ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("    IIJJJJJJJII    ", "        FJF        ", "        FFF        ", "        FJF        ",
-                        "   CCEEGJJJGEECC   ", "   GD         DG   ", "   GD         DG   ", "   GD         DG   ",
-                        "   CCHHJIFIJHHCC   ", "                   ", "                   ", "                   ",
-                        "                   ", "    CCEEEFEEECC    ", "    DD       DD    ", "    DD       DD    ",
-                        "    DD       DD    ", "    CCHHJFJHHCC    ", "       F   F       ", "       F   F       ",
-                        "       F   F       ", "       CCCCC       ", "       DDCDD       ", "       DDCDD       ",
-                        "       DDCDD       ", "       CCCCC       ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("   IIJJCCCCCJJII   ", "     J       J     ", "     J       J     ", "     J       J     ",
-                        "  CCEJGGJCJGGJECC  ", "  DD           DD  ", "  DD           DD  ", "  DD           DD  ",
-                        "  CCHHJIIFIIJHHCC  ", "                   ", "                   ", "                   ",
-                        "                   ", "   CCEEIIIIIEECC   ", "   DD         DD   ", "   DD         DD   ",
-                        "   DD         DD   ", "   CCHHJJFJJHHCC   ", "                   ", "                   ",
-                        "                   ", "     CCCEFECCC     ", "     GDD   DDG     ", "     GDD   DDG     ",
-                        "     GDD   DDG     ", "     CCCJFJCCC     ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("  IIJJCCCCCCCJJII  ", "    J         J    ", "    J         J    ", "    J         J    ",
-                        " CCEJGGJJCJJGGJECC ", " GD             DG ", " GD             DG ", " GD             DG ",
-                        " CCHHJIIJJJIIJHHCC ", "         F         ", "         F         ", "         F         ",
-                        "         C         ", "  CCEEIIJCJIIEECC  ", "  GD           DG  ", "  GD           DG  ",
-                        "  GD           DG  ", "  CCHHJEEEEEJHHCC  ", "         F         ", "         F         ",
-                        "         C         ", "    CCEEEFEEECC    ", "    GD       DG    ", "    GD       DG    ",
-                        "    GD       DG    ", "    CCJJIFIJJCC    ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("  IJJCCCGGGCCCJJI  ", "                   ", "                   ", "                   ",
-                        " CEEGGJJCCCJJGGEEC ", " D               D ", " D               D ", " D               D ",
-                        " CHHJIICCGCCIIJHHC ", "        K K        ", "        K K        ", "        K K        ",
-                        "        LCL        ", "  CEEIIJCCCJIIEEC  ", "  D             D  ", "  D             D  ",
-                        "  D             D  ", "  CHHJIICCCIIJHHC  ", "        K K        ", "        K K        ",
-                        "        LCL        ", "    CEEJJJJJEEC    ", "    D         D    ", "    D         D    ",
-                        "    D         D    ", "    CJJICFCIJJC    ", "        I I        ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("  IJCCCGGEGGCCCJI  ", "                   ", "                   ", "                   ",
-                        "CCEGGJJJCECJJJGGECC", "DD               DD", "DD               DD", "DD               DD",
-                        "CCHJIICEEGEECIIJHCC", " F     D   D     F ", " F     D   D     F ", " F     D   D     F ",
-                        " F     ILCLI     F ", " CCEIIJJCECJJIIECC ", " DD             DD ", " DD             DD ",
-                        " DD             DD ", " CCHJEICJJJCIEJHCC ", "   F   D   D   F   ", "   F   D   D   F   ",
-                        "   F   ILCLI   F   ", "   CCEJJIIIJJECC   ", "   DD         DD   ", "   DD         DD   ",
-                        "   DD         DD   ", "   CCJICCCCCIJCC   ", "       IICII       ", "       JJ JJ       ",
-                        "       JJ JJ       ", "       JJ JJ       ", "       JJ JJ       ", "       JJFJJ       ",
-                        "       JJ JJ       ", "       JJ JJ       ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("  IJCCGGEEEGGCCJI  ", "   F     C     F   ", "   F           F   ", "   F     C     F   ",
-                        "CEEJJJCCEGECCJJJEEC", "D        F        D", "D        F        D", "D        F        D",
-                        "CHJIIJCEFIFECJIIJHC", "      K GIG K      ", "      K GIG K      ", "      K GIGCK      ",
-                        "      LLLCLLL      ", " CEEIJCCEGECCJIEEC ", " D       F       D ", " D       F       D ",
-                        " D       F       D ", " CHJJECJJGJJCEJJHC ", "      K GIG K      ", "      K GIGCK      ",
-                        "      LLLCLLL      ", "   CEEJIIGIIJEEC   ", "   D     F     D   ", "   D     F     D   ",
-                        "   D     F     D   ", "   CJICCCICCCIJC   ", "      IICCCII      ", "       JFFFJ       ",
-                        "       JFFFJ       ", "       JFFFJ       ", "       JFFFJ       ", "       JFFFJ       ",
-                        "       JFFFJ       ", "       JFFFJ       ", "        FFF        ", "        FFF        ",
-                        "        FFF        ", "        FFF        ", "         F         ", "         F         ",
-                        "         F         ", "         F         ", "         F         ", "         F         ",
-                        "         F         ", "         F         ", "         F         ", "         F         ",
-                        "         F         ", "         F         ", "         F         ", "                   ",
-                        "                   ")
-                .aisle("  IJCCGEEEEEGCCJI  ", "   J    CFC    J   ", "   J     M     J   ", "   J    CNC    J   ",
-                        "CFFJCCCEGNGECCCJFFC", "C       FNF       C", "C       FNF       C", "C       FNF       C",
-                        "CFFFFJGGINIGGJFFFFC", "     F  INI  F     ", "     F  INI  F     ", "     F  INI  F     ",
-                        "     CCCCNCCCC     ", " CFFICCEGNGECCIFFC ", " C      FNF      C ", " C      FNF      C ",
-                        " C      FNF      C ", " CFFFECJGNGJCEFFFC ", "     F  INI  F     ", "     F  INI  F     ",
-                        "     CCCCNCCCC     ", "   CFFJIGNGIJFFC   ", "   C    FNF    C   ", "   C    FNF    C   ",
-                        "   C    FNF    C   ", "   CFFFCIIICFFFC   ", "       CCNCC       ", "        FNF        ",
-                        "        FNF        ", "        FNF        ", "        FNF        ", "       FFNFF       ",
-                        "        FNF        ", "        FNF        ", "        FNF        ", "        FNF        ",
-                        "        FNF        ", "        FNF        ", "        FNF        ", "        FNF        ",
-                        "        FNF        ", "        FNF        ", "        FNF        ", "        FNF        ",
-                        "        FNF        ", "        FNF        ", "        FNF        ", "        FNF        ",
-                        "        FNF        ", "        FNF        ", "        FNF        ", "         N         ",
-                        "         N         ")
-                .aisle("  IJCCGGEEEGGCCJI  ", "   F     C     F   ", "   F           F   ", "   F     C     F   ",
-                        "CEEJJJCCEGECCJJJEEC", "D        F        D", "D        F        D", "D        F        D",
-                        "CHJIIJCEFIFECJIIJHC", "      K GIG K      ", "      K GIG K      ", "      K GIG K      ",
-                        "      LLLCLLL      ", " CEEIJCCEGECCJIEEC ", " D       F       D ", " D       F       D ",
-                        " D       F       D ", " CHJJECJJGJJCEJJHC ", "      K GIG K      ", "      K GIG K      ",
-                        "      LLLCLLL      ", "   CEEJIIGIIJEEC   ", "   D     F     D   ", "   D     F     D   ",
-                        "   D     F     D   ", "   CJICCCICCCIJC   ", "      IICCCII      ", "       JFFFJ       ",
-                        "       JFFFJ       ", "       JFFFJ       ", "       JFFFJ       ", "       JFFFJ       ",
-                        "       JFFFJ       ", "       JFFFJ       ", "        FFF        ", "        FFF        ",
-                        "        FFF        ", "        FFF        ", "         F         ", "         F         ",
-                        "         F         ", "         F         ", "         F         ", "         F         ",
-                        "         F         ", "         F         ", "         F         ", "         F         ",
-                        "         F         ", "         F         ", "         F         ", "                   ",
-                        "                   ")
-                .aisle("  IJCCCGGEGGCCCJI  ", "                   ", "                   ", "                   ",
-                        "CCEGGJJJCECJJJGGECC", "DD               DD", "DD               DD", "DD               DD",
-                        "CCHJIICEEGEECIIJHCC", " F     D   D     F ", " F     D   D     F ", " F     D   D     F ",
-                        " F     ILCLI     F ", " CCEIIJJCECJJIIECC ", " DD             DD ", " DD             DD ",
-                        " DD             DD ", " CCHJEICJJJCIEJHCC ", "   F   D   D   F   ", "   F   D   D   F   ",
-                        "   F   ILCLI   F   ", "   CCEJJIIIJJECC   ", "   DD         DD   ", "   DD         DD   ",
-                        "   DD         DD   ", "   CCJICCCCCIJCC   ", "       IICII       ", "       JJ JJ       ",
-                        "       JJ JJ       ", "       JJ JJ       ", "       JJ JJ       ", "       JJFJJ       ",
-                        "       JJ JJ       ", "       JJ JJ       ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("  IJJCCCGGGCCCJJI  ", "                   ", "                   ", "                   ",
-                        " CEEGGJJCCCJJGGEEC ", " D               D ", " D               D ", " D               D ",
-                        " CHHJIICCGCCIIJHHC ", "        K K        ", "        K K        ", "        K K        ",
-                        "        LCL        ", "  CEEIIJCCCJIIEEC  ", "  D             D  ", "  D             D  ",
-                        "  D             D  ", "  CHHJIICCCIIJHHC  ", "        K K        ", "        K K        ",
-                        "        LCL        ", "    CEEJJJJJEEC    ", "    D         D    ", "    D         D    ",
-                        "    D         D    ", "    CJJICFCIJJC    ", "        I I        ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("  IIJJCCCCCCCJJII  ", "    J         J    ", "    J         J    ", "    J         J    ",
-                        " CCEJGGJJCJJGGJECC ", " GD             DG ", " GD             DG ", " GD             DG ",
-                        " CCHHJIIJJJIIJHHCC ", "         F         ", "         F         ", "         F         ",
-                        "         C         ", "  CCEEIIJCJIIEECC  ", "  GD           DG  ", "  GD           DG  ",
-                        "  GD           DG  ", "  CCHHJEEEEEJHHCC  ", "         F         ", "         F         ",
-                        "         C         ", "    CCEEEFEEECC    ", "    GD       DG    ", "    GD       DG    ",
-                        "    GD       DG    ", "    CCJJIFIJJCC    ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("   IIJJCCCCCJJII   ", "     J       J     ", "     J       J     ", "     J       J     ",
-                        "  CCEJGGJCJGGJECC  ", "  DD           DD  ", "  DD           DD  ", "  DD           DD  ",
-                        "  CCHHJIIFIIJHHCC  ", "                   ", "                   ", "                   ",
-                        "                   ", "   CCEEIIIIIEECC   ", "   DD         DD   ", "   DD         DD   ",
-                        "   DD         DD   ", "   CCHHJJFJJHHCC   ", "                   ", "                   ",
-                        "                   ", "     CCCEFECCC     ", "     GDD   DDG     ", "     GDD   DDG     ",
-                        "     GDD   DDG     ", "     CCCJFJCCC     ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("    IIJJJJJJJII    ", "        FJF        ", "        FOF        ", "        FJF        ",
-                        "   CCEEGJJJGEECC   ", "   GD         DG   ", "   GD         DG   ", "   GD         DG   ",
-                        "   CCHHJIFIJHHCC   ", "                   ", "                   ", "                   ",
-                        "                   ", "    CCEEEFEEECC    ", "    DD       DD    ", "    DD       DD    ",
-                        "    DD       DD    ", "    CCHHJFJHHCC    ", "       F   F       ", "       F   F       ",
-                        "       F   F       ", "       CCCCC       ", "       DDCDD       ", "       DDCDD       ",
-                        "       DDCDD       ", "       CCCCC       ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("     IIIIIIIII     ", "                   ", "                   ", "                   ",
-                        "    CCEEEFEEECC    ", "    DD       DD    ", "    DD       DD    ", "    DD       DD    ",
-                        "    CCHHJFJHHCC    ", "                   ", "                   ", "                   ",
-                        "                   ", "     CCCEFECCC     ", "     GDD   DDG     ", "     GDD   DDG     ",
-                        "     GDD   DDG     ", "     CCCHFHCCC     ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("                   ", "                   ", "                   ", "                   ",
-                        "     CCCEFECCC     ", "     GDD   DDG     ", "     GDD   DDG     ", "     GDD   DDG     ",
-                        "     CCCHFHCCC     ", "       F   F       ", "       F   F       ", "       F   F       ",
-                        "       F   F       ", "       CCCCC       ", "       DDCDD       ", "       DDCDD       ",
-                        "       DDCDD       ", "       CCCCC       ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .aisle("                   ", "                   ", "                   ", "                   ",
-                        "       CCCCC       ", "       DDCDD       ", "       DDCDD       ", "       DDCDD       ",
-                        "       CCCCC       ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ", "                   ", "                   ", "                   ",
-                        "                   ")
-                .where(" ", Predicates.any())
-                .where("C", blocks(PhoenixTeslaBlocks.MACHINE_CASING_NAQUADAH_ALLOY.get()))
-                .where("D", blocks(GTBlocks.CASING_TEMPERED_GLASS.get())
-                        .or(blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
-                        .or(blocks(GTBlocks.FUSION_GLASS.get())))
-                .where("E", Predicates.lampsByColor(DyeColor.PURPLE))
-                .where("F",
-                        blocks(ChemicalHelper.getBlock(TagPrefix.frameGt,
-                                PhoenixProgressionMaterials.ADVANCED_QUIN_NAQUADIAN_ALLOY)))
-                .where("G", Predicates.blocks(PhoenixTeslaBlocks.MACHINE_CASING_RHODIUM_PLATED_PALLADIUM.get()))
-                .where("H", Predicates.lampsByColor(DyeColor.BLACK))
-                .where("I", blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
-                .where('J', hatchPredicate(definition, profile))
+                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("ABDDDDDBA", "AAAEDEAAA", "AAAEDEAAA", "AADDDDDAA",
+                        "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA", "AADDDDDAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA",
+                        "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA", "ADDDDDDDA",
+                        "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("BDGGGGGDB", "AAAAEAAEA", "AAAAAAAEA", "ADDGGGDDA",
+                        "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA", "ADDDDDDDA",
+                        "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("BDGGGGGDB", "ADAEHEADA", "ADAAEAADA", "ADDGEGDDA",
+                        "AFAEIEAFA", "AFAEIEAFA", "AFAEIEAFA", "ADDDIDDDA",
+                        "AAAEIEAAA", "AAAEIEAAA", "AAADIDAAA", "AAAAIAAAA",
+                        "AAAAIAAAA")
+                .aisle("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA",
+                        "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA", "ADDDDDDDA",
+                        "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA",
+                        "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA", "ADDDDDDDA",
+                        "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("ABDDDDDBA", "AAAEJEAAA", "AAAEDEAAA", "AADDDDDAA",
+                        "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA", "AADDDDDAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA")
+                .where('A', Predicates.any())
+                .where('B', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
+                .where('D', hatchPredicate(definition, profile,
+                        PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get()))
+                .where('E', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Steel)))
+                .where('F', glass(profile))
+                .where('G', lamp(DyeColor.PURPLE))
+                .where('H', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
+                .where('I', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
+                .where('J', controller(blocks(definition.get())))
+                .build();
+    }
+
+    private static BlockPattern advancedTowerPattern(MultiblockMachineDefinition definition,
+                                                     PhoenixTeslaConfigs.TowerProfile profile) {
+        return FactoryBlockPattern.start()
+                .aisle("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCCCCCCAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("ABBCCCCCBBA", "AAAAECEAAAA", "AAAAECEAAAA", "AAACCCCCAAA",
+                        "AAAFFCFFAAA", "AAAFFCFFAAA", "AAAFFCFFAAA", "ACCGGCGGCCA",
+                        "AAAEAAAEAAA", "AAAEAAAEAAA", "AAAGGGGGAAA", "AAAFFFFFAAA",
+                        "AAAFFFFFAAA", "AAAGGGGGAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("BBCCGGGCCBB", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCGGGCCAA",
+                        "AAGFAAAFGAA", "AAGFAAAFGAA", "AAGFAAAFGAA", "CCGGHCHGGCC",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAGGBBBGGAA", "AAFFAAAFFAA",
+                        "AAFFAAAFFAA", "AAGGBBBGGAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAABBBBBAAA", "AAACFFFCAAA", "AAACFFFCAAA", "AAACFFFCAAA",
+                        "AAACCCCCAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("BCCGGHGGCCB", "AAAAAAAAAAA", "AAAAAAAAAAA", "ACCGGHGGCCA",
+                        "AFFAAAAAFFA", "AFFAAAAAFFA", "AFFAAAAAFFA", "CGGHHCHHGGC",
+                        "AEAAAAAAAEA", "AEAAAAAAAEA", "AGGBBHBBGGA", "AFFAAAAAFFA",
+                        "AFFAAAAAFFA", "AGGBBBBBGGA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AABBHHHBBAA", "AACHAAAHCAA", "AACHAAAHCAA", "AACHAAAHCAA",
+                        "AACCBBBCCAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("BCGGHHHGGCB", "AEAAAEAAAEA", "AEAAAAAAAEA", "ACGGHHHGGCA",
+                        "AFAAAAAAAFA", "AFAAAAAAAFA", "AFAAAAAAAFA", "CGHHHCHHHGC",
+                        "AAAAIEIAAAA", "AAAAIEIAAAA", "AGBBHEHBBGA", "AFAAAEAAAFA",
+                        "AFAAAEAAAFA", "AGBBBEBBBGA", "AAAAHEHAAAA", "AAAAHEHAAAA",
+                        "AABHHEHHBAA", "AAFAAEAAFAA", "AAFAAEAAFAA", "AAFAAEAAFAA",
+                        "AACBBEBBCAA", "AAACCECCAAA", "AAAACECAAAA", "AAAACECAAAA",
+                        "AAAACECAAAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("BCGHHHHHGCB", "ACAAEEEAACA", "ACAAAJAAACA", "ACGHHEHHGCA",
+                        "ACAAAEAAACA", "ACAAAEAAACA", "ACAAAEAAACA", "CCCCCCCCCCC",
+                        "AAAAEKEAAAA", "AAAAEKEAAAA", "AGBHEKEHBGA", "AFAAEKEAAFA",
+                        "AFAAEKEAAFA", "AGBBEKEBBGA", "AAAAEKEAAAA", "AAAAEKEAAAA",
+                        "AABHEKEHBAA", "AAFAEKEAFAA", "AAFAEKEAFAA", "AAFAEKEAFAA",
+                        "AACBEKEBCAA", "AAACEKECAAA", "AAAAEKEAAAA", "AAAAEKEAAAA",
+                        "AAAAEKEAAAA", "AAAACKCAAAA", "AAAAAKAAAAA", "AAAAAKAAAAA")
+                .aisle("BCGGHHHGGCB", "AEAAAEAAAEA", "AEAAAAAAAEA", "ACGGHHHGGCA",
+                        "AFAAAAAAAFA", "AFAAAAAAAFA", "AFAAAAAAAFA", "CGHHHCHHHGC",
+                        "AAAAIEIAAAA", "AAAAIEIAAAA", "AGBBAEHBBGA", "AFAAAEAAAFA",
+                        "AFAAAEAAAFA", "AGBBBEBBBGA", "AAAAHEHAAAA", "AAAAHEHAAAA",
+                        "AABHHEHHBAA", "AAFAAEAAFAA", "AAFAAEAAFAA", "AAFAAEAAFAA",
+                        "AACBBEBBCAA", "AAACCECCAAA", "AAAACECAAAA", "AAAACECAAAA",
+                        "AAAACECAAAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("BCCGGHGGCCB", "AAAAAAAAAAA", "AAAAAAAAAAA", "ACCGGHGGCCA",
+                        "AFFAAAAAFFA", "AFFAAAAAFFA", "AFFAAAAAFFA", "CGGHHCHHGGC",
+                        "AEAAAAAAAEA", "AEAAAAAAAEA", "AGGBBHBBGGA", "AFFAAAAAFFA",
+                        "AFFAAAAAFFA", "AGGBBBBBGGA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AABBHHHBBAA", "AACHAAAHCAA", "AACHAAAHCAA", "AACHAAAHCAA",
+                        "AACCBBBCCAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("BBCCGGGCCBB", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCGGGCCAA",
+                        "AAGFAAAFGAA", "AAGFAAAFGAA", "AAGFAAAFGAA", "CCGGHCHGGCC",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAGGBBBGGAA", "AAFFAAAFFAA",
+                        "AAFFAAAFFAA", "AAGGBBBGGAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAABBBBBAAA", "AAACFFFCAAA", "AAACFFFCAAA", "AAACFFFCAAA",
+                        "AAACCCCCAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("ABBCCCCCBBA", "AAAAELEAAAA", "AAAAECEAAAA", "AAACCCCCAAA",
+                        "AAAFFCFFAAA", "AAAFFCFFAAA", "AAAFFCFFAAA", "ACCGGCGGCCA",
+                        "AAAEAAAEAAA", "AAAEAAAEAAA", "AAAGGGGGAAA", "AAAFFFFFAAA",
+                        "AAAFFFFFAAA", "AAAGGGGGAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .aisle("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCCCCCCAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                        "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
+                .where('A', Predicates.any())
+                .where('B', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
+                .where('C', hatchPredicate(definition, profile,
+                        PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get()))
+                .where('E', blocks(byId(ID_RESONANT_RHODIUM_FRAME)))
+                .where('F', glass(profile))
+                .where('G', blocks(byId(ID_PRISTINE_RHODIUM_PALLADIUM)))
+                .where('H', lamp(DyeColor.PURPLE))
+                .where('I', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
+                .where('J', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
+                .where('K', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
+                .where('L', controller(blocks(definition.get())))
+                .build();
+    }
+
+    private static BlockPattern ultimateTowerPattern(MultiblockMachineDefinition definition,
+                                                     PhoenixTeslaConfigs.TowerProfile profile) {
+        return FactoryBlockPattern.start()
+                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
+                        "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
+                        "AAAAABBBHFHBBBAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA",
+                        "AAAAAAAFAAAFAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
+                        "AAAAAAACCBCCAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAAIIIIIIIIIAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
+                        "AAAABBHHJFJHHBBAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
+                        "AAAAAGCCAAACCGAAAAA", "AAAAABBBHFHBBBAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAIIJJJJJJJIIAAAA", "AAAAAAAAFJFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFJFAAAAAAAA",
+                        "AAABBEEGJJJGEEBBAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA",
+                        "AAABBHHJIFIJHHBBAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
+                        "AAAACCAAAAAAACCAAAA", "AAAABBHHJFJHHBBAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA",
+                        "AAAAAAAFAAAFAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
+                        "AAAAAAACCBCCAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAIIJJBBBBBJJIIAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA",
+                        "AABBEJGGJBJGGJEBBAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA",
+                        "AABBHHJIIFIIJHHBBAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAABBEEIIIIIEEBBAAA", "AAACCAAAAAAAAACCAAA", "AAACCAAAAAAAAACCAAA",
+                        "AAACCAAAAAAAAACCAAA", "AAABBHHJJFJJHHBBAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
+                        "AAAAAGCCAAACCGAAAAA", "AAAAABBBJFJBBBAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIIJJBBBBBBBJJIIAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA",
+                        "ABBEJGGJJBJJGGJEBBA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA",
+                        "ABBHHJIIJJJIIJHHBBA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAABAAAAAAAAA", "AABBEEIIJBJIIEEBBAA", "AAGCAAAAAAAAAAACGAA", "AAGCAAAAAAAAAAACGAA",
+                        "AAGCAAAAAAAAAAACGAA", "AABBHHJEEEEEJHHBBAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAABAAAAAAAAA", "AAAABBEEEFEEEBBAAAA", "AAAAGCAAAAAAACGAAAA", "AAAAGCAAAAAAACGAAAA",
+                        "AAAAGCAAAAAAACGAAAA", "AAAABBJJIFIJJBBAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIJJBBBGGGBBBJJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "ABEEGGJJBBBJJGGEEBA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA",
+                        "ABHHJIIBBGBBIIJHHBA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA",
+                        "AAAAAAAALBLAAAAAAAA", "AABEEIIJBBBJIIEEBAA", "AACAAAAAAAAAAAAACAA", "AACAAAAAAAAAAAAACAA",
+                        "AACAAAAAAAAAAAAACAA", "AABHHJIIBBBIIJHHBAA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA",
+                        "AAAAAAAALBLAAAAAAAA", "AAAABEEJJJJJEEBAAAA", "AAAACAAAAAAAAACAAAA", "AAAACAAAAAAAAACAAAA",
+                        "AAAACAAAAAAAAACAAAA", "AAAABJJIBFBIJJBAAAA", "AAAAAAAAIAIAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIJBBBGGEGGBBBJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "BBEGGJJJBEBJJJGGEBB", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC",
+                        "BBHJIIBEEGEEBIIJHBB", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA",
+                        "AFAAAAAILBLIAAAAAFA", "ABBEIIJJBEBJJIIEBBA", "ACCAAAAAAAAAAAAACCA", "ACCAAAAAAAAAAAAACCA",
+                        "ACCAAAAAAAAAAAAACCA", "ABBHJEIBJJJBIEJHBBA", "AAAFAAACAAACAAAFAAA", "AAAFAAACAAACAAAFAAA",
+                        "AAAFAAAILBLIAAAFAAA", "AAABBEJJIIIJJEBBAAA", "AAACCAAAAAAAAACCAAA", "AAACCAAAAAAAAACCAAA",
+                        "AAACCAAAAAAAAACCAAA", "AAABBJIBBBBBIJBBAAA", "AAAAAAAIIBIIAAAAAAA", "AAAAAAAJJAJJAAAAAAA",
+                        "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJFJJAAAAAAA",
+                        "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJAJJAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIJBBGGEEEGGBBJIAA", "AAAFAAAAABAAAAAFAAA", "AAAFAAAAAAAAAAAFAAA", "AAAFAAAAABAAAAAFAAA",
+                        "BEEJJJBBEGEBBJJJEEB", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC",
+                        "BHJIIJBEFIFEBJIIJHB", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGBKAAAAAA",
+                        "AAAAAALLLBLLLAAAAAA", "ABEEIJBBEGEBBJIEEBA", "ACAAAAAAAFAAAAAAACA", "ACAAAAAAAFAAAAAAACA",
+                        "ACAAAAAAAFAAAAAAACA", "ABHJJEBJJGJJBEJJHBA", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGBKAAAAAA",
+                        "AAAAAALLLBLLLAAAAAA", "AAABEEJIIGIIJEEBAAA", "AAACAAAAAFAAAAACAAA", "AAACAAAAAFAAAAACAAA",
+                        "AAACAAAAAFAAAAACAAA", "AAABJIBBBIBBBIJBAAA", "AAAAAAIIBBBIIAAAAAA", "AAAAAAAJFFFJAAAAAAA",
+                        "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA",
+                        "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA",
+                        "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIJBBGEEEEEGBBJIAA", "AAAJAAAABFBAAAAJAAA", "AAAJAAAAAMAAAAAJAAA", "AAAJAAAABNBAAAAJAAA",
+                        "BFFJBBBEGNGEBBBJFFB", "BAAAAAAAFNFAAAAAAAB", "BAAAAAAAFNFAAAAAAAB", "BAAAAAAAFNFAAAAAAAB",
+                        "BFFFFJGGINIGGJFFFFB", "AAAAAFAAINIAAFAAAAA", "AAAAAFAAINIAAFAAAAA", "AAAAAFAAINIAAFAAAAA",
+                        "AAAAABBBBNBBBBAAAAA", "ABFFIBBEGNGEBBIFFBA", "ABAAAAAAFNFAAAAAABA", "ABAAAAAAFNFAAAAAABA",
+                        "ABAAAAAAFNFAAAAAABA", "ABFFFEBJGNGJBEFFFBA", "AAAAAFAAINIAAFAAAAA", "AAAAAFAAINIAAFAAAAA",
+                        "AAAAABBBBNBBBBAAAAA", "AAABFFJIGNGIJFFBAAA", "AAABAAAAFNFAAAABAAA", "AAABAAAAFNFAAAABAAA",
+                        "AAABAAAAFNFAAAABAAA", "AAABFFFBIIIBFFFBAAA", "AAAAAAABBNBBAAAAAAA", "AAAAAAAAFNFAAAAAAAA",
+                        "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAFFNFFAAAAAAA",
+                        "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA",
+                        "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA",
+                        "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA",
+                        "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA",
+                        "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAANAAAAAAAAA",
+                        "AAAAAAAAANAAAAAAAAA")
+                .aisle("AAIJBBGGEEEGGBBJIAA", "AAAFAAAAABAAAAAFAAA", "AAAFAAAAAAAAAAAFAAA", "AAAFAAAAABAAAAAFAAA",
+                        "BEEJJJBBEGEBBJJJEEB", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC",
+                        "BHJIIJBEFIFEBJIIJHB", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA",
+                        "AAAAAALLLBLLLAAAAAA", "ABEEIJBBEGEBBJIEEBA", "ACAAAAAAAFAAAAAAACA", "ACAAAAAAAFAAAAAAACA",
+                        "ACAAAAAAAFAAAAAAACA", "ABHJJEBJJGJJBEJJHBA", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA",
+                        "AAAAAALLLBLLLAAAAAA", "AAABEEJIIGIIJEEBAAA", "AAACAAAAAFAAAAACAAA", "AAACAAAAAFAAAAACAAA",
+                        "AAACAAAAAFAAAAACAAA", "AAABJIBBBIBBBIJBAAA", "AAAAAAIIBBBIIAAAAAA", "AAAAAAAJFFFJAAAAAAA",
+                        "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA",
+                        "AAAAAAAJFFFJAAAAAAA", "AAAAAAAJFFFJAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA",
+                        "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIJBBBGGEGGBBBJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "BBEGGJJJBEBJJJGGEBB", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC",
+                        "BBHJIIBEEGEEBIIJHBB", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA",
+                        "AFAAAAAILBLIAAAAAFA", "ABBEIIJJBEBJJIIEBBA", "ACCAAAAAAAAAAAAACCA", "ACCAAAAAAAAAAAAACCA",
+                        "ACCAAAAAAAAAAAAACCA", "ABBHJEIBJJJBIEJHBBA", "AAAFAAACAAACAAAFAAA", "AAAFAAACAAACAAAFAAA",
+                        "AAAFAAAILBLIAAAFAAA", "AAABBEJJIIIJJEBBAAA", "AAACCAAAAAAAAACCAAA", "AAACCAAAAAAAAACCAAA",
+                        "AAACCAAAAAAAAACCAAA", "AAABBJIBBBBBIJBBAAA", "AAAAAAAIIBIIAAAAAAA", "AAAAAAAJJAJJAAAAAAA",
+                        "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJFJJAAAAAAA",
+                        "AAAAAAAJJAJJAAAAAAA", "AAAAAAAJJAJJAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIJJBBBGGGBBBJJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "ABEEGGJJBBBJJGGEEBA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA",
+                        "ABHHJIIBBGBBIIJHHBA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA",
+                        "AAAAAAAALBLAAAAAAAA", "AABEEIIJBBBJIIEEBAA", "AACAAAAAAAAAAAAACAA", "AACAAAAAAAAAAAAACAA",
+                        "AACAAAAAAAAAAAAACAA", "AABHHJIIBBBIIJHHBAA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA",
+                        "AAAAAAAALBLAAAAAAAA", "AAAABEEJJJJJEEBAAAA", "AAAACAAAAAAAAACAAAA", "AAAACAAAAAAAAACAAAA",
+                        "AAAACAAAAAAAAACAAAA", "AAAABJJIBFBIJJBAAAA", "AAAAAAAAIAIAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAIIJJBBBBBBBJJIIAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA",
+                        "ABBEJGGJJBJJGGJEBBA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA",
+                        "ABBHHJIIJJJIIJHHBBA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAABAAAAAAAAA", "AABBEEIIJBJIIEEBBAA", "AAGCAAAAAAAAAAACGAA", "AAGCAAAAAAAAAAACGAA",
+                        "AAGCAAAAAAAAAAACGAA", "AABBHHJEEEEEJHHBBAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
+                        "AAAAAAAAABAAAAAAAAA", "AAAABBEEEFEEEBBAAAA", "AAAAGCAAAAAAACGAAAA", "AAAAGCAAAAAAACGAAAA",
+                        "AAAAGCAAAAAAACGAAAA", "AAAABBJJIFIJJBBAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAIIJJBBBBBJJIIAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA",
+                        "AABBEJGGJBJGGJEBBAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA",
+                        "AABBHHJIIFIIJHHBBAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAABBEEIIIIIEEBBAAA", "AAACCAAAAAAAAACCAAA", "AAACCAAAAAAAAACCAAA",
+                        "AAACCAAAAAAAAACCAAA", "AAABBHHJJFJJHHBBAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
+                        "AAAAAGCCAAACCGAAAAA", "AAAAABBBJFJBBBAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAIIJJJJJJJIIAAAA", "AAAAAAAAFJFAAAAAAAA", "AAAAAAAAFOFAAAAAAAA", "AAAAAAAAFJFAAAAAAAA",
+                        "AAABBEEGJJJGEEBBAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA",
+                        "AAABBHHJIFIJHHBBAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
+                        "AAAACCAAAAAAACCAAAA", "AAAABBHHJFJHHBBAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA",
+                        "AAAAAAAFAAAFAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
+                        "AAAAAAACCBCCAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAAIIIIIIIIIAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
+                        "AAAABBHHJFJHHBBAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
+                        "AAAAAGCCAAACCGAAAAA", "AAAAABBBHFHBBBAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
+                        "AAAAABBBHFHBBBAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA",
+                        "AAAAAAAFAAAFAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
+                        "AAAAAAACCBCCAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
+                        "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                        "AAAAAAAAAAAAAAAAAAA")
+                .where('A', Predicates.any())
+                .where('B', blocks(byId(ID_ADVANCED_INVARIANT_CASING)))
+                .where('C', glass(profile))
+                .where('E', lamp(DyeColor.PURPLE))
+                .where('F', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt,
+                        PhoenixProgressionMaterials.ADVANCED_QUIN_NAQUADIAN_ALLOY)))
+                .where('G', blocks(byId(ID_PRISTINE_RHODIUM_PALLADIUM)))
+                .where('H', lamp(DyeColor.BLACK))
+                .where('I', blocks(byId(ID_ADVANCED_SOURCE_FIBER_CASING)))
+                .where('J', hatchPredicate(definition, profile, byId(ID_ADVANCED_TESLA_CASING)))
                 .where('K', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
-                .where('L', blocks(PhoenixTeslaBlocks.RELIABLE_NAQUADAH_ALLOY_MACHINE_CASING.get()))
-                .where("M", PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
+                .where('L', blocks(byId(ID_RELIABLE_NAQUADAH_CASING)))
+                .where('M', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
                 .where('N', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
                 .where('O', controller(blocks(definition.get())))
                 .build();

@@ -9,11 +9,6 @@ import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixArmorItem;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTechSuite;
 
-/**
- * The suit changes a few player values while it is worn - the boots raise step height, the chestplate's flight zeroes
- * the flying speed and grants flight. Their own ticks stop when the armor comes off, so this puts the vanilla values
- * back as soon as the pieces are no longer on the player.
- */
 @Mod.EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class SuitStepHandler {
 
@@ -29,7 +24,6 @@ public final class SuitStepHandler {
             PhoenixTechSuite.resetStepHeight(player);
         }
 
-        // the suit's flight changes the player's abilities; with the chestplate off nothing else puts them back
         if (!(player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof PhoenixArmorItem)) {
             var persistent = player.getPersistentData();
             boolean changed = false;

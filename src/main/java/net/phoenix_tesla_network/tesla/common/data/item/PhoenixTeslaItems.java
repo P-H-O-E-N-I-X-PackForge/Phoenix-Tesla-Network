@@ -1,5 +1,6 @@
 package net.phoenix_tesla_network.tesla.common.data.item;
 
+import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.item.armor.ArmorComponentItem;
 import com.gregtechceu.gtceu.common.item.armor.GTArmorMaterials;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
@@ -41,14 +42,6 @@ public class PhoenixTeslaItems {
             .tag(CustomTags.PPE_ARMOR)
             .register();
 
-    public static ItemEntry<PhoenixArmorItem> PHOENIX_WINGS = REGISTRATE
-            .item("phoenix_wings", (p) -> new PhoenixArmorItem(GTArmorMaterials.ARMOR, ArmorItem.Type.CHESTPLATE, p,
-                    new PhoenixTechSuite(ArmorItem.Type.CHESTPLATE, 16384, 500_000_000L, 6)))
-            .lang("Phoenix Wings")
-            .properties(p -> p.rarity(Rarity.EPIC))
-            .tag(Tags.Items.ARMORS_CHESTPLATES)
-            .register();
-
     public static ItemEntry<PhoenixArmorItem> PHOENIX_CHESTPLATE = REGISTRATE
             .item("phoenix_chestplate",
                     (p) -> new PhoenixArmorItem(GTArmorMaterials.ARMOR, ArmorItem.Type.CHESTPLATE, p,
@@ -83,6 +76,17 @@ public class PhoenixTeslaItems {
             .tag(Tags.Items.ARMORS_BOOTS)
             .tag(CustomTags.PPE_ARMOR)
             .tag(CustomTags.STEP_BOOTS)
+            .register();
+
+    public static ItemEntry<TeslaStabilizerItem> ULV_TESLA_STABILIZER = REGISTRATE
+            .item("ulv_tesla_stabilizer", TeslaStabilizerItem::new)
+            .lang("ULV Tesla Stabilizer")
+            .setData(ProviderType.LANG, (ctx, prov) -> {
+                prov.add(ctx.get(), "ULV Tesla Stabilizer");
+                prov.add(ctx.get().getDescriptionId() + ".tooltip",
+                        "A stabilizing unit for ultra-low-voltage wireless power.\nBarely a spark, but it counts.");
+            })
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
             .register();
 
     public static ItemEntry<TeslaStabilizerItem> LV_TESLA_STABILIZER = REGISTRATE
@@ -182,6 +186,61 @@ public class PhoenixTeslaItems {
                         "A stabilizing unit for ultra-high-voltage wireless power.\nIs this the peak of power? Or merely the beginning?");
             })
             .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/uhv_tesla_stabilizer")))
+            .register();
+
+    public static ItemEntry<TeslaStabilizerItem> UEV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
+            .item("uev_tesla_stabilizer", TeslaStabilizerItem::new)
+            .lang("UEV Tesla Stabilizer")
+            .setData(ProviderType.LANG, (ctx, prov) -> {
+                prov.add(ctx.get(), "UEV Tesla Stabilizer");
+                prov.add(ctx.get().getDescriptionId() + ".tooltip",
+                        "A stabilizing unit for ultra-excessive-voltage wireless power.\nThis is well past excessive.");
+            })
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .register();
+
+    public static ItemEntry<TeslaStabilizerItem> UIV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
+            .item("uiv_tesla_stabilizer", TeslaStabilizerItem::new)
+            .lang("UIV Tesla Stabilizer")
+            .setData(ProviderType.LANG, (ctx, prov) -> {
+                prov.add(ctx.get(), "UIV Tesla Stabilizer");
+                prov.add(ctx.get().getDescriptionId() + ".tooltip",
+                        "A stabilizing unit for ultra-immense-voltage wireless power.\nThe cables are starting to glow.");
+            })
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .register();
+
+    public static ItemEntry<TeslaStabilizerItem> UXV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
+            .item("uxv_tesla_stabilizer", TeslaStabilizerItem::new)
+            .lang("UXV Tesla Stabilizer")
+            .setData(ProviderType.LANG, (ctx, prov) -> {
+                prov.add(ctx.get(), "UXV Tesla Stabilizer");
+                prov.add(ctx.get().getDescriptionId() + ".tooltip",
+                        "A stabilizing unit for ultra-extreme-voltage wireless power.\nAt this point, the stabilizer is the only thing holding reality together.");
+            })
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .register();
+
+    public static ItemEntry<TeslaStabilizerItem> OpV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
+            .item("opv_tesla_stabilizer", TeslaStabilizerItem::new)
+            .lang("OpV Tesla Stabilizer")
+            .setData(ProviderType.LANG, (ctx, prov) -> {
+                prov.add(ctx.get(), "OpV Tesla Stabilizer");
+                prov.add(ctx.get().getDescriptionId() + ".tooltip",
+                        "A stabilizing unit for overpowered-voltage wireless power.\nThe name says it all.");
+            })
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .register();
+
+    public static ItemEntry<TeslaStabilizerItem> MAX_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
+            .item("max_tesla_stabilizer", TeslaStabilizerItem::new)
+            .lang("MAX Tesla Stabilizer")
+            .setData(ProviderType.LANG, (ctx, prov) -> {
+                prov.add(ctx.get(), "MAX Tesla Stabilizer");
+                prov.add(ctx.get().getDescriptionId() + ".tooltip",
+                        "A stabilizing unit for maximum-voltage wireless power.\nThere is nothing beyond this.");
+            })
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
             .register();
 
     public static void init() {}

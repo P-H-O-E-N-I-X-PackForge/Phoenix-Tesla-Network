@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "phoenix_tesla_network:item/phoenix_wings"
-  }
-}

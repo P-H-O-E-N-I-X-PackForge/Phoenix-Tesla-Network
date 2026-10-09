@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 
-/** What each Tesla Battery tier stores, straight from the config. */
 public final class TeslaBatteryCapacities {
 
     private TeslaBatteryCapacities() {}

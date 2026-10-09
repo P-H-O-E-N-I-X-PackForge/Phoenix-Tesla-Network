@@ -26,7 +26,6 @@ import net.phoenix_tesla_network.tesla.client.PhoenixTeslaClient;
 import net.phoenix_tesla_network.tesla.client.particle.PhoenixParticles;
 import net.phoenix_tesla_network.tesla.common.data.PhoenixTeslaRecipeTypes;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
-import net.phoenix_tesla_network.tesla.common.data.materials.PhoenixOres;
 import net.phoenix_tesla_network.tesla.common.data.materials.PhoenixProgressionMaterials;
 import net.phoenix_tesla_network.tesla.common.machine.PhoenixTeslaMachines;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
@@ -110,7 +109,6 @@ public class PhoenixTeslaNetwork {
     }
 
     private void addMaterials(MaterialEvent event) {
-        PhoenixOres.register();
         PhoenixProgressionMaterials.register();
     }
 

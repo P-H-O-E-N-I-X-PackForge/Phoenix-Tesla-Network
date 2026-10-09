@@ -198,22 +198,28 @@ public class PhoenixTeslaConfigs {
         @Configurable.Comment({
                 "Basic Tesla Tower (tier 1). Finite range by default - extend it with Tesla Range Extenders.",
                 "GT tier numbers used by every tier setting below: 0=ULV 1=LV 2=MV 3=HV 4=EV 5=IV 6=LuV 7=ZPM",
-                "8=UV 9=UHV 10=UEV 11=UIV 12=UXV 13=OpV 14=MAX"
+                "8=UV 9=UHV 10=UEV 11=UIV 12=UXV 13=OpV 14=MAX",
+                "Glass defaults: tempered + laminated + fusion."
         })
-        public TowerProfile tier1Basic = new TowerProfile(true, 1, 5, 1, 5, 128, false, false);
+        public TowerProfile tier1Basic = new TowerProfile(true, 1, 5, 1, 5, 128, false, false)
+                .glass(true, true, true);
 
         @Configurable
         @Configurable.Comment({
-                "Advanced Tesla Tower (tier 2). Infinite range inside its own dimension by default."
+                "Advanced Tesla Tower (tier 2). Infinite range inside its own dimension by default.",
+                "Glass defaults: laminated + fusion."
         })
-        public TowerProfile tier2Advanced = new TowerProfile(true, 1, 9, 1, 9, 128, true, false);
+        public TowerProfile tier2Advanced = new TowerProfile(true, 1, 9, 1, 9, 128, true, false)
+                .glass(false, true, true);
 
         @Configurable
         @Configurable.Comment({
                 "Tesla Tower (tier 3, the original tower - existing towers keep this behavior).",
-                "Infinite range and cross-dimensional by default."
+                "Infinite range and cross-dimensional by default.",
+                "Glass defaults: fusion only."
         })
-        public TowerProfile tier3Ultimate = new TowerProfile(true, 0, 14, 1, 14, 128, true, true);
+        public TowerProfile tier3Ultimate = new TowerProfile(true, 0, 14, 1, 14, 128, true, true)
+                .glass(false, false, true);
 
         @Configurable
         @Configurable.Comment({
@@ -253,6 +259,13 @@ public class PhoenixTeslaConfigs {
             this.rangeBlocks = rangeBlocks;
             this.infiniteRange = infiniteRange;
             this.crossDimension = crossDimension;
+        }
+
+        public TowerProfile glass(boolean tempered, boolean laminated, boolean fusion) {
+            this.allowTemperedGlass = tempered;
+            this.allowLaminatedGlass = laminated;
+            this.allowFusionGlass = fusion;
+            return this;
         }
 
         @Configurable
@@ -307,6 +320,23 @@ public class PhoenixTeslaConfigs {
         @Configurable
         @Configurable.Comment({ "Whether a maintenance hatch can be placed on this tower. Needs a restart." })
         public boolean allowMaintenanceHatch = true;
+
+        @Configurable
+        @Configurable.Comment({
+                "Whether GT Tempered Glass can be used in this tower's glass slots. Needs a restart.",
+                "Any combination of the three glass options works. If all three are false the tower falls back",
+                "to allowing all of them (otherwise it could never be built)."
+        })
+        public boolean allowTemperedGlass = true;
+
+        @Configurable
+        @Configurable.Comment({
+                "Whether GT Laminated Glass can be used in this tower's glass slots. Needs a restart." })
+        public boolean allowLaminatedGlass = true;
+
+        @Configurable
+        @Configurable.Comment({ "Whether Fusion Glass can be used in this tower's glass slots. Needs a restart." })
+        public boolean allowFusionGlass = true;
 
         @Configurable
         @Configurable.Comment({

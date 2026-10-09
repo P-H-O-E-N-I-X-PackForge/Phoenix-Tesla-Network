@@ -18,16 +18,10 @@ import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import static com.gregtechceu.gtceu.api.pattern.Predicates.blocks;
 import static com.gregtechceu.gtceu.api.pattern.Predicates.controller;
 
-/**
- * The Basic (11 x 11 x 28) and Advanced (19 x 19 x 53) Tesla Tower structures. The Ultimate tower keeps its own
- * pattern in {@link PhoenixTeslaMachines}. Hatches may replace the tower's own tier casing, exactly as they do on the
- * Ultimate tower.
- */
 final class TowerPatterns {
 
     private TowerPatterns() {}
 
-    /** Basic: the small tower. Hatches go on the Insanely Supercharged Tesla casing ("C"). */
     static BlockPattern basic(MultiblockMachineDefinition definition, PhoenixTeslaConfigs.TowerProfile profile) {
         return FactoryBlockPattern.start()
                 .aisle("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
@@ -103,7 +97,6 @@ final class TowerPatterns {
                 .build();
     }
 
-    /** Advanced: the large tower with the advanced casings. Hatches go on the Advanced Tesla casing ("J"). */
     static BlockPattern advanced(MultiblockMachineDefinition definition, PhoenixTeslaConfigs.TowerProfile profile) {
         return FactoryBlockPattern.start()
                 .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",

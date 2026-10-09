@@ -175,7 +175,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
                 CompoundTag chestData = player.getItemBySlot(EquipmentSlot.CHEST).getOrCreateTag();
                 int sprintSpeed = chestData.contains("SprintSpeed") ? chestData.getInt("SprintSpeed") : 5;
-                // eased, so the low end stays gentle and the top of the slider is where the big speed is
+
                 float percent = (float) Math.pow(Math.max(0, Math.min(20, sprintSpeed)) / 20.0f, 1.6);
                 PhoenixTeslaConfigs.WingFlightConfigs cfg = PhoenixTeslaConfigs.INSTANCE.wingFlight;
                 speedModifier = (float) (cfg.sprintAccelMin + (percent * (cfg.sprintAccelMax - cfg.sprintAccelMin)));
@@ -283,8 +283,6 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             if (dischargeCooldown > 0) data.putInt("dischargeCooldown", dischargeCooldown - 1);
         }
 
-        // Both boot features are controlled from the Wing Flight Control screen (stored on the chestplate); there
-        // are no keybind toggles.
         CompoundTag chestSettings = player.getItemBySlot(EquipmentSlot.CHEST).getTag();
         int jumpSetting = chestSettings != null && chestSettings.contains("JumpHeight") ?
                 chestSettings.getInt("JumpHeight") : 5;
@@ -326,19 +324,11 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         }
     }
 
-    /** Vanilla step height; what a player gets back when the boots stop applying their own. */
     public static final float VANILLA_STEP_HEIGHT = 0.6F;
     private static final String STEP_APPLIED = "phoenix_tesla_step_applied";
 
-    /**
-     * The lowest boosted step height: just over one block, the same value GTCEu's own step assist uses. Anything
-     * lower would step *less* than vanilla in practice, because vanilla's auto-jump already clears single blocks.
-     */
     public static final float MIN_BOOSTED_STEP_HEIGHT = 1.0023F;
 
-    /**
-     * Sets the player's step height from the slider: 0 = vanilla, 1 = one block, 20 = the configured maximum.
-     */
     private static void applyStepHeight(Player player, int slider) {
         PhoenixTeslaConfigs.WingFlightConfigs cfg = PhoenixTeslaConfigs.INSTANCE.wingFlight;
         int clamped = Math.max(0, Math.min(20, slider));
@@ -354,7 +344,6 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         player.getPersistentData().putBoolean(STEP_APPLIED, true);
     }
 
-    /** Hands step height back to vanilla if the boots had changed it. Safe to call every tick. */
     public static void resetStepHeight(Player player) {
         if (!player.getPersistentData().getBoolean(STEP_APPLIED)) return;
         player.setMaxUpStep(VANILLA_STEP_HEIGHT);
@@ -391,7 +380,6 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
         float verticalScale = Math.max(0, Math.min(20, rawVertical)) / 5.0f;
 
-        // creative-style flight zeroes the flying speed; any other mode must not leave it that way
         if (!flightMode.startsWith("creative") && player.getAbilities().getFlyingSpeed() == 0f) {
             player.getAbilities().setFlyingSpeed(VANILLA_FLYING_SPEED);
             player.onUpdateAbilities();
@@ -963,11 +951,9 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         }
     }
 
-    /** Flags (on the player) for the abilities the suit changed, so they can be put back when it comes off. */
     public static final String FLIGHT_SPEED_ZEROED = "phoenix_tesla_flight_speed_zeroed";
     public static final String MAYFLY_GRANTED = "phoenix_tesla_mayfly_granted";
 
-    /** Vanilla's flying speed, for every game mode. */
     public static final float VANILLA_FLYING_SPEED = 0.05F;
 
     private void disableFlight(Player player, CompoundTag data) {

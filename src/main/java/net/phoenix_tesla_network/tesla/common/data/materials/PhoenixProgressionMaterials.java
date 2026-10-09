@@ -20,8 +20,7 @@ public class PhoenixProgressionMaterials {
         RESONANT_RHODIUM_ALLOY = new Material.Builder(PhoenixTeslaNetwork.id("resonant_rhodium_alloy"))
                 .ingot().fluid()
                 .color(0xE245F8).secondaryColor(0xA345B0).iconSet(MaterialIconSet.METALLIC)
-                .components(GTMaterials.Rhodium, 3, GTMaterials.Palladium, 4, PhoenixOres.POLARITY_FLIPPED_BISMUTHITE,
-                        1, GTMaterials.Cerium, 4)
+                .components(GTMaterials.Rhodium, 3, GTMaterials.Palladium, 4, GTMaterials.Cerium, 4)
                 .cableProperties(GTValues.LuV, 1, 2, false)
                 .blastTemp(3600, HIGH, 480, 400).fluidPipeProperties(2800, 200, true, true, false, false)
                 .flags(GENERATE_PLATE, GENERATE_RING, PHOSPHORESCENT, GENERATE_ROD, GENERATE_LONG_ROD, GENERATE_GEAR,
