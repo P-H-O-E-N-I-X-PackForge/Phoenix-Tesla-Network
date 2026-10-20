@@ -932,13 +932,23 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
     @Persisted
     private UUID ownerTeamUUID;
 
+    /**
+     * The Tesla network this tower belongs to: the bound/assigned team if there is one, otherwise the team derived
+     * from the machine owner. Read-only, so it is safe to call before the structure has formed (e.g. from Jade).
+     */
+    public @Nullable UUID getOwnerTeamUUID() {
+        if (ownerTeamUUID != null) return ownerTeamUUID;
+        UUID owner = getOwnerUUID();
+        return TeamUtils.isNil(owner) ? null : TeamUtils.getTeamIdOrPlayerFallback(owner);
+    }
+
     private void ensureOwnerTeamUUID() {
         if (!(getLevel() instanceof ServerLevel sl)) return;
 
         if (this.ownerTeamUUID != null) return;
 
         UUID ownerUUID = getOwnerUUID();
-        if (ownerUUID != null) {
+        if (!TeamUtils.isNil(ownerUUID)) {
 
             this.ownerTeamUUID = TeamUtils.getTeamIdOrPlayerFallback(ownerUUID);
 

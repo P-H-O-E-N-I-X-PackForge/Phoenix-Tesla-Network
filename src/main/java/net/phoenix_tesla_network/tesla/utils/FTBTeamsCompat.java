@@ -42,8 +42,13 @@ final class FTBTeamsCompat {
 
     static String getTeamName(UUID teamId) {
         return findTeam(teamId)
-                .map(team -> team.isPlayerTeam() ? TeamUtils.resolvePlayerName(team.getOwner()) :
-                        team.getShortName())
+                .map(team -> {
+                    if (team.isPlayerTeam()) {
+                        String playerName = TeamUtils.lookupPlayerName(team.getOwner());
+                        return playerName != null ? playerName : team.getShortName();
+                    }
+                    return team.getShortName();
+                })
                 .orElseGet(() -> TeamUtils.resolvePlayerName(teamId));
     }
 

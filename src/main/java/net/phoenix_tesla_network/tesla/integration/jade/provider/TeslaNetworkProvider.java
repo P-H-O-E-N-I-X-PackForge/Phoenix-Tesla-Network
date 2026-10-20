@@ -58,7 +58,7 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                         transferRate = data.getOrCreate(team).machineDisplayFlow.getOrDefault(pos, 0L);
                     }
                 } else if (machine instanceof TeslaTowerMachine tower) {
-                    team = tower.getOwnerUUID();
+                    team = tower.getOwnerTeamUUID();
                 } else if (machine instanceof TeslaRelayMachine relay) {
                     team = relay.getOwnerTeamUUID();
                     if (team != null) {

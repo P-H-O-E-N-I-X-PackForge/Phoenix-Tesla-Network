@@ -3,9 +3,6 @@ buildscript {
         maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
         mavenCentral()
     }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
 }
 
 plugins {
@@ -142,19 +139,13 @@ legacyForge {
         }
     }
 }
-jar {
-    manifest.attributes([
-            "MixinConfigs": "phoenix_tesla_network.mixins.json"
-    ])
-}
+
 
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 
 dependencies {
     compileOnly("org.jetbrains:annotations:26.0.1")
 
-    // Mixin
-    annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
 
     // JEI, EMI, Jade
     modCompileOnly("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
@@ -189,11 +180,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
-// See com.example.examplemod.mixin.DummyMixin for information about mixins
-mixin {
-    add sourceSets.main, "mixins.${mod_id}.refmap.json"
-    config "${mod_id}.mixins.json"
-}
+
 
 tasks.named('processResources', ProcessResources).configure {
     var properties = [
@@ -222,5 +209,5 @@ tasks.withType(JavaCompile).configureEach {
     // If Javadoc is generated, this must be specified in that task too.
     options.encoding = "UTF-8"
     options.release.set(17)
-    options.compilerArgs << "-Aquiet=true" // Suppress mixin notes
+    options.compilerArgs << "-Aquiet=true"
 }

@@ -29,6 +29,8 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
@@ -36,7 +38,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
@@ -155,6 +161,11 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         }
     }
 
+    /** Name of PhoenixKeybinds.OPEN_WING_GUI (the KeyMapping that opens the suite settings screen). */
+    private static final String SETTINGS_KEYBIND = "key.phoenix_tesla_network.wing_flight_gui";
+
+    private static final String SPRINT_LATCH = "phoenix_tesla_sprint_latch";
+
     private static boolean isSuitOn(Player player) {
         CompoundTag chest = player.getItemBySlot(EquipmentSlot.CHEST).getTag();
         return chest != null && chest.getBoolean("teslaMode");
@@ -165,7 +176,25 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             return;
         }
 
-        boolean sprinting = SyncedKeyMappings.VANILLA_FORWARD.isKeyDown(player) && player.isSprinting();
+        float forwardAxis = (SyncedKeyMappings.VANILLA_FORWARD.isKeyDown(player) ? 1f : 0f) -
+                (SyncedKeyMappings.VANILLA_BACKWARD.isKeyDown(player) ? 1f : 0f);
+        float strafeAxis = (SyncedKeyMappings.VANILLA_LEFT.isKeyDown(player) ? 1f : 0f) -
+                (SyncedKeyMappings.VANILLA_RIGHT.isKeyDown(player) ? 1f : 0f);
+        boolean hasInput = forwardAxis != 0f || strafeAxis != 0f;
+
+        // Vanilla clears the sprint flag as soon as the forward key is released, so A/D alone can never
+        // "sprint". Latch the sprint state while only strafe keys are held so the boost keeps working sideways.
+        var persistent = player.getPersistentData();
+        boolean latched = persistent.getBoolean(SPRINT_LATCH);
+        if (player.isSprinting() && forwardAxis > 0f) {
+            latched = true;
+        } else if (!hasInput || forwardAxis > 0f || player.isShiftKeyDown() || player.isInWater()) {
+            latched = false;
+        }
+        if (latched) persistent.putBoolean(SPRINT_LATCH, true);
+        else persistent.remove(SPRINT_LATCH);
+
+        boolean sprinting = hasInput && (player.isSprinting() || latched);
         if (isSuitOn(player) && item.canUse(energyPerUse / 100) && sprinting && player.onGround()) {
 
             float speedModifier;
@@ -181,7 +210,8 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 speedModifier = (float) (cfg.sprintAccelMin + (percent * (cfg.sprintAccelMax - cfg.sprintAccelMin)));
             }
 
-            player.moveRelative(speedModifier, new Vec3(0, 0, 1));
+            // moveRelative normalizes inputs longer than 1, so diagonals don't get a double boost
+            player.moveRelative(speedModifier, new Vec3(strafeAxis, 0, forwardAxis));
 
             if (player.level().getGameTime() % 10 == 0) {
                 item.discharge(energyPerUse / 100, item.getTier(), true, false, false);
@@ -326,9 +356,18 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
     public static final float VANILLA_STEP_HEIGHT = 0.6F;
     private static final String STEP_APPLIED = "phoenix_tesla_step_applied";
+    private static final String STEP_STAMP = "phoenix_tesla_step_stamp";
+    private static final UUID STEP_MODIFIER_ID = UUID.fromString("6f1c2a54-3b0e-4d7a-9a52-1d7e5b8c0f31");
 
-    public static final float MIN_BOOSTED_STEP_HEIGHT = 1.0023F;
+    // Deliberately NOT 1.0023F (GTCEu's own magic step height, which its tick handler resets).
+    public static final float MIN_BOOSTED_STEP_HEIGHT = 1.0025F;
 
+    /**
+     * Step height is applied through Forge's STEP_HEIGHT_ADDITION attribute instead of Entity#setMaxUpStep.
+     * In the modpack log the raw maxUpStep field read 0.6 every tick even right after we set it, so something
+     * there resets the field. Entity movement uses IForgeEntity#getStepHeight() (field + attribute), and a
+     * modifier is not touched by code that resets the field.
+     */
     private static void applyStepHeight(Player player, int slider) {
         PhoenixTeslaConfigs.WingFlightConfigs cfg = PhoenixTeslaConfigs.INSTANCE.wingFlight;
         int clamped = Math.max(0, Math.min(20, slider));
@@ -340,14 +379,44 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             resetStepHeight(player);
             return;
         }
-        if (player.maxUpStep() != target) player.setMaxUpStep(target);
+
+        AttributeInstance attr = player.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
+        if (attr == null) return;
+
+        double addition = target - VANILLA_STEP_HEIGHT;
+        AttributeModifier existing = attr.getModifier(STEP_MODIFIER_ID);
+        if (existing == null || Math.abs(existing.getAmount() - addition) > 1.0E-4) {
+            if (existing != null) attr.removeModifier(STEP_MODIFIER_ID);
+            attr.addTransientModifier(new AttributeModifier(STEP_MODIFIER_ID, "Phoenix Tech Suite step assist",
+                    addition, AttributeModifier.Operation.ADDITION));
+        }
         player.getPersistentData().putBoolean(STEP_APPLIED, true);
+        player.getPersistentData().putInt(STEP_STAMP, player.tickCount);
     }
 
     public static void resetStepHeight(Player player) {
-        if (!player.getPersistentData().getBoolean(STEP_APPLIED)) return;
-        player.setMaxUpStep(VANILLA_STEP_HEIGHT);
-        player.getPersistentData().remove(STEP_APPLIED);
+        AttributeInstance attr = player.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
+        if (attr != null && attr.getModifier(STEP_MODIFIER_ID) != null) {
+            attr.removeModifier(STEP_MODIFIER_ID);
+        }
+        if (player.getPersistentData().getBoolean(STEP_APPLIED)) {
+            player.getPersistentData().remove(STEP_APPLIED);
+            player.getPersistentData().remove(STEP_STAMP);
+        }
+    }
+
+    /** Removes the step modifier once the boots stop ticking (taken off, suit unequipped, etc.). */
+    @Mod.EventBusSubscriber(modid = "phoenix_tesla_network", bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static class StepAssistCleanup {
+
+        @SubscribeEvent
+        public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+            if (!(event.getEntity() instanceof Player player)) return;
+            if (!player.getPersistentData().getBoolean(STEP_APPLIED)) return;
+            if (player.tickCount - player.getPersistentData().getInt(STEP_STAMP) > 3) {
+                resetStepHeight(player);
+            }
+        }
     }
 
     private void handleGlobalTeslaEffects(Player player, ServerLevel level, TeslaTeamEnergyData.TeamEnergy network) {
@@ -1381,6 +1450,9 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             lines.add(Component.translatable("metaarmor.tooltip.freezing"));
             lines.add(Component.translatable("metaarmor.tooltip.wings"));
             lines.add(Component.translatable("metaarmor.tooltip.tesla_connection"));
+            lines.add(Component.literal("Press ").withStyle(ChatFormatting.GRAY)
+                    .append(Component.keybind(SETTINGS_KEYBIND).withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal(" to open the suite settings").withStyle(ChatFormatting.GRAY)));
 
             if (itemStack.hasTag()) {
                 assert itemStack.getTag() != null;
@@ -1394,10 +1466,6 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             lines.add(Component.translatable("metaarmor.tooltip.speed"));
 
         } else if (type == ArmorItem.Type.BOOTS) {
-            CompoundTag nbtData = itemStack.getOrCreateTag();
-            boolean sa = nbtData.getBoolean("stepAssist");
-
-            lines.add(Component.translatable("metaarmor.message.step_assist." + (sa ? "enabled" : "disabled")));
             lines.add(Component.translatable("metaarmor.tooltip.falldamage"));
             lines.add(Component.translatable("metaarmor.tooltip.jump"));
         }

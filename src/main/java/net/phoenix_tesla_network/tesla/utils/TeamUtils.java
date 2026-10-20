@@ -17,7 +17,7 @@ public final class TeamUtils {
     private TeamUtils() {}
 
     public static UUID getTeamIdOrPlayerFallback(UUID playerUUID) {
-        if (playerUUID == null) return null;
+        if (isNil(playerUUID)) return null;
         if (PHOENIX_GUILDS_LOADED) return PhoenixGuildsCompat.getTeamIdOrPlayerFallback(playerUUID);
         if (FTB_TEAMS_LOADED) return FTBTeamsCompat.getTeamIdOrPlayerFallback(playerUUID);
 
@@ -25,7 +25,7 @@ public final class TeamUtils {
     }
 
     public static String getTeamName(UUID teamId) {
-        if (teamId == null) return "Unknown";
+        if (isNil(teamId)) return "Unknown";
         if (PHOENIX_GUILDS_LOADED) return stripIdSuffix(PhoenixGuildsCompat.getTeamName(teamId));
         if (FTB_TEAMS_LOADED) return stripIdSuffix(FTBTeamsCompat.getTeamName(teamId));
 
@@ -36,7 +36,14 @@ public final class TeamUtils {
         return name == null ? "Unknown" : name.replaceFirst("#[0-9A-Fa-f]{2,8}$", "");
     }
 
-    public static String resolvePlayerName(UUID playerUUID) {
+    /** The all-zero UUID is "no owner", not a real player or team. */
+    public static boolean isNil(UUID id) {
+        return id == null || (id.getMostSignificantBits() == 0L && id.getLeastSignificantBits() == 0L);
+    }
+
+    /** Returns the player's name if the server can resolve it (online or cached), otherwise null. */
+    public static String lookupPlayerName(UUID playerUUID) {
+        if (playerUUID == null) return null;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer online = server.getPlayerList().getPlayer(playerUUID);
@@ -47,6 +54,12 @@ public final class TeamUtils {
                 if (cached.isPresent()) return cached.get().getName();
             }
         }
+        return null;
+    }
+
+    public static String resolvePlayerName(UUID playerUUID) {
+        String name = lookupPlayerName(playerUUID);
+        if (name != null) return name;
         return "Player: " + playerUUID.toString().substring(0, 8);
     }
 

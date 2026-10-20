@@ -54,8 +54,7 @@ import java.util.function.BiFunction;
 
 import static com.gregtechceu.gtceu.api.GTValues.*;
 import static com.gregtechceu.gtceu.api.GTValues.VCF;
-import static com.gregtechceu.gtceu.api.pattern.Predicates.blocks;
-import static com.gregtechceu.gtceu.api.pattern.Predicates.controller;
+import static com.gregtechceu.gtceu.api.pattern.Predicates.*;
 import static com.gregtechceu.gtceu.common.data.models.GTMachineModels.createWorkableCasingMachineModel;
 import static net.phoenix_tesla_network.tesla.common.registry.PhoenixRegistration.REGISTRATE;
 
@@ -80,20 +79,29 @@ public class PhoenixTeslaMachines {
     private static MultiblockMachineDefinition registerTower(TeslaTowerType type) {
         if (!type.profile().enabled) return null;
 
+        // Determine the correct casing block and model string based on the tower tier
+        var casingBlock = switch (type) {
+            case BASIC -> PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING;
+            case ADVANCED -> PhoenixTeslaBlocks.ADVANCED_TESLA_CASING;
+            default -> PhoenixTeslaBlocks.ADVANCED_TESLA_CASING;
+        };
+
+        String casingModelPath = switch (type) {
+            case BASIC -> "block/casings/multiblock/tesla_casing";
+            case ADVANCED -> "block/casings/multiblock/advanced_tesla_casing";
+            default -> "block/casings/multiblock/advanced_tesla_casing";
+        };
+
         return REGISTRATE
                 .multiblock(type.registryName(), TeslaTowerMachine::new)
                 .langValue(type.displayName())
                 .rotationState(RotationState.ALL)
                 .recipeType(PhoenixTeslaRecipeTypes.TESLA_TOWER)
-                .appearanceBlock(type == TeslaTowerType.ADVANCED ? PhoenixTeslaBlocks.ADVANCED_TESLA_CASING :
-                        PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING)
+                .appearanceBlock(casingBlock)
                 .pattern(definition -> buildTowerPattern(definition, type))
                 .model(
                         createWorkableCasingMachineModel(
-                                PhoenixTeslaNetwork
-                                        .id(type == TeslaTowerType.ADVANCED || type == TeslaTowerType.ULTIMATE ?
-                                                "block/casings/multiblock/advanced_tesla_casing" :
-                                                "block/casings/multiblock/tesla_casing"),
+                                PhoenixTeslaNetwork.id(casingModelPath),
                                 PhoenixTeslaNetwork.id("block/multiblock/tesla_tower"))
                                 .andThen(d -> d
                                         .addDynamicRenderer(
@@ -135,6 +143,12 @@ public class PhoenixTeslaMachines {
         return hatchPredicate(definition, profile, PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get());
     }
 
+    /**
+     * Max hatches of each ability a tower accepts. Autobuild fills open slots up to this number, so lowering it
+     * also reduces how many hatches autobuild places.
+     */
+    private static final int MAX_HATCHES_PER_TYPE = 10;
+
     static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
                                                 PhoenixTeslaConfigs.TowerProfile profile,
                                                 Block casing) {
@@ -149,32 +163,34 @@ public class PhoenixTeslaMachines {
         if (profile.allowMaintenanceHatch) {
             predicate = predicate.or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1));
         }
+        // IMPORTANT: use exactly ONE predicate per ability. GT's TraceabilityPredicate.test() runs every limited
+        // predicate on every block without short-circuiting, so two predicates for the same hatch both count each
+        // hatch and the stricter cap silently wins. Autobuild also fills each remaining slot from the limited
+        // predicates in turn, which is how the old min1/max2 + max10 pair produced 11 input hatches (over the cap of
+        // 10) and a tower that would not form. One predicate keeps "at least 1" and a single clear maximum.
         if (profile.allowEnergyInput) {
-            predicate = predicate
-                    .or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.INPUT_ENERGY)
-                            .setMinGlobalLimited(1).setMaxGlobalLimited(2).setPreviewCount(1))
-                    .or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.INPUT_ENERGY)
-                            .setMaxGlobalLimited(10).setPreviewCount(1));
+            predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.INPUT_ENERGY)
+                    .setMinGlobalLimited(1).setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
         }
         if (profile.allowEnergyOutput) {
             predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.OUTPUT_ENERGY)
-                    .setMaxGlobalLimited(10).setPreviewCount(1));
+                    .setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
         }
         if (profile.allowSubstationInput) {
             predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.SUBSTATION_INPUT_ENERGY)
-                    .setMaxGlobalLimited(10).setPreviewCount(1));
+                    .setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
         }
         if (profile.allowSubstationOutput) {
             predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.SUBSTATION_OUTPUT_ENERGY)
-                    .setMaxGlobalLimited(10).setPreviewCount(1));
+                    .setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
         }
         if (profile.allowLaserInput) {
             predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.INPUT_LASER)
-                    .setMaxGlobalLimited(10).setPreviewCount(1));
+                    .setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
         }
         if (profile.allowLaserOutput) {
             predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.OUTPUT_LASER)
-                    .setMaxGlobalLimited(10).setPreviewCount(1));
+                    .setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
         }
         return predicate;
     }
@@ -217,42 +233,24 @@ public class PhoenixTeslaMachines {
     private static BlockPattern basicTowerPattern(MultiblockMachineDefinition definition,
                                                   PhoenixTeslaConfigs.TowerProfile profile) {
         return FactoryBlockPattern.start()
-                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("ABDDDDDBA", "AAAEDEAAA", "AAAEDEAAA", "AADDDDDAA",
-                        "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA", "AADDDDDAA",
-                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA",
-                        "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA", "ADDDDDDDA",
-                        "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("BDGGGGGDB", "AAAAEAAEA", "AAAAAAAEA", "ADDGGGDDA",
-                        "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA", "ADDDDDDDA",
-                        "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("BDGGGGGDB", "ADAEHEADA", "ADAAEAADA", "ADDGEGDDA",
-                        "AFAEIEAFA", "AFAEIEAFA", "AFAEIEAFA", "ADDDIDDDA",
-                        "AAAEIEAAA", "AAAEIEAAA", "AAADIDAAA", "AAAAIAAAA",
-                        "AAAAIAAAA")
-                .aisle("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA",
-                        "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA", "ADDDDDDDA",
-                        "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA",
-                        "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA", "ADDDDDDDA",
-                        "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("ABDDDDDBA", "AAAEJEAAA", "AAAEDEAAA", "AADDDDDAA",
-                        "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA", "AADDDDDAA",
-                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
-                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
-                        "AAAAAAAAA")
+                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("ABDDDDDBA", "AAAEDEAAA", "AAAEDEAAA", "AADDDDDAA", "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA",
+                        "AADDDDDAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA", "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA",
+                        "ADDDDDDDA", "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA", "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA",
+                        "ADDDDDDDA", "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("BDGGGGGDB", "ADAEHEADA", "ADAAEAADA", "ADDGEGDDA", "AFAEIEAFA", "AFAEIEAFA", "AFAEIEAFA",
+                        "ADDDIDDDA", "AAAEIEAAA", "AAAEIEAAA", "AAADIDAAA", "AAAAIAAAA", "AAAAIAAAA")
+                .aisle("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA", "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA",
+                        "ADDDDDDDA", "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA", "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA",
+                        "ADDDDDDDA", "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("ABDDDDDBA", "AAAEJEAAA", "AAAEDEAAA", "AADDDDDAA", "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA",
+                        "AADDDDDAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
+                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                        "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
                 .where('A', Predicates.any())
                 .where('B', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
                 .where('D', hatchPredicate(definition, profile,
@@ -261,7 +259,7 @@ public class PhoenixTeslaMachines {
                 .where('F', glass(profile))
                 .where('G', lamp(DyeColor.PURPLE))
                 .where('H', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
-                .where('I', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
+                .where('I', heatingCoils())
                 .where('J', controller(blocks(definition.get())))
                 .build();
     }
@@ -358,7 +356,7 @@ public class PhoenixTeslaMachines {
                 .where('H', lamp(DyeColor.PURPLE))
                 .where('I', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
                 .where('J', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
-                .where('K', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
+                .where('K', heatingCoils())
                 .where('L', controller(blocks(definition.get())))
                 .build();
     }
@@ -645,7 +643,7 @@ public class PhoenixTeslaMachines {
                 .where('K', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
                 .where('L', blocks(PhoenixTeslaBlocks.RELIABLE_NAQUADAH_ALLOY_MACHINE_CASING.get()))
                 .where('M', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
-                .where('N', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
+                .where('N', heatingCoils())
                 .where('O', controller(blocks(definition.get())))
                 .build();
     }
@@ -667,13 +665,13 @@ public class PhoenixTeslaMachines {
                         .aisle("TTSTT", "CGGGC", "CGGGC", "CGGGC", "CCCCC", "     ", "     ")
                         .where(" ", Predicates.any())
                         .where("T", blocks(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get()))
-                        .where("C", blocks(PhoenixTeslaBlocks.MACHINE_CASING_NAQUADAH_ALLOY.get()))
+                        .where("C", blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
                         .where("G", blocks(GTBlocks.CASING_TEMPERED_GLASS.get())
                                 .or(blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
                                 .or(blocks(GTBlocks.FUSION_GLASS.get())))
                         .where("F",
                                 blocks(ChemicalHelper.getBlock(TagPrefix.frameGt,
-                                        PhoenixProgressionMaterials.ADVANCED_QUIN_NAQUADIAN_ALLOY)))
+                                        GTMaterials.Steel)))
                         .where("N", blocks(GTBlocks.COIL_CUPRONICKEL.get()))
                         .where("E", Predicates.lampsByColor(DyeColor.PURPLE))
                         .where("S", controller(blocks(definition.get())))

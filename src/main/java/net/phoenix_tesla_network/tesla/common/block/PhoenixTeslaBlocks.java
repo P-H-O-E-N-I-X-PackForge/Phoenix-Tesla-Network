@@ -73,7 +73,7 @@ public class PhoenixTeslaBlocks {
     public static final BlockEntry<TeslaBatteryBlock> TESLA_BATTERY_MAX = createTeslaBattery(
             TeslaBatteryBlock.TeslaBatteryType.MAX);
 
-    private static final String PLACEHOLDER_TEXTURE_DIR = "block/casings/battery/zpm_lapotronic/";
+    private static final String PLACEHOLDER_TEXTURE_DIR = "block/casings/batteries/tesla_uhv/";
 
     private static BlockEntry<TeslaBatteryBlock> createTeslaBattery(ITeslaBattery batteryData) {
         String tierName = batteryData.getBatteryName();
@@ -88,8 +88,8 @@ public class PhoenixTeslaBlocks {
 
                     ResourceLocation side, top, bottom;
                     if (placeholder) {
-                        side = new ResourceLocation("gtceu", PLACEHOLDER_TEXTURE_DIR + "side");
-                        top = new ResourceLocation("gtceu", PLACEHOLDER_TEXTURE_DIR + "top");
+                        side = new ResourceLocation(PhoenixTeslaNetwork.MOD_ID, PLACEHOLDER_TEXTURE_DIR + "side");
+                        top = new ResourceLocation(PhoenixTeslaNetwork.MOD_ID, PLACEHOLDER_TEXTURE_DIR + "top");
                         bottom = top;
                     } else {
                         String folderPath = "block/casings/batteries/tesla_" + tierName + "/";

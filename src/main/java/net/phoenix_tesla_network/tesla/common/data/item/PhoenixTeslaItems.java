@@ -86,7 +86,7 @@ public class PhoenixTeslaItems {
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-low-voltage wireless power.\nBarely a spark, but it counts.");
             })
-            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/ulv_tesla_stabilizer")))
             .register();
 
     public static ItemEntry<TeslaStabilizerItem> LV_TESLA_STABILIZER = REGISTRATE
@@ -196,7 +196,7 @@ public class PhoenixTeslaItems {
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-excessive-voltage wireless power.\nThis is well past excessive.");
             })
-            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/uev_tesla_stabilizer")))
             .register();
 
     public static ItemEntry<TeslaStabilizerItem> UIV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
@@ -207,7 +207,7 @@ public class PhoenixTeslaItems {
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-immense-voltage wireless power.\nThe cables are starting to glow.");
             })
-            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/uiv_tesla_stabilizer")))
             .register();
 
     public static ItemEntry<TeslaStabilizerItem> UXV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
@@ -218,7 +218,7 @@ public class PhoenixTeslaItems {
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-extreme-voltage wireless power.\nAt this point, the stabilizer is the only thing holding reality together.");
             })
-            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/uxv_tesla_stabilizer")))
             .register();
 
     public static ItemEntry<TeslaStabilizerItem> OpV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
@@ -229,7 +229,7 @@ public class PhoenixTeslaItems {
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for overpowered-voltage wireless power.\nThe name says it all.");
             })
-            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/opv_tesla_stabilizer")))
             .register();
 
     public static ItemEntry<TeslaStabilizerItem> MAX_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
@@ -240,7 +240,7 @@ public class PhoenixTeslaItems {
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for maximum-voltage wireless power.\nThere is nothing beyond this.");
             })
-            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/lv_tesla_stabilizer")))
+            .model((ctx, prov) -> prov.generated(ctx, prov.modLoc("item/tesla_stabilizer/max_tesla_stabilizer")))
             .register();
 
     public static void init() {}

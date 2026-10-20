@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "bottom": "gtceu:block/casings/battery/zpm_lapotronic/top",
-    "side": "gtceu:block/casings/battery/zpm_lapotronic/side",
-    "top": "gtceu:block/casings/battery/zpm_lapotronic/top"
+    "bottom": "phoenix_tesla_network:block/casings/batteries/tesla_ev/bottom",
+    "side": "phoenix_tesla_network:block/casings/batteries/tesla_ev/side",
+    "top": "phoenix_tesla_network:block/casings/batteries/tesla_ev/top"
   }
 }
