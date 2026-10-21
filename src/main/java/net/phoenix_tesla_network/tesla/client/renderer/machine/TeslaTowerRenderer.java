@@ -14,7 +14,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaT
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
@@ -27,7 +27,7 @@ import java.util.WeakHashMap;
 public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTowerRenderer> {
 
     public static final TeslaTowerRenderer INSTANCE = new TeslaTowerRenderer();
-    public static final Codec<TeslaTowerRenderer> CODEC = Codec.unit(INSTANCE);
+    public static final MapCodec<TeslaTowerRenderer> CODEC = MapCodec.unit(INSTANCE);
     public static final DynamicRenderType<TeslaTowerMachine, TeslaTowerRenderer> TYPE = new DynamicRenderType<>(CODEC);
 
     private TeslaTowerRenderer() {}
@@ -176,7 +176,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
 
     @Override
     public @NotNull AABB getRenderBoundingBox(TeslaTowerMachine m) {
-        return new AABB(m.getPos()).inflate(40);
+        return new AABB(m.getBlockPos()).inflate(40);
     }
 
     @Override
@@ -224,7 +224,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         }
 
         // Base center relative to the controller (render space is machine-relative, world-aligned)
-        Vec3 axis = machine.getSpireAxis().subtract(Vec3.atLowerCornerOf(machine.getPos()));
+        Vec3 axis = machine.getSpireAxis().subtract(Vec3.atLowerCornerOf(machine.getBlockPos()));
         float baseAxisX = (float) axis.x;
         float baseAxisZ = (float) axis.z;
 
@@ -289,9 +289,9 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                         // targetPos is already machine-relative and world-aligned, so no inverse rotation is needed
                         machine.getLevel().addParticle(
                                 PhoenixParticles.TESLA_SPARK.get(),
-                                targetPos.x + machine.getPos().getX(),
-                                targetPos.y + machine.getPos().getY(),
-                                targetPos.z + machine.getPos().getZ(),
+                                targetPos.x + machine.getBlockPos().getX(),
+                                targetPos.y + machine.getBlockPos().getY(),
+                                targetPos.z + machine.getBlockPos().getZ(),
                                 0.0, 0.0, 0.0);
                     }
                 }
@@ -358,10 +358,10 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
             float nx = -dz * width;
             float nz = dx * width;
 
-            vc.vertex(pose, (float) s.x - nx, (float) s.y, (float) s.z - nz).color(r, g, b, a).endVertex();
-            vc.vertex(pose, (float) s.x + nx, (float) s.y, (float) s.z + nz).color(r, g, b, a).endVertex();
-            vc.vertex(pose, (float) e.x + nx, (float) e.y, (float) e.z + nz).color(r, g, b, a).endVertex();
-            vc.vertex(pose, (float) e.x - nx, (float) e.y, (float) e.z - nz).color(r, g, b, a).endVertex();
+            vc.addVertex(pose, (float) s.x - nx, (float) s.y, (float) s.z - nz).setColor(r, g, b, a);
+            vc.addVertex(pose, (float) s.x + nx, (float) s.y, (float) s.z + nz).setColor(r, g, b, a);
+            vc.addVertex(pose, (float) e.x + nx, (float) e.y, (float) e.z + nz).setColor(r, g, b, a);
+            vc.addVertex(pose, (float) e.x - nx, (float) e.y, (float) e.z - nz).setColor(r, g, b, a);
         }
     }
 
@@ -380,8 +380,8 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                 b = 197 / 255f;
                 a = 0.5f;
             }
-            vc.vertex(pose, (float) s.x, (float) s.y, (float) s.z).color(r, g, b, a).endVertex();
-            vc.vertex(pose, (float) e.x, (float) e.y, (float) e.z).color(r, g, b, a).endVertex();
+            vc.addVertex(pose, (float) s.x, (float) s.y, (float) s.z).setColor(r, g, b, a);
+            vc.addVertex(pose, (float) e.x, (float) e.y, (float) e.z).setColor(r, g, b, a);
             return;
         }
 
@@ -467,16 +467,16 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
             float ny = angleY;
             float nz = dx * angleX;
 
-            vc.vertex(pose, (float) s.x - nx, (float) s.y - ny, (float) s.z - nz).color(r, g, b, a).endVertex();
-            vc.vertex(pose, (float) s.x + nx, (float) s.y + ny, (float) s.z + nz).color(r, g, b, a).endVertex();
+            vc.addVertex(pose, (float) s.x - nx, (float) s.y - ny, (float) s.z - nz).setColor(r, g, b, a);
+            vc.addVertex(pose, (float) s.x + nx, (float) s.y + ny, (float) s.z + nz).setColor(r, g, b, a);
 
             float nextRoll = ((i + 1) * 0.5f) + twistSpeed;
             float nnx = -dz * (float) Math.cos(nextRoll) * width;
             float nny = (float) Math.sin(nextRoll) * width;
             float nnz = dx * (float) Math.cos(nextRoll) * width;
 
-            vc.vertex(pose, (float) e.x + nnx, (float) e.y + nny, (float) e.z + nnz).color(r, g, b, a).endVertex();
-            vc.vertex(pose, (float) e.x - nnx, (float) e.y - nny, (float) e.z - nnz).color(r, g, b, a).endVertex();
+            vc.addVertex(pose, (float) e.x + nnx, (float) e.y + nny, (float) e.z + nnz).setColor(r, g, b, a);
+            vc.addVertex(pose, (float) e.x - nnx, (float) e.y - nny, (float) e.z - nnz).setColor(r, g, b, a);
         }
     }
 

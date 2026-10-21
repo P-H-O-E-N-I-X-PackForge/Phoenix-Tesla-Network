@@ -13,13 +13,13 @@ import net.phoenix_tesla_network.tesla.client.PhoenixRenderTypes;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaRelayMachine;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import org.jetbrains.annotations.NotNull;
 
 public class TeslaLinkRenderer extends DynamicRender<TeslaRelayMachine, TeslaLinkRenderer> {
 
     public static final TeslaLinkRenderer INSTANCE = new TeslaLinkRenderer();
-    public static final Codec<TeslaLinkRenderer> CODEC = Codec.unit(INSTANCE);
+    public static final MapCodec<TeslaLinkRenderer> CODEC = MapCodec.unit(INSTANCE);
     public static final DynamicRenderType<TeslaRelayMachine, TeslaLinkRenderer> TYPE = new DynamicRenderType<>(CODEC);
 
     private TeslaLinkRenderer() {}
@@ -47,7 +47,7 @@ public class TeslaLinkRenderer extends DynamicRender<TeslaRelayMachine, TeslaLin
     @Override
     public @NotNull AABB getRenderBoundingBox(TeslaRelayMachine machine) {
         BlockPos linked = machine.getLinkedPos();
-        AABB box = new AABB(machine.getPos()).inflate(8);
+        AABB box = new AABB(machine.getBlockPos()).inflate(8);
         return linked == null ? box : box.minmax(new AABB(linked).inflate(60));
     }
 
@@ -59,7 +59,7 @@ public class TeslaLinkRenderer extends DynamicRender<TeslaRelayMachine, TeslaLin
 
         if (!(MetaMachine.getMachine(machine.getLevel(), linked) instanceof ITeslaLinkNode parent)) return;
 
-        Vec3 origin = Vec3.atLowerCornerOf(machine.getPos());
+        Vec3 origin = Vec3.atLowerCornerOf(machine.getBlockPos());
         Vec3 start = machine.getLinkAnchor().subtract(origin);
         Vec3 end = parent.getLinkAnchor().subtract(origin);
 

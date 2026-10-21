@@ -2,16 +2,27 @@ package net.phoenix_tesla_network.tesla.network.packet;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.phoenix_tesla_network.tesla.client.coverage.ClientCoverageData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
-public class S2CCoverageSyncPacket {
+public class S2CCoverageSyncPacket implements CustomPacketPayload {
+
+    public static final Type<S2CCoverageSyncPacket> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath("phoenix_tesla_network", "s2c_coverage_sync"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, S2CCoverageSyncPacket> STREAM_CODEC = StreamCodec
+            .ofMember(S2CCoverageSyncPacket::encode, S2CCoverageSyncPacket::new);
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
 
     public static final byte TOWER = 0;
     public static final byte TOWER_OFF = 1;
@@ -71,9 +82,7 @@ public class S2CCoverageSyncPacket {
         }
     }
 
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(
-                () -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientCoverageData.accept(entries, loss)));
-        ctx.get().setPacketHandled(true);
+    public void handle(IPayloadContext ctx) {
+        ctx.enqueueWork(() -> ClientCoverageData.accept(entries, loss));
     }
 }

@@ -1,18 +1,14 @@
 package net.phoenix_tesla_network.tesla.common.data.item;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.item.ComponentItem;
 import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
-import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
+import com.gregtechceu.gtceu.api.mui.IItemUIHolder;
 import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
-
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.*;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -21,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -33,26 +30,50 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.phoenix_tesla_network.tesla.api.gui.TeslaBackground;
 import net.phoenix_tesla_network.tesla.client.renderer.machine.TeslaHighlightRenderer;
 import net.phoenix_tesla_network.tesla.common.machine.singleblock.electric.TeslaWirelessChargerMachine;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
+import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.factory.PlayerInventoryGuiData;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.utils.Alignment;
+import brachy.modularui.value.sync.IntSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.StringSyncValue;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.TextWidget;
+import brachy.modularui.widgets.layout.Flow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
-import java.util.function.Consumer;
-
-import static net.phoenix_tesla_network.tesla.api.gui.PhoenixGuiTextures.TESLA_BACKGROUND;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 public class TeslaBinderItem extends ComponentItem
-                             implements IItemUIFactory, IInteractionItem, IAddInformation {
+                             implements IItemUIHolder, IInteractionItem, IAddInformation {
+
+    private static final int FILTER_ALL = 0;
+    private static final int FILTER_IN = 1;
+    private static final int FILTER_OUT = 2;
+    private static final int FILTER_SOUL = 3;
+    private static final int FILTER_CHARGER = 4;
+    private static final String[] FILTER_LABELS = { "ALL", "[I]", "[O]", "[S]", "[C]" };
+
+    private static final int UI_WIDTH = 260;
+    private static final int UI_HEIGHT = 300;
 
     public TeslaBinderItem(Properties properties) {
         super(properties);
@@ -91,13 +112,14 @@ public class TeslaBinderItem extends ComponentItem
             if (level instanceof ServerLevel serverLevel &&
                     machine instanceof TieredEnergyMachine tiered && tiered.energyContainer != null) {
 
-                CompoundTag tag = itemStack.getOrCreateTag();
+                CompoundTag tag = StackNbt.getOrCreateTag(itemStack);
                 if (tag.hasUUID("TargetTeam")) {
                     if (machine instanceof BatteryBufferMachine) {
                         player.sendSystemMessage(
                                 Component.literal("Danger: High Risk of Voiding. Connection terminated.")
                                         .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
-                        serverLevel.playSound(null, clickedPos, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.5f,
+                        serverLevel.playSound(null, clickedPos, SoundEvents.GENERIC_EXPLODE.value(),
+                                SoundSource.PLAYERS, 0.5f,
                                 1.2f);
                         return InteractionResult.FAIL;
                     }
@@ -183,7 +205,7 @@ public class TeslaBinderItem extends ComponentItem
         }
 
         if (!level.isClientSide) {
-            CompoundTag tag = stack.getOrCreateTag();
+            CompoundTag tag = StackNbt.getOrCreateTag(stack);
             if (tag.hasUUID("TargetTeam")) {
                 level.playSound(null, player.blockPosition(),
                         SoundEvents.ENDER_EYE_DEATH, SoundSource.PLAYERS, 0.4f, 1.5f);
@@ -195,7 +217,7 @@ public class TeslaBinderItem extends ComponentItem
 
     private void bindToPlayer(Player player, ItemStack stack) {
         UUID resolvedId = TeamUtils.getTeamIdOrPlayerFallback(player.getUUID());
-        var tag = stack.getOrCreateTag();
+        var tag = StackNbt.getOrCreateTag(stack);
 
         String teamName = TeamUtils.getTeamName(resolvedId);
 
@@ -220,9 +242,9 @@ public class TeslaBinderItem extends ComponentItem
 
     @Override
     public @NotNull Component getName(ItemStack stack) {
-        if (stack.hasTag()) {
-            assert stack.getTag() != null;
-            if (stack.getTag().contains("TargetTeam")) {
+        if (StackNbt.hasTag(stack)) {
+            assert StackNbt.getTag(stack) != null;
+            if (StackNbt.getTag(stack).contains("TargetTeam")) {
                 return Component.literal("Tesla Binder (Bound)").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC);
             }
         }
@@ -230,21 +252,22 @@ public class TeslaBinderItem extends ComponentItem
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip,
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, @NotNull List<Component> tooltip,
                                 @NotNull TooltipFlag flag) {
-        if (stack.hasTag() && Objects.requireNonNull(stack.getTag()).contains("OwnerName")) {
+        net.minecraft.world.level.Level level = context.level();
+        if (StackNbt.hasTag(stack) && Objects.requireNonNull(StackNbt.getTag(stack)).contains("OwnerName")) {
             int color = getAnimatedColor(0xA330FF, 0xFF66CC, 2000);
 
             tooltip.add(Component.literal("Right-Click to open the Tesla Network UI.")
                     .withStyle(Style.EMPTY.withColor(color)));
 
             tooltip.add(Component.literal("Bound to Player: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(stack.getTag().getString("OwnerName"))
+                    .append(Component.literal(StackNbt.getTag(stack).getString("OwnerName"))
                             .withStyle(Style.EMPTY.withColor(color))));
 
-            if (stack.getTag().contains("TeamName")) {
+            if (StackNbt.getTag(stack).contains("TeamName")) {
                 tooltip.add(Component.literal("Bound to Team: ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(stack.getTag().getString("TeamName"))
+                        .append(Component.literal(StackNbt.getTag(stack).getString("TeamName"))
                                 .withStyle(Style.EMPTY.withColor(color))));
             }
         } else {
@@ -265,307 +288,445 @@ public class TeslaBinderItem extends ComponentItem
     }
 
     @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player player) {
-        ItemStack stack = holder.getHeld();
-        CompoundTag tag = stack.getOrCreateTag();
+    public boolean shouldOpenUI() {
+        return true;
+    }
 
-        if (!tag.contains("FilterMode")) tag.putInt("FilterMode", 0);
-        int filterMode = tag.getInt("FilterMode");
+    @Override
+    public ModularPanel<?> buildUI(PlayerInventoryGuiData<?> guiData, PanelSyncManager panelSyncManager,
+                                   UISettings settings) {
+        Player player = guiData.getPlayer();
+        ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
 
-        int windowWidth = 260;
-        int windowHeight = 300;
+        CompoundTag tag = StackNbt.getOrCreateTag(stack);
+        if (!tag.contains("FilterMode")) tag.putInt("FilterMode", FILTER_ALL);
+        if (!tag.contains("SelectedHardwareKey")) tag.putString("SelectedHardwareKey", "");
 
-        ModularUI ui = new ModularUI(windowWidth, windowHeight, holder, player).background(GuiTextures.BACKGROUND);
-        WidgetGroup mainLayer = new WidgetGroup(0, 0, windowWidth, windowHeight);
-        WidgetGroup detailLayer = new WidgetGroup(0, 0, windowWidth, windowHeight);
-        detailLayer.setVisible(false);
+        IntSyncValue filterValue = new IntSyncValue(
+                () -> StackNbt.getOrCreateTag(stack).getInt("FilterMode"),
+                (val) -> StackNbt.getOrCreateTag(stack).putInt("FilterMode", val));
 
-        Consumer<CompoundTag> openDetail = (hTag) -> {
-            detailLayer.clearAllWidgets();
-            detailLayer.addWidget(new ButtonWidget(5, 5, 18, 18, GuiTextures.BUTTON_LEFT, c -> {
-                detailLayer.setVisible(false);
-                mainLayer.setVisible(true);
-            }));
+        StringSyncValue selectedKey = new StringSyncValue(
+                () -> StackNbt.getOrCreateTag(stack).getString("SelectedHardwareKey"),
+                (val) -> StackNbt.getOrCreateTag(stack).putString("SelectedHardwareKey", val));
 
-            boolean isHatch = hTag.contains("isOut");
-            boolean isCharger = hTag.getBoolean("isCharger");
+        panelSyncManager.syncValue("tesla_filter_mode", 0, filterValue);
+        panelSyncManager.syncValue("tesla_selected_key", 1, selectedKey);
 
-            String hardwareTitle;
-            ChatFormatting titleColor;
+        Flow root = Flow.col()
+                .widthRel(1f)
+                .heightRel(1f)
+                .crossAxisAlignment(Alignment.CrossAxis.START)
+                .collapseDisabledChildren();
+        root.background(new TeslaBackground());
 
-            if (isCharger) {
-                hardwareTitle = "Wireless Charger";
-                titleColor = ChatFormatting.AQUA;
-            } else if (isHatch) {
-                boolean isUplink = hTag.getBoolean("isOut");
-                hardwareTitle = isUplink ? "Tesla Uplink" : "Tesla Downlink";
-                titleColor = isUplink ? ChatFormatting.GREEN : ChatFormatting.RED;
-            } else {
-                hardwareTitle = hTag.contains("name") ? hTag.getString("name") : "Soul Consumer";
-                titleColor = ChatFormatting.LIGHT_PURPLE;
-            }
+        root.child(buildMainView(stack, player, filterValue, selectedKey));
+        root.child(buildDetailView(stack, player, selectedKey));
 
-            detailLayer
-                    .addWidget(new LabelWidget(28, 9, hardwareTitle + " Details").setTextColor(titleColor.getColor()));
+        return ModularPanel.defaultPanel("tesla_binder", UI_WIDTH, UI_HEIGHT)
+                .margin(6)
+                .child(root);
+    }
 
-            WidgetGroup displayBox = new WidgetGroup(5, 30, windowWidth - 10, 95);
-            displayBox.setBackground(GuiTextures.DISPLAY);
-            displayBox.addWidget(new ComponentPanelWidget(8, 8, list -> {
-                list.add(Component.literal(hardwareTitle).withStyle(titleColor, ChatFormatting.BOLD));
+    private IWidget buildMainView(ItemStack stack, Player player, IntSyncValue filterValue,
+                                  StringSyncValue selectedKey) {
+        Flow mainView = Flow.col()
+                .widthRel(1f)
+                .heightRel(1f)
+                .crossAxisAlignment(Alignment.CrossAxis.START);
 
-                BlockPos p = BlockPos.of(hTag.getLong("pos"));
-                list.add(Component.literal("Location: ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(String.format("%d, %d, %d", p.getX(), p.getY(), p.getZ()))
-                                .withStyle(ChatFormatting.WHITE)));
+        mainView.setEnabledIf(w -> selectedKey.getStringValue().isEmpty());
 
-                if (!isCharger && hTag.contains("buf")) {
+        TextWidget titleText = new TextWidget(Component.literal("Tesla Network Management")
+                .withStyle(ChatFormatting.DARK_PURPLE));
+        titleText.margin(0, 0, 4, 0);
+        mainView.child(titleText);
 
-                    list.add(Component.literal("Internal Buffer: ").withStyle(ChatFormatting.GRAY)
-                            .append(Component.literal(compactTeslaValue(hTag.getString("buf")) + "EU")
-                                    .withStyle(ChatFormatting.GOLD)));
-                }
+        mainView.child(buildHeaderBox(stack));
+        mainView.child(buildFilterTabs(filterValue));
+        mainView.child(buildHardwareList(stack, player, filterValue, selectedKey));
 
-                String transferStr = hTag.getString("transfer");
-                long flowVal = Long.parseLong(transferStr.isEmpty() ? "0" : transferStr);
+        return mainView;
+    }
 
-                String sign;
-                if (isCharger) {
-                    sign = "-";
-                } else if (isHatch) {
-                    sign = hTag.getBoolean("isOut") ? "+" : "-";
-                } else {
-                    sign = (flowVal < 0) ? "+" : (flowVal > 0 ? "-" : "");
-                }
-
-                String flowLabel = isCharger ? "Wireless Output: " : "Current Flow: ";
-
-                list.add(Component.literal(flowLabel).withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(sign + compactTeslaValue(String.valueOf(Math.abs(flowVal))) + "EU/t")
-                                .withStyle(flowVal != 0 ? titleColor : ChatFormatting.WHITE)));
-
-                String statusText = (flowVal != 0) ? "OPERATIONAL" : "IDLE / NO LOAD";
-                list.add(Component.literal("Status: ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(statusText)
-                                .withStyle(flowVal != 0 ? titleColor : ChatFormatting.DARK_GRAY)));
-            }));
-            detailLayer.addWidget(displayBox);
-
-            int btnY = 130;
-            detailLayer.addWidget(new ButtonWidget(5, btnY, windowWidth - 10, 18, GuiTextures.BUTTON, c -> {
-                if (player.level().isClientSide)
-                    TeslaHighlightRenderer.highlight(BlockPos.of(hTag.getLong("pos")), 200);
-            }));
-            detailLayer.addWidget(new LabelWidget(windowWidth / 2 - 45, btnY + 5, "§bHighlight Device"));
-
-            mainLayer.setVisible(false);
-            detailLayer.setVisible(true);
-        };
-
-        mainLayer.addWidget(new LabelWidget(8, 6, "Tesla Network Management").setTextColor(0xB000FF));
-
-        WidgetGroup header = new WidgetGroup(5, 18, windowWidth - 10, 80);
-        header.setBackground(TESLA_BACKGROUND);
-        header.addWidget(new ComponentPanelWidget(5, 4, text -> {
-            text.add(Component.literal("Network: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(tag.getString("TeamName")).withStyle(ChatFormatting.AQUA)));
-
-            text.add(Component.literal("Stored: ").withStyle(ChatFormatting.GRAY)
+    private IWidget buildHeaderBox(ItemStack stack) {
+        TextWidget headerText = new TextWidget(() -> {
+            CompoundTag tag = StackNbt.getOrCreateTag(stack);
+            return Component.literal("Network: ").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(tag.getString("TeamName")).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal("\nStored: ").withStyle(ChatFormatting.GRAY))
                     .append(Component.literal(compactTeslaValue(tag.getString("StoredEU")) + "EU")
-                            .withStyle(ChatFormatting.GOLD)));
-
-            text.add(Component.literal("Capacity: ").withStyle(ChatFormatting.GRAY)
+                            .withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal("\nCapacity: ").withStyle(ChatFormatting.GRAY))
                     .append(Component.literal(compactTeslaValue(tag.getString("CapacityEU")) + "EU")
-                            .withStyle(ChatFormatting.YELLOW)));
-
-            text.add(Component.literal("Net Input: ").withStyle(ChatFormatting.GRAY)
+                            .withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal("\nNet Input: ").withStyle(ChatFormatting.GRAY))
                     .append(Component.literal("+" + compactTeslaValue(tag.getString("NetInput")) + "EU/t")
-                            .withStyle(ChatFormatting.GREEN)));
-
-            text.add(Component.literal("Net Output: ").withStyle(ChatFormatting.GRAY)
+                            .withStyle(ChatFormatting.GREEN))
+                    .append(Component.literal("\nNet Output: ").withStyle(ChatFormatting.GRAY))
                     .append(Component.literal("-" + compactTeslaValue(tag.getString("NetOutput")) + "EU/t")
-                            .withStyle(ChatFormatting.RED)));
-        }));
-        mainLayer.addWidget(header);
+                            .withStyle(ChatFormatting.RED));
+        });
+        headerText.widthRel(1f);
+        headerText.height(80);
+        headerText.margin(0, 0, 4, 0);
+        headerText.background(GTGuiTextures.DISPLAY);
+        return headerText;
+    }
 
-        String[] filters = { "ALL", "[I]", "[O]", "[S]", "[C]" };
-        int btnWidth = 48;
-        for (int i = 0; i < filters.length; i++) {
-            int targetMode = i;
-            mainLayer.addWidget(new ButtonWidget(7 + (i * (btnWidth + 2)), 102, btnWidth, 18, GuiTextures.BUTTON, c -> {
-                stack.getOrCreateTag().putInt("FilterMode", targetMode);
-                if (player instanceof ServerPlayer sp) HeldItemUIFactory.INSTANCE.openUI(holder, sp);
-            }));
-            LabelWidget fl = new LabelWidget(7 + (i * (btnWidth + 2)) + (btnWidth / 2 - 8), 106, filters[i]);
-            if (filterMode == targetMode) fl.setTextColor(ChatFormatting.YELLOW.getColor());
-            mainLayer.addWidget(fl);
+    private IWidget buildFilterTabs(IntSyncValue filterValue) {
+        Flow tabRow = Flow.row()
+                .widthRel(1f)
+                .height(18)
+                .mainAxisAlignment(Alignment.MainAxis.SPACE_BETWEEN)
+                .margin(0, 0, 4, 0);
+
+        for (int i = 0; i < FILTER_LABELS.length; i++) {
+            final int targetMode = i;
+            ButtonWidget<?> tabButton = new ButtonWidget<>();
+            TextWidget tabLabel = new TextWidget(() -> Component.literal(FILTER_LABELS[targetMode])
+                    .withStyle(filterValue.getIntValue() == targetMode ? ChatFormatting.YELLOW : ChatFormatting.WHITE));
+            tabLabel.alignment(Alignment.CENTER);
+            tabButton.onMousePressed((context, button) -> {
+                filterValue.setIntValue(targetMode);
+                return true;
+            })
+                    .background(GTGuiTextures.BUTTON)
+                    .child(tabLabel);
+            tabButton.resizer().expanded(true);
+            tabRow.child(tabButton.getThis());
         }
 
-        DraggableScrollableWidgetGroup listGroup = new DraggableScrollableWidgetGroup(7, 125, windowWidth - 14, 165);
-        listGroup.setBackground(GuiTextures.DISPLAY);
-        mainLayer.addWidget(listGroup);
+        return tabRow;
+    }
 
+    private IWidget buildHardwareList(ItemStack stack, Player player, IntSyncValue filterValue,
+                                      StringSyncValue selectedKey) {
+        Flow listViewport = Flow.col()
+                .widthRel(1f)
+                .height(165)
+                .background(GTGuiTextures.DISPLAY);
+
+        Flow listContent = Flow.col()
+                .widthRel(1f)
+                .collapseDisabledChildren();
+
+        CompoundTag tag = StackNbt.getOrCreateTag(stack);
         ListTag hatchData = tag.getList("HatchData", Tag.TAG_COMPOUND);
         ListTag machineData = tag.getList("MachineData", Tag.TAG_COMPOUND);
         ListTag chargerData = tag.getList("ChargerData", Tag.TAG_COMPOUND);
-        int currentY = 0;
 
         for (int i = 0; i < hatchData.size(); i++) {
             CompoundTag hTag = hatchData.getCompound(i);
-            boolean isInput = hTag.getBoolean("isOut");
-            if (filterMode == 0 || (filterMode == 1 && isInput) || (filterMode == 2 && !isInput)) {
-                currentY = addListRow(listGroup, hTag, player, openDetail, currentY, "hatch", windowWidth);
-            }
+            boolean isUplink = hTag.getBoolean("isOut");
+            Flow row = buildRow(hTag, player, "hatch:" + i, "hatch", selectedKey);
+            row.setEnabledIf(w -> {
+                int mode = filterValue.getIntValue();
+                return mode == FILTER_ALL || (mode == FILTER_IN && isUplink) || (mode == FILTER_OUT && !isUplink);
+            });
+            listContent.child(row);
         }
-        if (filterMode == 0 || filterMode == 3) {
-            for (int i = 0; i < machineData.size(); i++) {
-                currentY = addListRow(listGroup, machineData.getCompound(i), player, openDetail, currentY, "machine",
-                        windowWidth);
-            }
+        for (int i = 0; i < machineData.size(); i++) {
+            Flow row = buildRow(machineData.getCompound(i), player, "machine:" + i, "machine", selectedKey);
+            row.setEnabledIf(w -> {
+                int mode = filterValue.getIntValue();
+                return mode == FILTER_ALL || mode == FILTER_SOUL;
+            });
+            listContent.child(row);
         }
-        if (filterMode == 0 || filterMode == 4) {
-            for (int i = 0; i < chargerData.size(); i++) {
-                currentY = addListRow(listGroup, chargerData.getCompound(i), player, openDetail, currentY, "charger",
-                        windowWidth);
-            }
+        for (int i = 0; i < chargerData.size(); i++) {
+            Flow row = buildRow(chargerData.getCompound(i), player, "charger:" + i, "charger", selectedKey);
+            row.setEnabledIf(w -> {
+                int mode = filterValue.getIntValue();
+                return mode == FILTER_ALL || mode == FILTER_CHARGER;
+            });
+            listContent.child(row);
         }
 
-        ui.widget(mainLayer);
-        ui.widget(detailLayer);
-        return ui;
+        listViewport.child(listContent);
+        return listViewport;
     }
 
-    private int addListRow(WidgetGroup group, CompoundTag data, Player player, Consumer<CompoundTag> clickAction, int y,
-                           String type, int windowWidth) {
+    private Flow buildRow(CompoundTag data, Player player, String rowKey, String type,
+                          StringSyncValue selectedKey) {
         BlockPos pos = BlockPos.of(data.getLong("pos")).immutable();
 
-        String typeLabel;
-        String colorCode;
-        String sign;
-
         String transferRaw = data.getString("transfer");
-        long flowVal = 0;
+        long flowVal = 0L;
         try {
             flowVal = Long.parseLong(transferRaw.isEmpty() ? "0" : transferRaw);
         } catch (NumberFormatException ignored) {}
 
+        String typeLabel;
+        ChatFormatting color;
+        String sign;
         switch (type) {
             case "hatch" -> {
-                boolean isInput = data.getBoolean("isOut");
-                typeLabel = isInput ? "[I]" : "[O]";
-                colorCode = isInput ? "§a" : "§c";
-                sign = isInput ? "+" : "-";
+                boolean isUplink = data.getBoolean("isOut");
+                typeLabel = isUplink ? "[I]" : "[O]";
+                color = isUplink ? ChatFormatting.GREEN : ChatFormatting.RED;
+                sign = isUplink ? "+" : "-";
             }
             case "charger" -> {
                 typeLabel = "[C]";
-                colorCode = "§b";
+                color = ChatFormatting.AQUA;
                 sign = "-";
             }
             default -> {
                 typeLabel = "[S]";
                 if (flowVal < 0) {
-                    colorCode = "§a";
+                    color = ChatFormatting.GREEN;
                     sign = "+";
                 } else {
-                    colorCode = "§d";
+                    color = ChatFormatting.LIGHT_PURPLE;
                     sign = "-";
                 }
             }
         }
 
-        String statusIcon;
-        boolean hasFlow = flowVal != 0;
-
-        if (type.equals("charger")) {
-            statusIcon = hasFlow ? "§3波" : "§7波";
-        } else if (!hasFlow) {
-            statusIcon = "§7△";
-        } else if (type.equals("hatch")) {
-            statusIcon = data.getBoolean("isOut") ? "§2▲" : "§4▼";
-        } else {
-            statusIcon = "§b⚡";
-        }
-
         String rawName = data.contains("name") ? data.getString("name") :
                 (type.equals("hatch") ? "Tesla Hatch" : (type.equals("charger") ? "Wireless Charger" : "Soul Machine"));
+        String displayName = rawName.length() > 20 ? rawName.substring(0, 18) + ".." : rawName;
+        final long finalFlowVal = flowVal;
+        final ChatFormatting finalColor = color;
 
-        String flowStr = " §8(" + colorCode + sign + compactTeslaValue(String.valueOf(Math.abs(flowVal))) + "EU§8)";
+        Flow row = Flow.row()
+                .widthRel(1f)
+                .height(18)
+                .mainAxisAlignment(Alignment.MainAxis.SPACE_BETWEEN);
 
-        String displayName = rawName;
-        if (displayName.length() > 20) {
-            displayName = displayName.substring(0, 18) + "..";
-        }
+        ButtonWidget<?> rowButton = new ButtonWidget<>();
+        TextWidget rowLabel = new TextWidget(Component.literal(typeLabel + " ").withStyle(finalColor)
+                .append(Component.literal(displayName).withStyle(ChatFormatting.WHITE))
+                .append(Component
+                        .literal("  (" + sign + compactTeslaValue(String.valueOf(Math.abs(finalFlowVal))) + "EU)")
+                        .withStyle(ChatFormatting.DARK_GRAY)));
+        rowLabel.margin(4, 0, 0, 0);
+        rowButton.onMousePressed((context, button) -> {
+            boolean alreadySelected = rowKey.equals(selectedKey.getStringValue());
+            selectedKey.setStringValue(alreadySelected ? "" : rowKey);
+            return true;
+        })
+                .background(GTGuiTextures.BUTTON)
+                .child(rowLabel);
+        rowButton.resizer().expanded(true);
+        row.child(rowButton.getThis());
 
-        String finalRowText = String.format("%s %s%s§r %s%s", statusIcon, colorCode, typeLabel, displayName, flowStr);
+        ButtonWidget<?> highlightButton = new ButtonWidget<>();
+        highlightButton.onMousePressed((context, button) -> {
+            if (player.level().isClientSide) {
+                TeslaHighlightRenderer.highlight(pos, 200);
+            }
+            return true;
+        })
+                .background(GTGuiTextures.TOOL_COVER_SETTINGS)
+                .size(18);
+        row.child(highlightButton.getThis());
 
-        int rowWidth = windowWidth - 20;
-        WidgetGroup row = new WidgetGroup(0, y, rowWidth, 18);
-
-        row.addWidget(new ButtonWidget(0, 0, rowWidth - 22, 18, GuiTextures.BUTTON, c -> clickAction.accept(data)));
-        row.addWidget(new LabelWidget(4, 5, finalRowText));
-        row.addWidget(new LabelWidget(rowWidth - 68, 5, getDistanceString(pos, player, data)));
-
-        int gearX = rowWidth - 18;
-        row.addWidget(new ButtonWidget(gearX, 0, 18, 18, GuiTextures.BUTTON, c -> {
-            if (player.level().isClientSide) TeslaHighlightRenderer.highlight(pos, 200);
-        }));
-        row.addWidget(new ImageWidget(gearX + 1, 1, 16, 16, GuiTextures.IO_CONFIG_COVER_SETTINGS));
-
-        group.addWidget(row);
-        return y + 19;
+        return row;
     }
 
-    private String getDistanceString(BlockPos pos, Player player, CompoundTag data) {
-        if (data.contains("dim") && !player.level().dimension().location().toString().equals(data.getString("dim"))) {
-            String dim = data.getString("dim");
-            return "§8" + (dim.contains(":") ? dim.split(":")[1] : dim);
+    private IWidget buildDetailView(ItemStack stack, Player player, StringSyncValue selectedKey) {
+        Flow detailView = Flow.col()
+                .widthRel(1f)
+                .heightRel(1f)
+                .crossAxisAlignment(Alignment.CrossAxis.START);
+
+        detailView.setEnabledIf(w -> !selectedKey.getStringValue().isEmpty());
+
+        Flow backRow = Flow.row().widthRel(1f).height(18).margin(0, 0, 4, 0);
+        ButtonWidget<?> backButton = new ButtonWidget<>();
+        TextWidget backLabel = new TextWidget(Component.literal("< Back").withStyle(ChatFormatting.GRAY));
+        backLabel.alignment(Alignment.CENTER);
+        backButton.onMousePressed((context, button) -> {
+            selectedKey.setStringValue("");
+            return true;
+        })
+                .background(GTGuiTextures.BUTTON)
+                .width(40)
+                .height(18)
+                .child(backLabel);
+        backRow.child(backButton.getThis());
+
+        TextWidget detailTitle = new TextWidget(() -> resolveDetailTitle(stack, selectedKey));
+        detailTitle.margin(4, 0, 0, 0);
+        backRow.child(detailTitle);
+        detailView.child(backRow);
+
+        TextWidget detailBody = new TextWidget(() -> resolveDetailBody(stack, selectedKey));
+        detailBody.widthRel(1f);
+        detailBody.height(95);
+        detailBody.margin(0, 0, 6, 0);
+        detailBody.background(GTGuiTextures.DISPLAY);
+        detailView.child(detailBody);
+
+        ButtonWidget<?> highlightDeviceButton = new ButtonWidget<>();
+        TextWidget highlightDeviceLabel = new TextWidget(Component.literal("Highlight Device")
+                .withStyle(ChatFormatting.AQUA));
+        highlightDeviceLabel.alignment(Alignment.CENTER);
+        highlightDeviceButton.onMousePressed((context, button) -> {
+            if (player.level().isClientSide) {
+                CompoundTag hTag = resolveSelected(stack, selectedKey);
+                if (hTag != null) {
+                    TeslaHighlightRenderer.highlight(BlockPos.of(hTag.getLong("pos")), 200);
+                }
+            }
+            return true;
+        })
+                .background(GTGuiTextures.BUTTON)
+                .widthRel(1f)
+                .height(18)
+                .child(highlightDeviceLabel);
+        detailView.child(highlightDeviceButton.getThis());
+
+        return detailView;
+    }
+
+    private CompoundTag resolveSelected(ItemStack stack, StringSyncValue selectedKey) {
+        String key = selectedKey.getStringValue();
+        if (key.isEmpty()) return null;
+
+        String[] parts = key.split(":", 2);
+        if (parts.length != 2) return null;
+        String type = parts[0];
+        int index;
+        try {
+            index = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            return null;
         }
-        return "§7" + (int) Math.sqrt(player.blockPosition().distSqr(pos)) + "m";
+
+        CompoundTag tag = StackNbt.getOrCreateTag(stack);
+        ListTag list = switch (type) {
+            case "hatch" -> tag.getList("HatchData", Tag.TAG_COMPOUND);
+            case "machine" -> tag.getList("MachineData", Tag.TAG_COMPOUND);
+            case "charger" -> tag.getList("ChargerData", Tag.TAG_COMPOUND);
+            default -> new ListTag();
+        };
+        if (index < 0 || index >= list.size()) return null;
+        return list.getCompound(index);
+    }
+
+    private Component resolveDetailTitle(ItemStack stack, StringSyncValue selectedKey) {
+        CompoundTag hTag = resolveSelected(stack, selectedKey);
+        if (hTag == null) return Component.literal("");
+
+        String key = selectedKey.getStringValue();
+        boolean isHatch = key.startsWith("hatch:");
+        boolean isCharger = key.startsWith("charger:");
+
+        String hardwareTitle;
+        ChatFormatting titleColor;
+        if (isCharger) {
+            hardwareTitle = "Wireless Charger";
+            titleColor = ChatFormatting.AQUA;
+        } else if (isHatch) {
+            boolean isUplink = hTag.getBoolean("isOut");
+            hardwareTitle = isUplink ? "Tesla Uplink" : "Tesla Downlink";
+            titleColor = isUplink ? ChatFormatting.GREEN : ChatFormatting.RED;
+        } else {
+            hardwareTitle = hTag.contains("name") ? hTag.getString("name") : "Soul Consumer";
+            titleColor = ChatFormatting.LIGHT_PURPLE;
+        }
+
+        return Component.literal(hardwareTitle + " Details").withStyle(titleColor);
+    }
+
+    private Component resolveDetailBody(ItemStack stack, StringSyncValue selectedKey) {
+        CompoundTag hTag = resolveSelected(stack, selectedKey);
+        if (hTag == null) return Component.literal("");
+
+        String key = selectedKey.getStringValue();
+        boolean isHatch = key.startsWith("hatch:");
+        boolean isCharger = key.startsWith("charger:");
+
+        ChatFormatting titleColor;
+        String hardwareTitle;
+        if (isCharger) {
+            hardwareTitle = "Wireless Charger";
+            titleColor = ChatFormatting.AQUA;
+        } else if (isHatch) {
+            boolean isUplink = hTag.getBoolean("isOut");
+            hardwareTitle = isUplink ? "Tesla Uplink" : "Tesla Downlink";
+            titleColor = isUplink ? ChatFormatting.GREEN : ChatFormatting.RED;
+        } else {
+            hardwareTitle = hTag.contains("name") ? hTag.getString("name") : "Soul Consumer";
+            titleColor = ChatFormatting.LIGHT_PURPLE;
+        }
+
+        BlockPos p = BlockPos.of(hTag.getLong("pos"));
+        MutableComponent body = Component.literal(hardwareTitle).withStyle(titleColor, ChatFormatting.BOLD)
+                .append(Component.literal("\nLocation: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(String.format("%d, %d, %d", p.getX(), p.getY(), p.getZ()))
+                        .withStyle(ChatFormatting.WHITE));
+
+        if (!isCharger && hTag.contains("buf")) {
+            body.append(Component.literal("\nInternal Buffer: ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(compactTeslaValue(hTag.getString("buf")) + "EU")
+                            .withStyle(ChatFormatting.GOLD));
+        }
+
+        String transferStr = hTag.getString("transfer");
+        long flowVal = 0L;
+        try {
+            flowVal = Long.parseLong(transferStr.isEmpty() ? "0" : transferStr);
+        } catch (NumberFormatException ignored) {}
+
+        String sign;
+        if (isCharger) {
+            sign = "-";
+        } else if (isHatch) {
+            sign = hTag.getBoolean("isOut") ? "+" : "-";
+        } else {
+            sign = (flowVal < 0) ? "+" : (flowVal > 0 ? "-" : "");
+        }
+
+        String flowLabel = isCharger ? "Wireless Output: " : "Current Flow: ";
+        body.append(Component.literal("\n" + flowLabel).withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(sign + compactTeslaValue(String.valueOf(Math.abs(flowVal))) + "EU/t")
+                        .withStyle(flowVal != 0 ? titleColor : ChatFormatting.WHITE));
+
+        String statusText = (flowVal != 0) ? "OPERATIONAL" : "IDLE / NO LOAD";
+        body.append(Component.literal("\nStatus: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(statusText).withStyle(flowVal != 0 ? titleColor : ChatFormatting.DARK_GRAY));
+
+        return body;
     }
 
     private String compactTeslaValue(String value) {
         try {
             if (value == null || value.isEmpty()) return "0 ";
-            java.math.BigInteger n = new java.math.BigInteger(value);
-
-            if (n.equals(java.math.BigInteger.ZERO)) return "0 ";
+            BigInteger n = new BigInteger(value);
+            if (n.equals(BigInteger.ZERO)) return "0 ";
 
             boolean negative = n.signum() == -1;
             if (negative) n = n.abs();
 
-            java.math.BigInteger thousand = java.math.BigInteger.valueOf(1000);
-
+            BigInteger thousand = BigInteger.valueOf(1000);
             if (n.compareTo(thousand) < 0) {
-                return (negative ? "-" : "") + n.toString() + " ";
+                return (negative ? "-" : "") + n + " ";
             }
 
-            String result = getString(n);
-
-            return (negative ? "-" : "") + result;
+            return (negative ? "-" : "") + formatWithSuffix(n);
         } catch (Exception e) {
             return "0 ";
         }
     }
 
-    private static @NotNull String getString(BigInteger n) {
-        String[] suffixes = new String[] { " ", " k", " M", " G", " T", " P", " Ei", " Z", " Y" };
+    private static String formatWithSuffix(BigInteger n) {
+        String[] suffixes = { " ", " k", " M", " G", " T", " P", " Ei", " Z", " Y" };
         int tier = 0;
 
-        java.math.BigDecimal dN = new java.math.BigDecimal(n);
-        java.math.BigDecimal dThousand = new java.math.BigDecimal(1000);
+        BigDecimal dN = new BigDecimal(n);
+        BigDecimal dThousand = new BigDecimal(1000);
 
         while (dN.compareTo(dThousand) >= 0 && tier < suffixes.length - 1) {
-            dN = dN.divide(dThousand, 2, java.math.RoundingMode.HALF_UP);
+            dN = dN.divide(dThousand, 2, RoundingMode.HALF_UP);
             tier++;
         }
 
-        String result;
-
-        if (dN.compareTo(java.math.BigDecimal.valueOf(100)) >= 0) {
-            result = String.format("%.0f%s", dN, suffixes[tier]);
-        } else {
-            result = String.format("%.1f%s", dN, suffixes[tier]);
-        }
-        return result;
+        return dN.compareTo(BigDecimal.valueOf(100)) >= 0 ? String.format("%.0f%s", dN, suffixes[tier]) :
+                String.format("%.1f%s", dN, suffixes[tier]);
     }
 
     @Override
@@ -574,10 +735,10 @@ public class TeslaBinderItem extends ComponentItem
         if (level.isClientSide || !(entity instanceof ServerPlayer serverPlayer)) return;
         if (level.getGameTime() % 5 != 0) return;
 
-        boolean isUIOpen = serverPlayer.containerMenu instanceof com.lowdragmc.lowdraglib.gui.modular.ModularUIContainer;
+        boolean isUIOpen = serverPlayer.containerMenu != serverPlayer.inventoryMenu;
         if (!isSelected && !isUIOpen) return;
 
-        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag tag = StackNbt.getOrCreateTag(stack);
         if (tag.hasUUID("TargetTeam")) {
             UUID teamUUID = tag.getUUID("TargetTeam");
             ServerLevel overworld = serverPlayer.server.getLevel(Level.OVERWORLD);
@@ -595,9 +756,7 @@ public class TeslaBinderItem extends ComponentItem
 
             ListTag hatchList = new ListTag();
             for (TeslaTeamEnergyData.HatchInfo hatch : globalData.getHatches(teamUUID)) {
-                if (hatch == null || hatch.pos == null || hatch.dimension == null) continue;
-
-                if (hatch.isSoulLinked) continue;
+                if (hatch == null || hatch.isSoulLinked) continue;
 
                 Boolean live = TeslaTeamEnergyData.isLivePhysicalHatch(serverPlayer.server, hatch);
                 if (live == null) continue;
@@ -610,8 +769,8 @@ public class TeslaBinderItem extends ComponentItem
                 hTag.putLong("pos", hatch.pos.asLong());
                 hTag.putBoolean("isOut", hatch.isPhysicalOutput);
                 hTag.putString("dim", hatch.dimension.location().toString());
-                hTag.putString("buf", hatch.buffered != null ? hatch.buffered.toString() : "0");
-                hTag.putString("transfer", String.valueOf(team.machineDisplayFlow.getOrDefault(hatch.pos, 0L)));
+                hTag.putString("buf", hatch.buffered.toString());
+                hTag.putString("transfer", String.valueOf(hatch.displayFlow));
                 hatchList.add(hTag);
             }
             tag.put("HatchData", hatchList);
@@ -619,7 +778,7 @@ public class TeslaBinderItem extends ComponentItem
             ListTag machineList = new ListTag();
             for (BlockPos mPos : team.soulLinkedMachines) {
                 if (mPos == null) continue;
-                ResourceKey<Level> mDim = team.posToDimension.getOrDefault(mPos, Level.OVERWORLD);
+                ResourceKey<Level> mDim = team.getMachineDimension(mPos);
                 ServerLevel mLevel = serverPlayer.server.getLevel(mDim);
 
                 CompoundTag mTag = new CompoundTag();
@@ -682,7 +841,7 @@ public class TeslaBinderItem extends ComponentItem
         target.hurt(target.damageSources().playerAttack((Player) attacker), 16.0f);
 
         target.level().playSound(null, target.blockPosition(),
-                SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 0.5f, 2.0f);
+                SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 0.5f, 2.0f);
 
         return true;
     }

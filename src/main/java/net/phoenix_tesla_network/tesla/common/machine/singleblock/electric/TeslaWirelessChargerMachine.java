@@ -1,25 +1,19 @@
 package net.phoenix_tesla_network.tesla.common.machine.singleblock.electric;
 
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
-import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine.State;
-
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.annotation.RequireRerender;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableEnergyContainer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine.State;
+import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -27,18 +21,26 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.wrapper.PlayerInvWrapper;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.wrapper.PlayerMainInvWrapper;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
+import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.utils.Alignment;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.TextWidget;
+import brachy.modularui.widgets.layout.Flow;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.math.BigInteger;
@@ -47,20 +49,18 @@ import java.util.List;
 import java.util.UUID;
 
 public class TeslaWirelessChargerMachine extends TieredEnergyMachine
-                                         implements IDataStickInteractable, IFancyUIMachine {
+                                         implements IDataStickInteractable, IMuiMachine {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            TeslaWirelessChargerMachine.class, TieredEnergyMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
-    @DescSynced
+    @SaveField
+    @SyncToClient
     private UUID boundTeam;
 
-    @DescSynced
+    @SaveField
+    @SyncToClient
     private long lastTransferred = 0L;
 
-    @DescSynced
-    @RequireRerender
+    @SaveField
+    @SyncToClient
     private State state = State.IDLE;
 
     // Conversion for plain FE items. Swap this for GTCEu's configured EU->FE ratio if you want it to follow the config.
@@ -69,13 +69,9 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
     private final List<UUID> playersInRange = new ArrayList<>();
     private TickableSubscription tickSubs;
 
-    public TeslaWirelessChargerMachine(IMachineBlockEntity holder, int tier) {
-        super(holder, tier);
-    }
-
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public TeslaWirelessChargerMachine(BlockEntityCreationInfo holder, int tier) {
+        super(holder, tier, NotifiableEnergyContainer.receiverContainer(
+                GTValues.V[tier] * 64L, GTValues.V[tier], 1L));
     }
 
     @Override
@@ -106,16 +102,16 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         TeslaTeamEnergyData.TeamEnergy network = data.getOrCreate(boundTeam);
 
         if (getOffsetTimer() % 10 == 0) {
-            if (!TeslaRange.isInRange(network, level.dimension(), getPos())) {
+            if (!TeslaRange.isInRange(network, level.dimension(), getBlockPos())) {
                 this.lastTransferred = 0L;
-                network.machineDisplayFlow.put(getPos(), 0L);
+                network.machineDisplayFlow.put(getBlockPos(), 0L);
                 changeState(State.IDLE);
                 return;
             }
 
             if (network.stored.signum() <= 0) {
                 this.lastTransferred = 0L;
-                network.machineDisplayFlow.put(getPos(), 0L);
+                network.machineDisplayFlow.put(getBlockPos(), 0L);
                 changeState(State.IDLE);
                 return;
             }
@@ -140,8 +136,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             playerLoop:
             for (Player player : playersToCharge) {
                 List<IItemHandler> inventories = new ArrayList<>();
-                // Covers main inventory, armor slots and offhand
-                inventories.add(new PlayerInvWrapper(player.getInventory()));
+                inventories.add(new PlayerMainInvWrapper(player.getInventory()));
                 CuriosApi.getCuriosInventory(player).ifPresent(h -> inventories.add(h.getEquippedCurios()));
 
                 // Efficiency depends only on the player's position, so compute it once per player
@@ -158,8 +153,8 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
                         long accepted = chargeStack(stack, network, efficiency, totalBatchBudget);
 
                         if (accepted > 0) {
-                            // Charging mutates the stack in place. Writing it back makes Curios'
-                            // handler fire onContentsChanged so the change is saved and synced.
+                            // Charging mutates the stack in place. Writing it back makes the Curios handler fire
+                            // onContentsChanged so the change is saved and synced.
                             if (handler instanceof IItemHandlerModifiable modifiable) {
                                 modifiable.setStackInSlot(i, stack);
                             }
@@ -172,11 +167,11 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             }
 
             this.lastTransferred = movedInThisCycle / ticksInBatch;
-            network.machineDisplayFlow.put(getPos(), this.lastTransferred);
+            network.machineDisplayFlow.put(getBlockPos(), this.lastTransferred);
 
             if (movedInThisCycle > 0) {
-                network.machineCurrentFlow.merge(getPos(), movedInThisCycle, Long::sum);
-                network.markHatchActive(getPos(), level.getGameTime());
+                network.machineCurrentFlow.merge(getBlockPos(), movedInThisCycle, Long::sum);
+                network.markHatchActive(getBlockPos(), level.getGameTime());
                 data.setDirty();
                 changeState(State.RUNNING);
             } else {
@@ -207,7 +202,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         }
 
         // Fallback: plain FE container (e.g. AE2 wireless terminals via ae2wtlib)
-        IEnergyStorage fe = stack.getCapability(ForgeCapabilities.ENERGY).resolve().orElse(null);
+        IEnergyStorage fe = stack.getCapability(Capabilities.EnergyStorage.ITEM);
         if (fe != null && fe.canReceive()) {
             long feNeeded = (long) fe.getMaxEnergyStored() - fe.getEnergyStored();
             if (feNeeded <= 0) return 0;
@@ -244,7 +239,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
     public void onUnload() {
         super.onUnload();
         if (boundTeam != null && getLevel() instanceof ServerLevel level) {
-            TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).machineDisplayFlow.remove(getPos());
+            TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).machineDisplayFlow.remove(getBlockPos());
         }
     }
 
@@ -256,7 +251,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         }
 
         UUID owner = getOwnerUUID();
-        if (owner == null) return;
+        if (TeamUtils.isNil(owner)) return;
 
         UUID team = TeamUtils.getTeamIdOrPlayerFallback(owner);
         if (team == null) return;
@@ -266,18 +261,18 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         unregisterFromNetwork();
         this.boundTeam = team;
         registerToNetwork();
-        this.markDirty();
+        this.markAsChanged();
     }
 
     private void registerToNetwork() {
         if (!isRemote() && boundTeam != null && getLevel() instanceof ServerLevel level) {
-            TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).addCharger(getPos());
+            TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).addCharger(getBlockPos());
         }
     }
 
     private void unregisterFromNetwork() {
         if (!isRemote() && boundTeam != null && getLevel() instanceof ServerLevel level) {
-            TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).removeCharger(getPos());
+            TeslaTeamEnergyData.get(level).getOrCreate(boundTeam).removeCharger(getBlockPos());
         }
     }
 
@@ -286,7 +281,9 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         if (!stick.is(PhoenixTeslaItems.TESLA_BINDER.get())) return InteractionResult.PASS;
         if (isRemote()) return InteractionResult.SUCCESS;
 
-        UUID stickTeam = stick.getOrCreateTag().getUUID("TargetTeam");
+        var tag = StackNbt.getTag(stick);
+        if (tag == null || !tag.hasUUID("TargetTeam")) return InteractionResult.PASS;
+        UUID stickTeam = tag.getUUID("TargetTeam");
 
         if (this.boundTeam != null && this.boundTeam.equals(stickTeam)) {
             unregisterFromNetwork();
@@ -299,45 +296,45 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             player.sendSystemMessage(Component.literal("Charger Synchronized").withStyle(ChatFormatting.LIGHT_PURPLE));
         }
 
-        this.markDirty();
+        this.markAsChanged();
         return InteractionResult.SUCCESS;
     }
 
     @Override
-    public Widget createUIWidget() {
-        WidgetGroup root = new WidgetGroup(0, 0, 170, 80);
-        root.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        root.addWidget(new ComponentPanelWidget(10, 10, this::addDisplayText));
-        return root;
-    }
+    public ModularPanel<?> buildUI(PosGuiData data, PanelSyncManager syncManager, UISettings settings) {
+        ModularPanel<?> panel = new ModularPanel<>("phoenix_tesla_network:tesla_wireless_charger_panel")
+                .size(170, 95);
 
-    private void addDisplayText(List<Component> text) {
-        text.add(Component.literal(GTValues.VNF[getTier()] + " Wireless Charger").withStyle(ChatFormatting.GOLD,
-                ChatFormatting.BOLD));
-        text.add(Component.empty());
+        Flow layout = Flow.column()
+                .size(170, 95)
+                .padding(10)
+                .crossAxisAlignment(Alignment.CrossAxis.START);
 
-        if (boundTeam == null) {
-            text.add(Component.literal("STATUS: ").append(Component.literal("UNBOUND").withStyle(ChatFormatting.RED)));
-        } else {
-            text.add(Component.literal("NETWORK: ")
-                    .append(Component.literal(TeamUtils.getTeamName(boundTeam)).withStyle(ChatFormatting.AQUA)));
-            text.add(Component.literal("REACH: ")
-                    .append(Component.literal("Determined by Tesla Network")
-                            .withStyle(ChatFormatting.LIGHT_PURPLE)));
+        layout.child(new TextWidget<>(Component.literal("Tesla Field Generator")
+                .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)).marginBottom(8));
 
-            String rate = com.gregtechceu.gtceu.utils.FormattingUtil.formatNumbers(lastTransferred);
-            text.add(Component.literal("OUTPUT: ")
-                    .append(Component.literal(rate + " EU/t").withStyle(ChatFormatting.GREEN)));
-        }
-    }
+        layout.child(new TextWidget<>(() -> {
+            if (boundTeam == null) {
+                return Component.literal("STATUS: ").append(Component.literal("UNBOUND").withStyle(ChatFormatting.RED));
+            }
+            return Component.literal("NETWORK: ")
+                    .append(Component.literal(TeamUtils.getTeamName(boundTeam)).withStyle(ChatFormatting.AQUA));
+        }).marginBottom(4));
 
-    @Override
-    public IGuiTexture getTabIcon() {
-        return GuiTextures.CHARGER_OVERLAY;
-    }
+        layout.child(new TextWidget<>(() -> {
+            if (boundTeam == null) return Component.empty();
+            return Component.literal("REACH: ")
+                    .append(Component.literal("Determined by Tesla Network").withStyle(ChatFormatting.LIGHT_PURPLE));
+        }).marginBottom(4));
 
-    @Override
-    public Component getTitle() {
-        return Component.literal("Tesla Field Generator");
+        layout.child(new TextWidget<>(() -> {
+            if (boundTeam == null) return Component.empty();
+            String rate = FormattingUtil.formatNumbers(lastTransferred);
+            return Component.literal("OUTPUT: ")
+                    .append(Component.literal(rate + " EU/t").withStyle(ChatFormatting.GREEN));
+        }));
+
+        panel.child(layout);
+        return panel;
     }
 }

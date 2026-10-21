@@ -7,17 +7,21 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
-import net.phoenix_tesla_network.tesla.network.PhoenixNetwork;
 import net.phoenix_tesla_network.tesla.network.packet.UpdateWingSettingsPacket;
+import net.phoenix_tesla_network.tesla.util.StackNbt;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class WingFlightScreen extends Screen {
+
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {}
 
     private String flightMode;
     private int flightSpeed;
@@ -72,7 +76,7 @@ public class WingFlightScreen extends Screen {
     public WingFlightScreen() {
         super(Component.literal("Wing Flight Control"));
         ItemStack chest = Minecraft.getInstance().player.getItemBySlot(EquipmentSlot.CHEST);
-        CompoundTag tag = chest.getOrCreateTag();
+        CompoundTag tag = StackNbt.getOrCreateTag(chest);
         this.flightMode = tag.contains("FlightMode") ? tag.getString("FlightMode") : "basic";
         this.flightSpeed = tag.contains("FlightSpeed") ? tag.getInt("FlightSpeed") : 5;
         this.flightDrift = tag.contains("FlightDrift") ? tag.getInt("FlightDrift") : 5;
@@ -124,7 +128,7 @@ public class WingFlightScreen extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int rmx, int rmy, float partialTick) {
-        renderBackground(gfx);
+        renderBackground(gfx, 0, 0, 0f);
 
         int mouseX = Math.round(rmx / uiScale);
         int mouseY = Math.round(rmy / uiScale);
@@ -329,7 +333,7 @@ public class WingFlightScreen extends Screen {
     }
 
     private void sendUpdate() {
-        PhoenixNetwork.CHANNEL.sendToServer(
+        PacketDistributor.sendToServer(
                 new UpdateWingSettingsPacket(flightMode, flightSpeed, flightDrift, flightVertical, sprintSpeed,
                         jumpHeight, stepHeight, keepFlyingOnLand));
     }

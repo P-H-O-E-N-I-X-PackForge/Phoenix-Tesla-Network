@@ -1,72 +1,110 @@
 package net.phoenix_tesla_network.tesla.api.pattern;
 
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.gregtechceu.gtceu.api.multiblock.MultiPredicate;
+import com.gregtechceu.gtceu.api.multiblock.Predicates;
+import com.gregtechceu.gtceu.api.multiblock.error.PlaceholderError;
+import com.gregtechceu.gtceu.api.multiblock.util.BlockInfo;
+import com.gregtechceu.gtceu.common.block.LampBlock;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaAPI;
 import net.phoenix_tesla_network.tesla.api.machine.trait.ITeslaBattery;
 import net.phoenix_tesla_network.tesla.common.block.TeslaBatteryBlock;
-import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine;
 
-import java.math.BigInteger;
+import com.tterrag.registrate.util.entry.BlockEntry;
+
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine.TTB_BATTERY_HEADER;
+import static com.gregtechceu.gtceu.common.data.GTBlocks.BORDERLESS_LAMPS;
+import static com.gregtechceu.gtceu.common.data.GTBlocks.LAMPS;
 
 public class PhoenixPredicates {
 
-    public static TraceabilityPredicate teslaBatteries() {
+    public static MultiPredicate teslaBatteries() {
         return teslaBatteries(Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
-    public static TraceabilityPredicate teslaBatteries(int minTier, int maxTier) {
-        return new TraceabilityPredicate(blockWorldState -> {
-            BlockState state = blockWorldState.getBlockState();
+    public static MultiPredicate teslaBatteries(int minTier, int maxTier) {
+        List<BlockInfo> candidates = PhoenixTeslaAPI.TESLA_BATTERIES.entrySet().stream()
+                .filter(e -> e.getKey().getTier() >= minTier && e.getKey().getTier() <= maxTier)
+                .sorted(Comparator.comparingInt(e -> e.getKey().getTier()))
+                .map(e -> new BlockInfo(e.getValue().get().defaultBlockState()))
+                .collect(Collectors.toList());
 
-            for (Map.Entry<ITeslaBattery, Supplier<TeslaBatteryBlock>> entry : PhoenixTeslaAPI.TESLA_BATTERIES
-                    .entrySet()) {
-                if (state.is(entry.getValue().get())) {
-                    ITeslaBattery battery = entry.getKey();
-
-                    if (battery.getTier() != -1 && (battery.getTier() < minTier || battery.getTier() > maxTier)) {
-                        return false;
+        return Predicates.builder("tesla_battery")
+                .candidates(candidates)
+                .predicate(ctx -> {
+                    BlockState state = ctx.state();
+                    for (Map.Entry<ITeslaBattery, Supplier<TeslaBatteryBlock>> entry : PhoenixTeslaAPI.TESLA_BATTERIES
+                            .entrySet()) {
+                        if (state.is(entry.getValue().get())) {
+                            int tier = entry.getKey().getTier();
+                            return tier == -1 || (tier >= minTier && tier <= maxTier);
+                        }
                     }
-
-                    if (battery.getTier() != -1 && battery.getCapacity().compareTo(BigInteger.ZERO) > 0) {
-                        String key = TTB_BATTERY_HEADER + battery.getBatteryName();
-
-                        TeslaTowerMachine.BatteryMatchWrapper wrapper = blockWorldState.getMatchContext()
-                                .getOrCreate(key, () -> new TeslaTowerMachine.BatteryMatchWrapper(battery));
-
-                        wrapper.increment();
-                    }
-                    return true;
-                }
-            }
-            return false;
-        }, () -> PhoenixTeslaAPI.TESLA_BATTERIES.entrySet().stream()
-                .filter(entry -> entry.getKey().getTier() >= minTier && entry.getKey().getTier() <= maxTier)
-                .sorted(Comparator.comparingInt(entry -> entry.getKey().getTier()))
-                .map(entry -> new BlockInfo(entry.getValue().get().defaultBlockState(), null))
-                .toArray(BlockInfo[]::new))
+                    return false;
+                })
+                .errorFunction(ctx -> PlaceholderError.instance())
+                .toMultiPredicate()
                 .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.batteries"));
     }
 
-    public static TraceabilityPredicate tieredAbilities(int minTier, int maxTier, PartAbility... abilities) {
+    /** Hatches of the given abilities, restricted to a voltage tier range. */
+    public static MultiPredicate tieredAbilities(int minTier, int maxTier, PartAbility... abilities) {
         int lo = Math.min(minTier, maxTier);
         int hi = Math.max(minTier, maxTier);
 
-        List<Block> blocks = new ArrayList<>();
+        int[] tiers = new int[hi - lo + 1];
+        for (int i = 0; i < tiers.length; i++) tiers[i] = lo + i;
+
+        MultiPredicate combined = null;
         for (PartAbility ability : abilities) {
-            blocks.addAll(ability.getBlockRange(lo, hi));
+            MultiPredicate next = Predicates.ability(ability, tiers);
+            combined = combined == null ? next : combined.or(next);
         }
-        return Predicates.blocks(blocks.toArray(Block[]::new));
+        return combined == null ? Predicates.any() : combined;
+    }
+
+    @SafeVarargs
+    public static MultiPredicate lamps(BlockEntry<LampBlock>... lampEntries) {
+        List<BlockInfo> candidates = Arrays.stream(lampEntries)
+                .map(e -> new BlockInfo(e.get().defaultBlockState()))
+                .collect(Collectors.toList());
+
+        return Predicates.builder("lamp")
+                .candidates(candidates)
+                .predicate(ctx -> {
+                    BlockState state = ctx.state();
+                    for (BlockEntry<LampBlock> entry : lampEntries) {
+                        if (state.is(entry.get())) return true;
+                    }
+                    return false;
+                })
+                .errorFunction(ctx -> PlaceholderError.instance())
+                .toMultiPredicate();
+    }
+
+    public static MultiPredicate anyLamp() {
+        List<BlockEntry<LampBlock>> all = new ArrayList<>();
+        all.addAll(LAMPS.values());
+        all.addAll(BORDERLESS_LAMPS.values());
+        return lamps(all.toArray(BlockEntry[]::new));
+    }
+
+    private static final Map<DyeColor, MultiPredicate> LAMPS_BY_COLOR = new EnumMap<>(DyeColor.class);
+
+    static {
+        for (DyeColor color : DyeColor.values()) {
+            LAMPS_BY_COLOR.put(color, lamps(LAMPS.get(color), BORDERLESS_LAMPS.get(color)));
+        }
+    }
+
+    public static MultiPredicate lampsByColor(DyeColor color) {
+        return LAMPS_BY_COLOR.getOrDefault(color, anyLamp());
     }
 }

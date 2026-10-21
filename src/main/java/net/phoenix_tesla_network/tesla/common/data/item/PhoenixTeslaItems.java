@@ -8,7 +8,7 @@ import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Rarity;
-import net.minecraftforge.common.Tags;
+import net.neoforged.neoforge.common.Tags;
 
 import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.util.entry.ItemEntry;
@@ -38,7 +38,7 @@ public class PhoenixTeslaItems {
                             8)))
             .lang("Phoenix Tech Suite Helmet")
             .properties(p -> p.rarity(Rarity.EPIC))
-            .tag(Tags.Items.ARMORS_HELMETS)
+            .tag(ItemTags.HEAD_ARMOR)
             .tag(CustomTags.PPE_ARMOR)
             .register();
 
@@ -48,7 +48,7 @@ public class PhoenixTeslaItems {
                             new PhoenixTechSuite(ArmorItem.Type.CHESTPLATE, 16384, 500_000_000L, 6)))
             .lang("Phoenix Tech Suite Chestplate")
             .properties(p -> p.rarity(Rarity.EPIC))
-            .tag(Tags.Items.ARMORS_CHESTPLATES)
+            .tag(ItemTags.CHEST_ARMOR)
             .tag(ItemTags.FREEZE_IMMUNE_WEARABLES)
             .tag(CustomTags.PPE_ARMOR)
             .register();
@@ -61,7 +61,7 @@ public class PhoenixTeslaItems {
                             6)))
             .lang("Phoenix Tech Suite Leggings")
             .properties(p -> p.rarity(Rarity.EPIC))
-            .tag(Tags.Items.ARMORS_LEGGINGS)
+            .tag(ItemTags.LEG_ARMOR)
             .tag(CustomTags.PPE_ARMOR)
             .register();
 
@@ -73,7 +73,7 @@ public class PhoenixTeslaItems {
                             6)))
             .lang("Phoenix Tech Suite Boots")
             .properties(p -> p.rarity(Rarity.EPIC))
-            .tag(Tags.Items.ARMORS_BOOTS)
+            .tag(ItemTags.FOOT_ARMOR)
             .tag(CustomTags.PPE_ARMOR)
             .tag(CustomTags.STEP_BOOTS)
             .register();

@@ -1,12 +1,12 @@
 package net.phoenix_tesla_network.tesla.datagen.models;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
-import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine;
+import com.gregtechceu.gtceu.api.registry.registrate.builder.MachineBuilder;
+import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.client.model.generators.BlockModelBuilder;
+import net.neoforged.neoforge.client.model.generators.BlockModelBuilder;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.machine.trait.ITeslaBattery;
 import net.phoenix_tesla_network.tesla.common.block.TeslaBatteryBlock;
@@ -41,7 +41,7 @@ public class PhoenixMachineModels {
     public static MachineBuilder.ModelInitializer createWirelessChargerModel() {
         return (ctx, prov, builder) -> {
             builder.forAllStatesModels(renderState -> {
-                ChargerMachine.State state = renderState.getValue(CHARGER_STATE);
+                BatteryBufferMachine.State state = renderState.getValue(CHARGER_STATE);
 
                 BlockModelBuilder model = prov.models().nested()
                         .parent(prov.models().getExistingFile(SIDED_SIDED_OVERLAY_MODEL));

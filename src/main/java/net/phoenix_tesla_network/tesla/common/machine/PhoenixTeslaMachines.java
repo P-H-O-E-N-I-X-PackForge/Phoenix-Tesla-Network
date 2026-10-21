@@ -2,26 +2,31 @@ package net.phoenix_tesla_network.tesla.common.machine;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.MachineInstanceFactory;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.api.pattern.FactoryBlockPattern;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
+import com.gregtechceu.gtceu.api.multiblock.MultiPredicate;
+import com.gregtechceu.gtceu.api.multiblock.Predicates;
+import com.gregtechceu.gtceu.api.multiblock.pattern.IBlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.pattern.MultiblockPatternBuilder;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
-import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
+import com.gregtechceu.gtceu.api.registry.registrate.builder.MachineBuilder;
+import com.gregtechceu.gtceu.api.registry.registrate.entry.MachineEntry;
 import com.gregtechceu.gtceu.common.data.GCYMBlocks;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
-import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine;
+import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
+import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import net.minecraft.ChatFormatting;
@@ -32,7 +37,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.pattern.PhoenixPredicates;
 import net.phoenix_tesla_network.tesla.client.renderer.machine.multiblock.PhoenixDynamicRenderHelpers;
@@ -54,7 +59,7 @@ import java.util.function.BiFunction;
 
 import static com.gregtechceu.gtceu.api.GTValues.*;
 import static com.gregtechceu.gtceu.api.GTValues.VCF;
-import static com.gregtechceu.gtceu.api.pattern.Predicates.*;
+import static com.gregtechceu.gtceu.api.multiblock.Predicates.*;
 import static com.gregtechceu.gtceu.common.data.models.GTMachineModels.createWorkableCasingMachineModel;
 import static net.phoenix_tesla_network.tesla.common.registry.PhoenixRegistration.REGISTRATE;
 
@@ -62,21 +67,21 @@ public class PhoenixTeslaMachines {
 
     public static final int[] MULTI_AMP_TESLA_HATCH = GTValues.tiersBetween(EV, GTCEuAPI.isHighTier() ? MAX : UHV);
 
-    public static final MultiblockMachineDefinition TESLA_TOWER_BASIC = registerTower(TeslaTowerType.BASIC);
-    public static final MultiblockMachineDefinition TESLA_TOWER_ADVANCED = registerTower(TeslaTowerType.ADVANCED);
-    public static final MultiblockMachineDefinition TESLA_TOWER = registerTower(TeslaTowerType.ULTIMATE);
+    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER_BASIC = registerTower(TeslaTowerType.BASIC);
+    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER_ADVANCED = registerTower(TeslaTowerType.ADVANCED);
+    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER = registerTower(TeslaTowerType.ULTIMATE);
 
-    public static final MultiblockMachineDefinition TESLA_RELAY = registerRelay();
+    public static final MachineEntry<MultiblockMachineDefinition> TESLA_RELAY = registerRelay();
 
     public static ItemStack getCreativeTabIcon() {
-        for (MultiblockMachineDefinition definition : new MultiblockMachineDefinition[] { TESLA_TOWER,
-                TESLA_TOWER_ADVANCED, TESLA_TOWER_BASIC, TESLA_RELAY }) {
-            if (definition != null) return definition.asStack();
+        for (MachineEntry<MultiblockMachineDefinition> entry : java.util.Arrays.asList(TESLA_TOWER,
+                TESLA_TOWER_ADVANCED, TESLA_TOWER_BASIC, TESLA_RELAY)) {
+            if (entry != null) return entry.asStack();
         }
         return ItemStack.EMPTY;
     }
 
-    private static MultiblockMachineDefinition registerTower(TeslaTowerType type) {
+    private static MachineEntry<MultiblockMachineDefinition> registerTower(TeslaTowerType type) {
         if (!type.profile().enabled) return null;
 
         // Determine the correct casing block and model string based on the tower tier
@@ -99,6 +104,7 @@ public class PhoenixTeslaMachines {
                 .recipeType(PhoenixTeslaRecipeTypes.TESLA_TOWER)
                 .appearanceBlock(casingBlock)
                 .pattern(definition -> buildTowerPattern(definition, type))
+                .modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE)
                 .model(
                         createWorkableCasingMachineModel(
                                 PhoenixTeslaNetwork.id(casingModelPath),
@@ -138,7 +144,7 @@ public class PhoenixTeslaMachines {
                         TeslaTowerType.tierName(profile.maxBatteryTier)).withStyle(ChatFormatting.AQUA)));
     }
 
-    private static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
+    private static MultiPredicate hatchPredicate(MultiblockMachineDefinition definition,
                                                         PhoenixTeslaConfigs.TowerProfile profile) {
         return hatchPredicate(definition, profile, PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get());
     }
@@ -149,12 +155,12 @@ public class PhoenixTeslaMachines {
      */
     private static final int MAX_HATCHES_PER_TYPE = 10;
 
-    static TraceabilityPredicate hatchPredicate(MultiblockMachineDefinition definition,
+    static MultiPredicate hatchPredicate(MultiblockMachineDefinition definition,
                                                 PhoenixTeslaConfigs.TowerProfile profile,
                                                 Block casing) {
         int min = profile.minHatchTier;
         int max = profile.maxHatchTier;
-        TraceabilityPredicate predicate = blocks(casing);
+        MultiPredicate predicate = blocks(casing);
 
         if (profile.allowItemFluidHatches) {
             predicate = predicate.or(Predicates.autoAbilities(definition.getRecipeTypes(), false, false, true, true,
@@ -163,7 +169,7 @@ public class PhoenixTeslaMachines {
         if (profile.allowMaintenanceHatch) {
             predicate = predicate.or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1));
         }
-        // IMPORTANT: use exactly ONE predicate per ability. GT's TraceabilityPredicate.test() runs every limited
+        // IMPORTANT: use exactly ONE predicate per ability. GT's MultiPredicate.test() runs every limited
         // predicate on every block without short-circuiting, so two predicates for the same hatch both count each
         // hatch and the stricter cap silently wins. Autobuild also fills each remaining slot from the limited
         // predicates in turn, which is how the old min1/max2 + max10 pair produced 11 input hatches (over the cap of
@@ -195,7 +201,7 @@ public class PhoenixTeslaMachines {
         return predicate;
     }
 
-    private static BlockPattern buildTowerPattern(MultiblockMachineDefinition definition, TeslaTowerType type) {
+    private static IBlockPattern buildTowerPattern(MultiblockMachineDefinition definition, TeslaTowerType type) {
         var profile = type.profile();
 
         if (type == TeslaTowerType.BASIC) return basicTowerPattern(definition, profile);
@@ -206,18 +212,18 @@ public class PhoenixTeslaMachines {
     private static final String MOD = "phoenix_tesla_network:";
 
     private static Block byId(String id) {
-        Block block = ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse(id));
+        Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(id));
         if (block == null || block == Blocks.AIR) {
             throw new IllegalStateException("Missing block '" + id + "' while building a Tesla Tower pattern");
         }
         return block;
     }
 
-    private static TraceabilityPredicate lamp(DyeColor color) {
-        return Predicates.lampsByColor(color);
+    private static MultiPredicate lamp(DyeColor color) {
+        return PhoenixPredicates.lampsByColor(color);
     }
 
-    private static TraceabilityPredicate glass(PhoenixTeslaConfigs.TowerProfile profile) {
+    private static MultiPredicate glass(PhoenixTeslaConfigs.TowerProfile profile) {
         List<Block> allowed = new ArrayList<>(3);
         if (profile.allowTemperedGlass) allowed.add(GTBlocks.CASING_TEMPERED_GLASS.get());
         if (profile.allowLaminatedGlass) allowed.add(GTBlocks.CASING_LAMINATED_GLASS.get());
@@ -230,26 +236,26 @@ public class PhoenixTeslaMachines {
         return blocks(allowed.toArray(new Block[0]));
     }
 
-    private static BlockPattern basicTowerPattern(MultiblockMachineDefinition definition,
+    private static IBlockPattern basicTowerPattern(MultiblockMachineDefinition definition,
                                                   PhoenixTeslaConfigs.TowerProfile profile) {
-        return FactoryBlockPattern.start()
-                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+        return MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
+                .slice("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
                         "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("ABDDDDDBA", "AAAEDEAAA", "AAAEDEAAA", "AADDDDDAA", "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA",
+                .slice("ABDDDDDBA", "AAAEDEAAA", "AAAEDEAAA", "AADDDDDAA", "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA",
                         "AADDDDDAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA", "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA",
+                .slice("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA", "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA",
                         "ADDDDDDDA", "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA", "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA",
+                .slice("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA", "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA",
                         "ADDDDDDDA", "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("BDGGGGGDB", "ADAEHEADA", "ADAAEAADA", "ADDGEGDDA", "AFAEIEAFA", "AFAEIEAFA", "AFAEIEAFA",
+                .slice("BDGGGGGDB", "ADAEHEADA", "ADAAEAADA", "ADDGEGDDA", "AFAEIEAFA", "AFAEIEAFA", "AFAEIEAFA",
                         "ADDDIDDDA", "AAAEIEAAA", "AAAEIEAAA", "AAADIDAAA", "AAAAIAAAA", "AAAAIAAAA")
-                .aisle("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA", "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA",
+                .slice("BDGGGGGDB", "AEAAEAAEA", "AEAAAAAEA", "ADDGGGDDA", "AFAGEGAFA", "AFAGEGAFA", "AFAGEGAFA",
                         "ADDDDDDDA", "AAADEDAAA", "AAADEDAAA", "AAADDDAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA", "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA",
+                .slice("BDDGGGDDB", "AAAAAAAAA", "AAAAAAAAA", "ADDDDDDDA", "AFAAAAAFA", "AFAAAAAFA", "AFAAAAAFA",
                         "ADDDDDDDA", "AAEAAAEAA", "AAEAAAEAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("ABDDDDDBA", "AAAEJEAAA", "AAAEDEAAA", "AADDDDDAA", "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA",
+                .slice("ABDDDDDBA", "AAAEJEAAA", "AAAEDEAAA", "AADDDDDAA", "AAFFFFFAA", "AAFFFFFAA", "AAFFFFFAA",
                         "AADDDDDAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
-                .aisle("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
+                .slice("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
                         "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
                 .where('A', Predicates.any())
                 .where('B', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
@@ -260,84 +266,84 @@ public class PhoenixTeslaMachines {
                 .where('G', lamp(DyeColor.PURPLE))
                 .where('H', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
                 .where('I', heatingCoils())
-                .where('J', controller(blocks(definition.get())))
+                .where('J', controller(blocks(definition.getBlock())))
                 .build();
     }
 
-    private static BlockPattern advancedTowerPattern(MultiblockMachineDefinition definition,
+    private static IBlockPattern advancedTowerPattern(MultiblockMachineDefinition definition,
                                                      PhoenixTeslaConfigs.TowerProfile profile) {
-        return FactoryBlockPattern.start()
-                .aisle("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+        return MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
+                .slice("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCCCCCCAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("ABBCCCCCBBA", "AAAAECEAAAA", "AAAAECEAAAA", "AAACCCCCAAA",
+                .slice("ABBCCCCCBBA", "AAAAECEAAAA", "AAAAECEAAAA", "AAACCCCCAAA",
                         "AAAFFCFFAAA", "AAAFFCFFAAA", "AAAFFCFFAAA", "ACCGGCGGCCA",
                         "AAAEAAAEAAA", "AAAEAAAEAAA", "AAAGGGGGAAA", "AAAFFFFFAAA",
                         "AAAFFFFFAAA", "AAAGGGGGAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("BBCCGGGCCBB", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCGGGCCAA",
+                .slice("BBCCGGGCCBB", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCGGGCCAA",
                         "AAGFAAAFGAA", "AAGFAAAFGAA", "AAGFAAAFGAA", "CCGGHCHGGCC",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAGGBBBGGAA", "AAFFAAAFFAA",
                         "AAFFAAAFFAA", "AAGGBBBGGAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAABBBBBAAA", "AAACFFFCAAA", "AAACFFFCAAA", "AAACFFFCAAA",
                         "AAACCCCCAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("BCCGGHGGCCB", "AAAAAAAAAAA", "AAAAAAAAAAA", "ACCGGHGGCCA",
+                .slice("BCCGGHGGCCB", "AAAAAAAAAAA", "AAAAAAAAAAA", "ACCGGHGGCCA",
                         "AFFAAAAAFFA", "AFFAAAAAFFA", "AFFAAAAAFFA", "CGGHHCHHGGC",
                         "AEAAAAAAAEA", "AEAAAAAAAEA", "AGGBBHBBGGA", "AFFAAAAAFFA",
                         "AFFAAAAAFFA", "AGGBBBBBGGA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AABBHHHBBAA", "AACHAAAHCAA", "AACHAAAHCAA", "AACHAAAHCAA",
                         "AACCBBBCCAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("BCGGHHHGGCB", "AEAAAEAAAEA", "AEAAAAAAAEA", "ACGGHHHGGCA",
+                .slice("BCGGHHHGGCB", "AEAAAEAAAEA", "AEAAAAAAAEA", "ACGGHHHGGCA",
                         "AFAAAAAAAFA", "AFAAAAAAAFA", "AFAAAAAAAFA", "CGHHHCHHHGC",
                         "AAAAIEIAAAA", "AAAAIEIAAAA", "AGBBHEHBBGA", "AFAAAEAAAFA",
                         "AFAAAEAAAFA", "AGBBBEBBBGA", "AAAAHEHAAAA", "AAAAHEHAAAA",
                         "AABHHEHHBAA", "AAFAAEAAFAA", "AAFAAEAAFAA", "AAFAAEAAFAA",
                         "AACBBEBBCAA", "AAACCECCAAA", "AAAACECAAAA", "AAAACECAAAA",
                         "AAAACECAAAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("BCGHHHHHGCB", "ACAAEEEAACA", "ACAAAJAAACA", "ACGHHEHHGCA",
+                .slice("BCGHHHHHGCB", "ACAAEEEAACA", "ACAAAJAAACA", "ACGHHEHHGCA",
                         "ACAAAEAAACA", "ACAAAEAAACA", "ACAAAEAAACA", "CCCCCCCCCCC",
                         "AAAAEKEAAAA", "AAAAEKEAAAA", "AGBHEKEHBGA", "AFAAEKEAAFA",
                         "AFAAEKEAAFA", "AGBBEKEBBGA", "AAAAEKEAAAA", "AAAAEKEAAAA",
                         "AABHEKEHBAA", "AAFAEKEAFAA", "AAFAEKEAFAA", "AAFAEKEAFAA",
                         "AACBEKEBCAA", "AAACEKECAAA", "AAAAEKEAAAA", "AAAAEKEAAAA",
                         "AAAAEKEAAAA", "AAAACKCAAAA", "AAAAAKAAAAA", "AAAAAKAAAAA")
-                .aisle("BCGGHHHGGCB", "AEAAAEAAAEA", "AEAAAAAAAEA", "ACGGHHHGGCA",
+                .slice("BCGGHHHGGCB", "AEAAAEAAAEA", "AEAAAAAAAEA", "ACGGHHHGGCA",
                         "AFAAAAAAAFA", "AFAAAAAAAFA", "AFAAAAAAAFA", "CGHHHCHHHGC",
                         "AAAAIEIAAAA", "AAAAIEIAAAA", "AGBBAEHBBGA", "AFAAAEAAAFA",
                         "AFAAAEAAAFA", "AGBBBEBBBGA", "AAAAHEHAAAA", "AAAAHEHAAAA",
                         "AABHHEHHBAA", "AAFAAEAAFAA", "AAFAAEAAFAA", "AAFAAEAAFAA",
                         "AACBBEBBCAA", "AAACCECCAAA", "AAAACECAAAA", "AAAACECAAAA",
                         "AAAACECAAAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("BCCGGHGGCCB", "AAAAAAAAAAA", "AAAAAAAAAAA", "ACCGGHGGCCA",
+                .slice("BCCGGHGGCCB", "AAAAAAAAAAA", "AAAAAAAAAAA", "ACCGGHGGCCA",
                         "AFFAAAAAFFA", "AFFAAAAAFFA", "AFFAAAAAFFA", "CGGHHCHHGGC",
                         "AEAAAAAAAEA", "AEAAAAAAAEA", "AGGBBHBBGGA", "AFFAAAAAFFA",
                         "AFFAAAAAFFA", "AGGBBBBBGGA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AABBHHHBBAA", "AACHAAAHCAA", "AACHAAAHCAA", "AACHAAAHCAA",
                         "AACCBBBCCAA", "AAAACCCAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("BBCCGGGCCBB", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCGGGCCAA",
+                .slice("BBCCGGGCCBB", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCGGGCCAA",
                         "AAGFAAAFGAA", "AAGFAAAFGAA", "AAGFAAAFGAA", "CCGGHCHGGCC",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAGGBBBGGAA", "AAFFAAAFFAA",
                         "AAFFAAAFFAA", "AAGGBBBGGAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAABBBBBAAA", "AAACFFFCAAA", "AAACFFFCAAA", "AAACFFFCAAA",
                         "AAACCCCCAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("ABBCCCCCBBA", "AAAAELEAAAA", "AAAAECEAAAA", "AAACCCCCAAA",
+                .slice("ABBCCCCCBBA", "AAAAELEAAAA", "AAAAECEAAAA", "AAACCCCCAAA",
                         "AAAFFCFFAAA", "AAAFFCFFAAA", "AAAFFCFFAAA", "ACCGGCGGCCA",
                         "AAAEAAAEAAA", "AAAEAAAEAAA", "AAAGGGGGAAA", "AAAFFFFFAAA",
                         "AAAFFFFFAAA", "AAAGGGGGAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA")
-                .aisle("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+                .slice("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCCCCCCAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
@@ -357,14 +363,14 @@ public class PhoenixTeslaMachines {
                 .where('I', blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
                 .where('J', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
                 .where('K', heatingCoils())
-                .where('L', controller(blocks(definition.get())))
+                .where('L', controller(blocks(definition.getBlock())))
                 .build();
     }
 
-    private static BlockPattern ultimateTowerPattern(MultiblockMachineDefinition definition,
+    private static IBlockPattern ultimateTowerPattern(MultiblockMachineDefinition definition,
                                                      PhoenixTeslaConfigs.TowerProfile profile) {
-        return FactoryBlockPattern.start()
-                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+        return MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
+                .slice("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
                         "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
@@ -378,7 +384,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
                         "AAAAABBBHFHBBBAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA",
                         "AAAAAAAFAAAFAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
@@ -392,7 +398,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAAIIIIIIIIIAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAAAAIIIIIIIIIAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
                         "AAAABBHHJFJHHBBAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
@@ -406,7 +412,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAIIJJJJJJJIIAAAA", "AAAAAAAAFJFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFJFAAAAAAAA",
+                .slice("AAAAIIJJJJJJJIIAAAA", "AAAAAAAAFJFAAAAAAAA", "AAAAAAAAFFFAAAAAAAA", "AAAAAAAAFJFAAAAAAAA",
                         "AAABBEEGJJJGEEBBAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA",
                         "AAABBHHJIFIJHHBBAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
@@ -420,7 +426,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAIIJJBBBBBJJIIAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA",
+                .slice("AAAIIJJBBBBBJJIIAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA",
                         "AABBEJGGJBJGGJEBBAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA",
                         "AABBHHJIIFIIJHHBBAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAABBEEIIIIIEEBBAAA", "AAACCAAAAAAAAACCAAA", "AAACCAAAAAAAAACCAAA",
@@ -434,7 +440,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIIJJBBBBBBBJJIIAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA",
+                .slice("AAIIJJBBBBBBBJJIIAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA",
                         "ABBEJGGJJBJJGGJEBBA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA",
                         "ABBHHJIIJJJIIJHHBBA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
                         "AAAAAAAAABAAAAAAAAA", "AABBEEIIJBJIIEEBBAA", "AAGCAAAAAAAAAAACGAA", "AAGCAAAAAAAAAAACGAA",
@@ -448,7 +454,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIJJBBBGGGBBBJJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAIJJBBBGGGBBBJJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "ABEEGGJJBBBJJGGEEBA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA",
                         "ABHHJIIBBGBBIIJHHBA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA",
                         "AAAAAAAALBLAAAAAAAA", "AABEEIIJBBBJIIEEBAA", "AACAAAAAAAAAAAAACAA", "AACAAAAAAAAAAAAACAA",
@@ -462,7 +468,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIJBBBGGEGGBBBJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAIJBBBGGEGGBBBJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "BBEGGJJJBEBJJJGGEBB", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC",
                         "BBHJIIBEEGEEBIIJHBB", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA",
                         "AFAAAAAILBLIAAAAAFA", "ABBEIIJJBEBJJIIEBBA", "ACCAAAAAAAAAAAAACCA", "ACCAAAAAAAAAAAAACCA",
@@ -476,7 +482,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIJBBGGEEEGGBBJIAA", "AAAFAAAAABAAAAAFAAA", "AAAFAAAAAAAAAAAFAAA", "AAAFAAAAABAAAAAFAAA",
+                .slice("AAIJBBGGEEEGGBBJIAA", "AAAFAAAAABAAAAAFAAA", "AAAFAAAAAAAAAAAFAAA", "AAAFAAAAABAAAAAFAAA",
                         "BEEJJJBBEGEBBJJJEEB", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC",
                         "BHJIIJBEFIFEBJIIJHB", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGBKAAAAAA",
                         "AAAAAALLLBLLLAAAAAA", "ABEEIJBBEGEBBJIEEBA", "ACAAAAAAAFAAAAAAACA", "ACAAAAAAAFAAAAAAACA",
@@ -490,7 +496,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
                         "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIJBBGEEEEEGBBJIAA", "AAAJAAAABFBAAAAJAAA", "AAAJAAAAAMAAAAAJAAA", "AAAJAAAABNBAAAAJAAA",
+                .slice("AAIJBBGEEEEEGBBJIAA", "AAAJAAAABFBAAAAJAAA", "AAAJAAAAAMAAAAAJAAA", "AAAJAAAABNBAAAAJAAA",
                         "BFFJBBBEGNGEBBBJFFB", "BAAAAAAAFNFAAAAAAAB", "BAAAAAAAFNFAAAAAAAB", "BAAAAAAAFNFAAAAAAAB",
                         "BFFFFJGGINIGGJFFFFB", "AAAAAFAAINIAAFAAAAA", "AAAAAFAAINIAAFAAAAA", "AAAAAFAAINIAAFAAAAA",
                         "AAAAABBBBNBBBBAAAAA", "ABFFIBBEGNGEBBIFFBA", "ABAAAAAAFNFAAAAAABA", "ABAAAAAAFNFAAAAAABA",
@@ -504,7 +510,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA",
                         "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAFNFAAAAAAAA", "AAAAAAAAANAAAAAAAAA",
                         "AAAAAAAAANAAAAAAAAA")
-                .aisle("AAIJBBGGEEEGGBBJIAA", "AAAFAAAAABAAAAAFAAA", "AAAFAAAAAAAAAAAFAAA", "AAAFAAAAABAAAAAFAAA",
+                .slice("AAIJBBGGEEEGGBBJIAA", "AAAFAAAAABAAAAAFAAA", "AAAFAAAAAAAAAAAFAAA", "AAAFAAAAABAAAAAFAAA",
                         "BEEJJJBBEGEBBJJJEEB", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC", "CAAAAAAAAFAAAAAAAAC",
                         "BHJIIJBEFIFEBJIIJHB", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA", "AAAAAAKAGIGAKAAAAAA",
                         "AAAAAALLLBLLLAAAAAA", "ABEEIJBBEGEBBJIEEBA", "ACAAAAAAAFAAAAAAACA", "ACAAAAAAAFAAAAAAACA",
@@ -518,7 +524,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
                         "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIJBBBGGEGGBBBJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAIJBBBGGEGGBBBJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "BBEGGJJJBEBJJJGGEBB", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC", "CCAAAAAAAAAAAAAAACC",
                         "BBHJIIBEEGEEBIIJHBB", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA", "AFAAAAACAAACAAAAAFA",
                         "AFAAAAAILBLIAAAAAFA", "ABBEIIJJBEBJJIIEBBA", "ACCAAAAAAAAAAAAACCA", "ACCAAAAAAAAAAAAACCA",
@@ -532,7 +538,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIJJBBBGGGBBBJJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAIJJBBBGGGBBBJJIAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "ABEEGGJJBBBJJGGEEBA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA", "ACAAAAAAAAAAAAAAACA",
                         "ABHHJIIBBGBBIIJHHBA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA", "AAAAAAAAKAKAAAAAAAA",
                         "AAAAAAAALBLAAAAAAAA", "AABEEIIJBBBJIIEEBAA", "AACAAAAAAAAAAAAACAA", "AACAAAAAAAAAAAAACAA",
@@ -546,7 +552,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAIIJJBBBBBBBJJIIAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA",
+                .slice("AAIIJJBBBBBBBJJIIAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA", "AAAAJAAAAAAAAAJAAAA",
                         "ABBEJGGJJBJJGGJEBBA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA", "AGCAAAAAAAAAAAAACGA",
                         "ABBHHJIIJJJIIJHHBBA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA", "AAAAAAAAAFAAAAAAAAA",
                         "AAAAAAAAABAAAAAAAAA", "AABBEEIIJBJIIEEBBAA", "AAGCAAAAAAAAAAACGAA", "AAGCAAAAAAAAAAACGAA",
@@ -560,7 +566,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAIIJJBBBBBJJIIAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA",
+                .slice("AAAIIJJBBBBBJJIIAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA", "AAAAAJAAAAAAAJAAAAA",
                         "AABBEJGGJBJGGJEBBAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA", "AACCAAAAAAAAAAACCAA",
                         "AABBHHJIIFIIJHHBBAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAABBEEIIIIIEEBBAAA", "AAACCAAAAAAAAACCAAA", "AAACCAAAAAAAAACCAAA",
@@ -574,7 +580,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAIIJJJJJJJIIAAAA", "AAAAAAAAFJFAAAAAAAA", "AAAAAAAAFOFAAAAAAAA", "AAAAAAAAFJFAAAAAAAA",
+                .slice("AAAAIIJJJJJJJIIAAAA", "AAAAAAAAFJFAAAAAAAA", "AAAAAAAAFOFAAAAAAAA", "AAAAAAAAFJFAAAAAAAA",
                         "AAABBEEGJJJGEEBBAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA", "AAAGCAAAAAAAAACGAAA",
                         "AAABBHHJIFIJHHBBAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
@@ -588,7 +594,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAAIIIIIIIIIAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAAAAIIIIIIIIIAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAABBEEEFEEEBBAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA", "AAAACCAAAAAAACCAAAA",
                         "AAAABBHHJFJHHBBAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
@@ -602,7 +608,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAABBBEFEBBBAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA", "AAAAAGCCAAACCGAAAAA",
                         "AAAAABBBHFHBBBAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA", "AAAAAAAFAAAFAAAAAAA",
                         "AAAAAAAFAAAFAAAAAAA", "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
@@ -616,7 +622,7 @@ public class PhoenixTeslaMachines {
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA")
-                .aisle("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
+                .slice("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
                         "AAAAAAABBBBBAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
@@ -644,11 +650,11 @@ public class PhoenixTeslaMachines {
                 .where('L', blocks(PhoenixTeslaBlocks.RELIABLE_NAQUADAH_ALLOY_MACHINE_CASING.get()))
                 .where('M', PhoenixPredicates.teslaBatteries(profile.minBatteryTier, profile.maxBatteryTier))
                 .where('N', heatingCoils())
-                .where('O', controller(blocks(definition.get())))
+                .where('O', controller(blocks(definition.getBlock())))
                 .build();
     }
 
-    private static MultiblockMachineDefinition registerRelay() {
+    private static MachineEntry<MultiblockMachineDefinition> registerRelay() {
         if (!PhoenixTeslaConfigs.get().towers.relay.enabled) return null;
 
         return REGISTRATE
@@ -657,25 +663,26 @@ public class PhoenixTeslaMachines {
                 .rotationState(RotationState.ALL)
                 .recipeType(PhoenixTeslaRecipeTypes.TESLA_RELAY)
                 .appearanceBlock(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING)
-                .pattern(definition -> FactoryBlockPattern.start()
-                        .aisle("TTTTT", "CGGGC", "CGGGC", "CGGGC", "CCCCC", "     ", "     ")
-                        .aisle("TTTTT", "C   C", "C   C", "C   C", "CCCCC", "     ", "     ")
-                        .aisle("TTTTT", "C F C", "C N C", "C F C", "CCFCC", "  F  ", "  E  ")
-                        .aisle("TTTTT", "C   C", "C   C", "C   C", "CCCCC", "     ", "     ")
-                        .aisle("TTSTT", "CGGGC", "CGGGC", "CGGGC", "CCCCC", "     ", "     ")
-                        .where(" ", Predicates.any())
-                        .where("T", blocks(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get()))
-                        .where("C", blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
-                        .where("G", blocks(GTBlocks.CASING_TEMPERED_GLASS.get())
+                .pattern(definition -> MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
+                        .slice("TTTTT", "CGGGC", "CGGGC", "CGGGC", "CCCCC", "     ", "     ")
+                        .slice("TTTTT", "C   C", "C   C", "C   C", "CCCCC", "     ", "     ")
+                        .slice("TTTTT", "C F C", "C N C", "C F C", "CCFCC", "  F  ", "  E  ")
+                        .slice("TTTTT", "C   C", "C   C", "C   C", "CCCCC", "     ", "     ")
+                        .slice("TTSTT", "CGGGC", "CGGGC", "CGGGC", "CCCCC", "     ", "     ")
+                        .where(' ', Predicates.any())
+                        .where('T', blocks(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get()))
+                        .where('C', blocks(PhoenixTeslaBlocks.SOURCE_FIBER_MACHINE_CASING.get()))
+                        .where('G', blocks(GTBlocks.CASING_TEMPERED_GLASS.get())
                                 .or(blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
                                 .or(blocks(GTBlocks.FUSION_GLASS.get())))
-                        .where("F",
+                        .where('F',
                                 blocks(ChemicalHelper.getBlock(TagPrefix.frameGt,
                                         GTMaterials.Steel)))
-                        .where("N", blocks(GTBlocks.COIL_CUPRONICKEL.get()))
-                        .where("E", Predicates.lampsByColor(DyeColor.PURPLE))
-                        .where("S", controller(blocks(definition.get())))
+                        .where('N', blocks(GTBlocks.COIL_CUPRONICKEL.get()))
+                        .where('E', PhoenixPredicates.lampsByColor(DyeColor.PURPLE))
+                        .where('S', controller(blocks(definition.getBlock())))
                         .build())
+                .modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE)
                 .model(
                         createWorkableCasingMachineModel(
                                 PhoenixTeslaNetwork.id("block/casings/multiblock/tesla_casing"),
@@ -694,19 +701,12 @@ public class PhoenixTeslaMachines {
                 .register();
     }
 
-    public static MachineDefinition[] registerTieredMachines(String name,
-                                                             BiFunction<IMachineBlockEntity, Integer, MetaMachine> factory,
-                                                             BiFunction<Integer, MachineBuilder<MachineDefinition, ?>, MachineDefinition> builder,
-                                                             int... tiers) {
-        MachineDefinition[] definitions = new MachineDefinition[GTValues.TIER_COUNT];
-        for (int tier : tiers) {
-            var register = REGISTRATE
-                    .machine(GTValues.VN[tier].toLowerCase(Locale.ROOT) + "_" + name,
-                            holder -> factory.apply(holder, tier))
-                    .tier(tier);
-            definitions[tier] = builder.apply(tier, register);
-        }
-        return definitions;
+    public static MachineEntry<MachineDefinition>[] registerTieredMachines(String name,
+                                                                           MachineInstanceFactory.Tiered<? extends MetaMachine> factory,
+                                                                           BiFunction<Integer, MachineBuilder<MachineDefinition, MetaMachine, ?>, MachineEntry<MachineDefinition>> builder,
+                                                                           int... tiers) {
+        return GTMachineUtils.registerTieredMachines(REGISTRATE, name,
+                (MachineInstanceFactory.Tiered<MetaMachine>) factory::buildMachine, builder, tiers);
     }
 
     private static String getTeslaOverlay(String iomode, int amperage) {
@@ -717,7 +717,7 @@ public class PhoenixTeslaMachines {
         return "tesla_hatches/tesla_" + iomode + "_" + amperage + "a";
     }
 
-    private static MachineDefinition[] registerTeslaHatch(String name, IO io, int amperage, PartAbility ability,
+    private static MachineEntry<MachineDefinition>[] registerTeslaHatch(String name, IO io, int amperage, PartAbility ability,
                                                           int... tiers) {
         String iomode = io == IO.OUT ? "input" : "output";
 
@@ -738,63 +738,63 @@ public class PhoenixTeslaMachines {
                                 Component.translatable("gtceu.universal.tooltip.energy_storage_capacity",
                                         FormattingUtil.formatNumbers(
                                                 GTValues.V[tier] * (io == IO.OUT ? 16L : 64L) * amperage)),
-                                Component.translatable("tooltip.PhoenixTeslaNetwork.tesla_hatch." + iomode))
+                                Component.translatable("tooltip.phoenix_tesla_network.tesla_hatch." + iomode))
                         .overlayTieredHullModel(getTeslaOverlay(iomode, amperage))
                         .register(),
                 tiers);
     }
 
-    public static final MachineDefinition[] TESLA_LASER_INPUT_256A = registerTeslaLaserHatch(
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_256A = registerTeslaLaserHatch(
             "tesla_laser_input_hatch_256a", IO.OUT, 256,
             PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_256A = registerTeslaLaserHatch(
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_256A = registerTeslaLaserHatch(
             "tesla_laser_output_hatch_256a", IO.IN, 256,
             PartAbility.INPUT_LASER);
 
-    public static final MachineDefinition[] TESLA_LASER_INPUT_1024A = registerTeslaLaserHatch(
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_1024A = registerTeslaLaserHatch(
             "tesla_laser_input_hatch_1024a", IO.OUT, 1024,
             PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_1024A = registerTeslaLaserHatch(
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_1024A = registerTeslaLaserHatch(
             "tesla_laser_output_hatch_1024a", IO.IN, 1024,
             PartAbility.INPUT_LASER);
 
-    public static final MachineDefinition[] TESLA_LASER_INPUT_4096A = registerTeslaLaserHatch(
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_4096A = registerTeslaLaserHatch(
             "tesla_laser_input_hatch_4096a", IO.OUT, 4096,
             PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_4096A = registerTeslaLaserHatch(
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_4096A = registerTeslaLaserHatch(
             "tesla_laser_output_hatch_4096a", IO.IN, 4096,
             PartAbility.INPUT_LASER);
 
-    public static final MachineDefinition[] TESLA_LASER_INPUT_16384A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_16384A = registerGatedLaserHatch("input", IO.OUT,
             16_384, PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_16384A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_16384A = registerGatedLaserHatch("output", IO.IN,
             16_384, PartAbility.INPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_INPUT_65536A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_65536A = registerGatedLaserHatch("input", IO.OUT,
             65_536, PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_65536A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_65536A = registerGatedLaserHatch("output", IO.IN,
             65_536, PartAbility.INPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_INPUT_262144A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_262144A = registerGatedLaserHatch("input", IO.OUT,
             262_144, PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_262144A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_262144A = registerGatedLaserHatch("output", IO.IN,
             262_144, PartAbility.INPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_INPUT_1048576A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_1048576A = registerGatedLaserHatch("input", IO.OUT,
             1_048_576, PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_1048576A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_1048576A = registerGatedLaserHatch("output", IO.IN,
             1_048_576, PartAbility.INPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_INPUT_4194304A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_4194304A = registerGatedLaserHatch("input", IO.OUT,
             4_194_304, PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_4194304A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_4194304A = registerGatedLaserHatch("output", IO.IN,
             4_194_304, PartAbility.INPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_INPUT_16777216A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_16777216A = registerGatedLaserHatch("input", IO.OUT,
             16_777_216, PartAbility.OUTPUT_LASER);
-    public static final MachineDefinition[] TESLA_LASER_OUTPUT_16777216A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_16777216A = registerGatedLaserHatch("output", IO.IN,
             16_777_216, PartAbility.INPUT_LASER);
 
-    private static MachineDefinition[] registerGatedLaserHatch(String direction, IO io, int amperage,
+    private static MachineEntry<MachineDefinition>[] registerGatedLaserHatch(String direction, IO io, int amperage,
                                                                PartAbility ability) {
         int required = amperage > 1_048_576 ? 2 : 1;
         boolean enabled = PhoenixTeslaConfigs.get().features.laserHatchSizes.ordinal() >= required;
-        if (!enabled && !net.minecraftforge.data.loading.DatagenModLoader.isRunningDataGen()) return null;
+        if (!enabled && !net.neoforged.neoforge.data.loading.DatagenModLoader.isRunningDataGen()) return null;
 
         return registerTeslaLaserHatch("tesla_laser_" + direction + "_hatch_" + amperage + "a", io, amperage, ability);
     }
@@ -817,7 +817,7 @@ public class PhoenixTeslaMachines {
         }
     }
 
-    private static MachineDefinition[] registerTeslaLaserHatch(String name, IO io, int amperage, PartAbility ability) {
+    private static MachineEntry<MachineDefinition>[] registerTeslaLaserHatch(String name, IO io, int amperage, PartAbility ability) {
         String iomode = io == IO.OUT ? "input" : "output";
         String laserDisplayName = getLaserName(io, amperage);
 
@@ -837,7 +837,7 @@ public class PhoenixTeslaMachines {
                                 Component.translatable("gtceu.universal.tooltip.energy_storage_capacity",
                                         FormattingUtil.formatNumbers(
                                                 GTValues.V[tier] * (io == IO.OUT ? 16L : 64L) * amperage)),
-                                Component.translatable("tooltip.PhoenixTeslaNetwork.tesla_hatch." + iomode))
+                                Component.translatable("tooltip.phoenix_tesla_network.tesla_hatch." + iomode))
                         .overlayTieredHullModel(getTeslaLaserOverlay(iomode, amperage))
                         .register(),
                 GTValues.ALL_TIERS);
@@ -847,44 +847,44 @@ public class PhoenixTeslaMachines {
         return "tesla_hatches/tesla_" + iomode + "_" + "laser" + "_" + Math.min(amperage, 4096) + "a";
     }
 
-    public static final MachineDefinition[] TESLA_INPUT_2A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 2,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_2A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 2,
             PartAbility.OUTPUT_ENERGY, GTValues.ALL_TIERS);
 
-    public static final MachineDefinition[] TESLA_INPUT_4A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 4,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_4A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 4,
             PartAbility.OUTPUT_ENERGY, MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineDefinition[] TESLA_INPUT_16A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 16,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_16A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 16,
             PartAbility.OUTPUT_ENERGY, MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineDefinition[] TESLA_INPUT_64A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 64,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_64A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 64,
             PartAbility.SUBSTATION_OUTPUT_ENERGY,
             MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineDefinition[] TESLA_OUTPUT_2A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN, 2,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_2A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN, 2,
             PartAbility.INPUT_ENERGY, GTValues.ALL_TIERS);
 
-    public static final MachineDefinition[] TESLA_OUTPUT_4A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN, 4,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_4A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN, 4,
             PartAbility.INPUT_ENERGY, MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineDefinition[] TESLA_OUTPUT_16A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_16A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN,
             16, PartAbility.INPUT_ENERGY,
             MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineDefinition[] TESLA_OUTPUT_64A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_64A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN,
             64, PartAbility.SUBSTATION_INPUT_ENERGY,
             MULTI_AMP_TESLA_HATCH);
 
-    public static MachineDefinition[] registerWirelessCharger(
-                                                              GTRegistrate registrate,
-                                                              String name,
-                                                              BiFunction<IMachineBlockEntity, Integer, TeslaWirelessChargerMachine> factory) {
+    public static MachineEntry<MachineDefinition>[] registerWirelessCharger(
+                                                                            GTRegistrate registrate,
+                                                                            String name,
+                                                                            BiFunction<BlockEntityCreationInfo, Integer, TeslaWirelessChargerMachine> factory) {
         return registerChargerTieredMachines(
                 registrate,
                 name,
-                factory::apply,
+                (holder, tier) -> factory.apply(holder, tier),
                 (tier, builder) -> builder
                         .rotationState(RotationState.ALL)
-                        .modelProperty(GTMachineModelProperties.CHARGER_STATE, ChargerMachine.State.IDLE)
+                        .modelProperty(GTMachineModelProperties.CHARGER_STATE, BatteryBufferMachine.State.IDLE)
                         .model(PhoenixMachineModels.createWirelessChargerModel())
                         .langValue("%s Tesla Wireless Charger".formatted(
                                 VCF[tier] + GTValues.VOLTAGE_NAMES[tier] + ChatFormatting.RESET))
@@ -902,13 +902,14 @@ public class PhoenixTeslaMachines {
                 GTValues.ALL_TIERS);
     }
 
-    public static MachineDefinition[] registerChargerTieredMachines(
-                                                                    GTRegistrate registrate,
-                                                                    String name,
-                                                                    BiFunction<IMachineBlockEntity, Integer, MetaMachine> machineFactory,
-                                                                    BiFunction<Integer, MachineBuilder<MachineDefinition, ?>, MachineDefinition> definitionBuilder,
-                                                                    int... tiers) {
-        MachineDefinition[] definitions = new MachineDefinition[GTValues.TIER_COUNT];
+    public static MachineEntry<MachineDefinition>[] registerChargerTieredMachines(
+                                                                                  GTRegistrate registrate,
+                                                                                  String name,
+                                                                                  BiFunction<BlockEntityCreationInfo, Integer, MetaMachine> machineFactory,
+                                                                                  BiFunction<Integer, MachineBuilder<MachineDefinition, ?, ?>, MachineEntry<MachineDefinition>> definitionBuilder,
+                                                                                  int... tiers) {
+        @SuppressWarnings("unchecked")
+        MachineEntry<MachineDefinition>[] definitions = new MachineEntry[GTValues.TIER_COUNT];
 
         for (int tier : tiers) {
             var builder = registrate
@@ -922,7 +923,7 @@ public class PhoenixTeslaMachines {
         return definitions;
     }
 
-    public static final MachineDefinition[] TESLA_WIRELESS_CHARGER = registerWirelessCharger(
+    public static final MachineEntry<MachineDefinition>[] TESLA_WIRELESS_CHARGER = registerWirelessCharger(
             REGISTRATE,
             "tesla_wireless_charger",
             TeslaWirelessChargerMachine::new);

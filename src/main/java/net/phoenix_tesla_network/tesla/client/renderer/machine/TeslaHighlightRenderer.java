@@ -6,20 +6,21 @@ import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import org.joml.Matrix4f;
 
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(value = Dist.CLIENT)
 public class TeslaHighlightRenderer {
 
     private static final Map<BlockPos, Long> HIGHLIGHT_MAP = new ConcurrentHashMap<>();
@@ -55,13 +56,11 @@ public class TeslaHighlightRenderer {
             RenderType.CompositeState.builder()
                     .setLineState(new ShardAccessor.LineState(3.0D))
                     .setLayeringState(new RenderStateShard.LayeringStateShard("view_offset_z_layering", () -> {
-                        PoseStack posestack = RenderSystem.getModelViewStack();
-                        posestack.pushPose();
+                        org.joml.Matrix4fStack posestack = RenderSystem.getModelViewStack();
+                        posestack.pushMatrix();
                         posestack.scale(0.99975F, 0.99975F, 0.99975F);
-                        RenderSystem.applyModelViewMatrix();
                     }, () -> {
-                        RenderSystem.getModelViewStack().popPose();
-                        RenderSystem.applyModelViewMatrix();
+                        RenderSystem.getModelViewStack().popMatrix();
                     }))
                     .setTransparencyState(
                             new RenderStateShard.TransparencyStateShard("translucent_transparency", () -> {
@@ -107,14 +106,13 @@ public class TeslaHighlightRenderer {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tesselator.getBuilder();
-
-        bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.DEBUG_LINES,
+                DefaultVertexFormat.POSITION_COLOR);
 
         float r = 0.74f, g = 0.0f, b = 1.0f, a = 1.0f;
         drawBox(stack, bufferbuilder, 0, 0, 0, 1, 1, 1, r, g, b, a);
 
-        tesselator.end();
+        BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
 
         RenderSystem.disableBlend();
         RenderSystem.enableDepthTest();
@@ -142,7 +140,7 @@ public class TeslaHighlightRenderer {
 
     private static void line(Matrix4f pose, VertexConsumer buffer, float x1, float y1, float z1, float x2, float y2,
                              float z2, float r, float g, float b, float a) {
-        buffer.vertex(pose, x1, y1, z1).color(r, g, b, a).endVertex();
-        buffer.vertex(pose, x2, y2, z2).color(r, g, b, a).endVertex();
+        buffer.addVertex(pose, x1, y1, z1).setColor(r, g, b, a);
+        buffer.addVertex(pose, x2, y2, z2).setColor(r, g, b, a);
     }
 }

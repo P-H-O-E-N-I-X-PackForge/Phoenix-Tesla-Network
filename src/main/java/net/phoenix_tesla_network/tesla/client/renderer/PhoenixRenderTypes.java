@@ -15,7 +15,7 @@ public class PhoenixRenderTypes extends RenderType {
             256,
             false,
             false,
-            CompositeState.builder()
+            RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setCullState(RenderStateShard.NO_CULL)
                     .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
@@ -28,9 +28,9 @@ public class PhoenixRenderTypes extends RenderType {
             256,
             false,
             false,
-            CompositeState.builder()
+            RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
-                    .setLineState(new LineStateShard(java.util.OptionalDouble.of(2.5D)))
+                    .setLineState(new RenderStateShard.LineStateShard(java.util.OptionalDouble.of(2.5D)))
 
                     .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
@@ -45,7 +45,7 @@ public class PhoenixRenderTypes extends RenderType {
             256,
             false,
             true,
-            CompositeState.builder()
+            RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
@@ -60,7 +60,7 @@ public class PhoenixRenderTypes extends RenderType {
             256,
             true,
             true,
-            CompositeState.builder()
+            RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setLayeringState(RenderStateShard.NO_LAYERING)
@@ -76,7 +76,7 @@ public class PhoenixRenderTypes extends RenderType {
             256,
             false,
             true,
-            CompositeState.builder()
+            RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                     .setTransparencyState(RenderStateShard.ADDITIVE_TRANSPARENCY)
                     .setLayeringState(RenderStateShard.NO_LAYERING)

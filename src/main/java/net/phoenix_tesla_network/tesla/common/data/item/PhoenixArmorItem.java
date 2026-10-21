@@ -4,30 +4,23 @@ import com.gregtechceu.gtceu.api.item.armor.ArmorComponentItem;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.phoenix_tesla_network.tesla.client.renderer.PhoenixArmorRenderer;
+import net.phoenix_tesla_network.tesla.util.StackNbt;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.constant.DataTickets;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public class PhoenixArmorItem extends ArmorComponentItem implements GeoItem {
@@ -35,21 +28,17 @@ public class PhoenixArmorItem extends ArmorComponentItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PhoenixTechSuite logic;
 
-    public PhoenixArmorItem(ArmorMaterial material, Type type, Properties properties, PhoenixTechSuite logic) {
+    public PhoenixArmorItem(net.minecraft.core.Holder<ArmorMaterial> material, Type type, Properties properties,
+                            PhoenixTechSuite logic) {
         super(material, type, properties);
         this.logic = logic;
         this.setArmorLogic(logic);
     }
 
     @Override
-    public void onArmorTick(ItemStack stack, Level world, Player player) {
-        this.logic.onArmorTick(world, player, stack);
-    }
-
-    @Override
     public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
         if (entity instanceof Player player) {
-            CompoundTag nbt = stack.getTag();
+            CompoundTag nbt = StackNbt.getTag(stack);
             return nbt != null && nbt.getBoolean("teslaMode");
         }
         return false;
@@ -62,12 +51,6 @@ public class PhoenixArmorItem extends ArmorComponentItem implements GeoItem {
             entity.gameEvent(GameEvent.ELYTRA_GLIDE);
         }
         return true;
-    }
-
-    @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level world, @NotNull List<Component> tooltip,
-                                @NotNull TooltipFlag flag) {
-        this.logic.addInfo(stack, tooltip);
     }
 
     @Override
@@ -89,7 +72,7 @@ public class PhoenixArmorItem extends ArmorComponentItem implements GeoItem {
                 }
 
                 ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
-                CompoundTag chestNBT = chestplate.getTag();
+                CompoundTag chestNBT = StackNbt.getTag(chestplate);
                 if (chestNBT != null && chestNBT.getInt("wingFlapTick") > 0) {
                     return event.setAndContinue(RawAnimation.begin().thenPlay("animation.phoenix.flap"));
                 }

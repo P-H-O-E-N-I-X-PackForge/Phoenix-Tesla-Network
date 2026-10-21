@@ -1,6 +1,5 @@
 package net.phoenix_tesla_network.tesla.integration.jade.provider;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
@@ -37,7 +36,7 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
 
     @Override
     public void appendServerData(CompoundTag tag, BlockAccessor accessor) {
-        if (accessor.getBlockEntity() instanceof MetaMachineBlockEntity metaBE) {
+        if (accessor.getBlockEntity() instanceof MetaMachine machine) {
             UUID team = null;
             BlockPos pos = accessor.getPosition();
             long transferRate = 0;
@@ -49,7 +48,6 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                 if (overworld == null) return;
 
                 TeslaTeamEnergyData data = TeslaTeamEnergyData.get(overworld);
-                MetaMachine machine = metaBE.getMetaMachine();
 
                 if (machine instanceof TeslaEnergyHatchPartMachine hatch) {
                     team = hatch.getOwnerTeamUUID();

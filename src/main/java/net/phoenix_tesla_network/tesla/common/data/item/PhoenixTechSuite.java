@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -31,46 +32,49 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
+import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @SuppressWarnings("removal")
 public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, GeoItem {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    public static final Reference2IntMap<MobEffect> potionRemovalCost = new Reference2IntOpenHashMap<>();
+    public static final Reference2IntMap<Holder<MobEffect>> potionRemovalCost = new Reference2IntOpenHashMap<>();
     private float charge = 0.0F;
     private static final byte RUNNING_TIMER = 10;
     private static final byte JUMPING_TIMER = 10;
@@ -96,7 +100,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         IElectricItem item = GTCapabilityHelper.getElectricItem(itemStack);
         if (item == null) return;
 
-        CompoundTag data = itemStack.getOrCreateTag();
+        CompoundTag data = StackNbt.getOrCreateTag(itemStack);
         UUID teamID = TeamUtils.getTeamIdOrPlayerFallback(player.getUUID());
         if (teamID == null) {
             teamID = player.getUUID();
@@ -167,7 +171,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
     private static final String SPRINT_LATCH = "phoenix_tesla_sprint_latch";
 
     private static boolean isSuitOn(Player player) {
-        CompoundTag chest = player.getItemBySlot(EquipmentSlot.CHEST).getTag();
+        CompoundTag chest = StackNbt.getTag(player.getItemBySlot(EquipmentSlot.CHEST));
         return chest != null && chest.getBoolean("teslaMode");
     }
 
@@ -202,7 +206,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 speedModifier = 0.02F;
             } else {
 
-                CompoundTag chestData = player.getItemBySlot(EquipmentSlot.CHEST).getOrCreateTag();
+                CompoundTag chestData = StackNbt.getOrCreateTag(player.getItemBySlot(EquipmentSlot.CHEST));
                 int sprintSpeed = chestData.contains("SprintSpeed") ? chestData.getInt("SprintSpeed") : 5;
 
                 float percent = (float) Math.pow(Math.max(0, Math.min(20, sprintSpeed)) / 20.0f, 1.6);
@@ -313,7 +317,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             if (dischargeCooldown > 0) data.putInt("dischargeCooldown", dischargeCooldown - 1);
         }
 
-        CompoundTag chestSettings = player.getItemBySlot(EquipmentSlot.CHEST).getTag();
+        CompoundTag chestSettings = StackNbt.getTag(player.getItemBySlot(EquipmentSlot.CHEST));
         int jumpSetting = chestSettings != null && chestSettings.contains("JumpHeight") ?
                 chestSettings.getInt("JumpHeight") : 5;
         int stepSetting = chestSettings != null && chestSettings.contains("StepHeight") ?
@@ -347,7 +351,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 if (prevOnGround && !player.onGround() && jumping && !sneaking) {
                     item.discharge(energyPerUse / 100, item.getTier(), true, false, false);
                     ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-                    if (!chest.isEmpty()) chest.getOrCreateTag().putInt("wingFlapTick", 15);
+                    if (!chest.isEmpty()) StackNbt.getOrCreateTag(chest).putInt("wingFlapTick", 15);
                 }
                 data.putBoolean("onGround", player.onGround());
             }
@@ -357,13 +361,14 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
     public static final float VANILLA_STEP_HEIGHT = 0.6F;
     private static final String STEP_APPLIED = "phoenix_tesla_step_applied";
     private static final String STEP_STAMP = "phoenix_tesla_step_stamp";
-    private static final UUID STEP_MODIFIER_ID = UUID.fromString("6f1c2a54-3b0e-4d7a-9a52-1d7e5b8c0f31");
+    private static final ResourceLocation STEP_MODIFIER_ID = ResourceLocation
+            .fromNamespaceAndPath("phoenix_tesla_network", "tech_suite_step_assist");
 
     // Deliberately NOT 1.0023F (GTCEu's own magic step height, which its tick handler resets).
     public static final float MIN_BOOSTED_STEP_HEIGHT = 1.0025F;
 
     /**
-     * Step height is applied through Forge's STEP_HEIGHT_ADDITION attribute instead of Entity#setMaxUpStep.
+     * Step height is applied through the STEP_HEIGHT attribute instead of Entity#setMaxUpStep.
      * In the modpack log the raw maxUpStep field read 0.6 every tick even right after we set it, so something
      * there resets the field. Entity movement uses IForgeEntity#getStepHeight() (field + attribute), and a
      * modifier is not touched by code that resets the field.
@@ -380,22 +385,22 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             return;
         }
 
-        AttributeInstance attr = player.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
+        AttributeInstance attr = player.getAttribute(Attributes.STEP_HEIGHT);
         if (attr == null) return;
 
         double addition = target - VANILLA_STEP_HEIGHT;
         AttributeModifier existing = attr.getModifier(STEP_MODIFIER_ID);
-        if (existing == null || Math.abs(existing.getAmount() - addition) > 1.0E-4) {
+        if (existing == null || Math.abs(existing.amount() - addition) > 1.0E-4) {
             if (existing != null) attr.removeModifier(STEP_MODIFIER_ID);
-            attr.addTransientModifier(new AttributeModifier(STEP_MODIFIER_ID, "Phoenix Tech Suite step assist",
-                    addition, AttributeModifier.Operation.ADDITION));
+            attr.addTransientModifier(new AttributeModifier(STEP_MODIFIER_ID, addition,
+                    AttributeModifier.Operation.ADD_VALUE));
         }
         player.getPersistentData().putBoolean(STEP_APPLIED, true);
         player.getPersistentData().putInt(STEP_STAMP, player.tickCount);
     }
 
     public static void resetStepHeight(Player player) {
-        AttributeInstance attr = player.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
+        AttributeInstance attr = player.getAttribute(Attributes.STEP_HEIGHT);
         if (attr != null && attr.getModifier(STEP_MODIFIER_ID) != null) {
             attr.removeModifier(STEP_MODIFIER_ID);
         }
@@ -406,11 +411,11 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
     }
 
     /** Removes the step modifier once the boots stop ticking (taken off, suit unequipped, etc.). */
-    @Mod.EventBusSubscriber(modid = "phoenix_tesla_network", bus = Mod.EventBusSubscriber.Bus.FORGE)
+    @EventBusSubscriber(modid = "phoenix_tesla_network")
     public static class StepAssistCleanup {
 
         @SubscribeEvent
-        public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+        public static void onLivingTick(EntityTickEvent.Post event) {
             if (!(event.getEntity() instanceof Player player)) return;
             if (!player.getPersistentData().getBoolean(STEP_APPLIED)) return;
             if (player.tickCount - player.getPersistentData().getInt(STEP_STAMP) > 3) {
@@ -981,7 +986,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
                     player.level().playSound(null, player.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS,
                             1.5f, 0.8f);
-                    player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE,
+                    player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(),
                             SoundSource.PLAYERS, 0.5f, 1.2f);
 
                     player.displayClientMessage(Component.literal("§6§l⚡ PHOENIX REBIRTH ACTIVATED ⚡"), true);
@@ -1086,7 +1091,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         }
 
         ItemStack chestplate = mc.player.getItemBySlot(EquipmentSlot.CHEST);
-        CompoundTag nbt = chestplate.getTag();
+        CompoundTag nbt = StackNbt.getTag(chestplate);
 
         if (nbt == null || !nbt.getBoolean("teslaMode")) {
             this.HUD.draw(guiGraphics);
@@ -1266,7 +1271,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         for (Entity target : targets) {
             if (target instanceof LivingEntity living && !(target instanceof Player)) {
                 living.hurt(level.damageSources().lightningBolt(), 20.0f);
-                living.setSecondsOnFire(3);
+                living.igniteForSeconds(3);
                 level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                         living.getX(), living.getY() + 1, living.getZ(),
                         15, 0.3, 0.3, 0.3, 0.1);
@@ -1288,7 +1293,8 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
     public void supplyFood(@NotNull IElectricItem item, Player player) {
         if (item.canUse(energyPerUse / 10) && player.getFoodData().needsFood()) {
-            IItemHandler playerInv = player.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+            IItemHandler playerInv = Optional.ofNullable(player.getCapability(Capabilities.ItemHandler.ENTITY))
+                    .orElse(null);
             if (!(playerInv instanceof IItemHandlerModifiable items)) return;
 
             int bestSlot = -1;
@@ -1299,7 +1305,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 var foodProps = current.getFoodProperties(player);
                 if (foodProps == null) continue;
 
-                float saturation = foodProps.getSaturationModifier();
+                float saturation = foodProps.saturation();
                 boolean isHotbar = i < 9;
                 float priority = saturation + (isHotbar ? 0.1f : 0f);
 
@@ -1325,7 +1331,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
     public static void removeNegativeEffects(@NotNull IElectricItem item, Player player) {
         for (MobEffectInstance effect : new LinkedList<>(player.getActiveEffects())) {
-            MobEffect potion = effect.getEffect();
+            Holder<MobEffect> potion = effect.getEffect();
             int cost = potionRemovalCost.getOrDefault(potion, -1);
             if (cost != -1) {
                 cost = cost * (effect.getAmplifier() + 1);
@@ -1338,10 +1344,10 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
     }
 
     @Override
-    public int damageArmor(LivingEntity entity, ItemStack itemStack, DamageSource source, int damage,
-                           EquipmentSlot equipmentSlot) {
+    public int damageArmor(LivingEntity entity, ItemStack itemStack, int damage, EquipmentSlot equipmentSlot) {
+        DamageSource source = entity == null ? null : entity.getLastDamageSource();
         if (source == null) {
-            return super.damageArmor(entity, itemStack, source, damage, equipmentSlot);
+            return super.damageArmor(entity, itemStack, damage, equipmentSlot);
         }
 
         if (entity instanceof Player player && !player.level().isClientSide &&
@@ -1351,7 +1357,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             UUID teamID = TeamUtils.getTeamIdOrPlayerFallback(player.getUUID());
 
             if (TeslaRange.canPlayerUseNetwork(data, teamID, player)) {
-                CompoundTag nbt = itemStack.getOrCreateTag();
+                CompoundTag nbt = StackNbt.getOrCreateTag(itemStack);
                 if (source.is(net.minecraft.world.damagesource.DamageTypes.FLY_INTO_WALL) ||
                         source.is(net.minecraft.world.damagesource.DamageTypes.FALL) ||
                         nbt.getBoolean("teslaMode")) {
@@ -1363,7 +1369,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                     java.math.BigInteger rebirthCost = java.math.BigInteger.valueOf(10_000_000L);
 
                     ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
-                    CompoundTag chestNBT = chestplate.getOrCreateTag();
+                    CompoundTag chestNBT = StackNbt.getOrCreateTag(chestplate);
                     int rebirthCooldown = chestNBT.getInt("rebirthCooldown");
 
                     if (rebirthCooldown <= 0 && network.stored.compareTo(rebirthCost) >= 0) {
@@ -1391,13 +1397,14 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 }
             }
         }
-        return super.damageArmor(entity, itemStack, source, damage, equipmentSlot);
+        return super.damageArmor(entity, itemStack, damage, equipmentSlot);
     }
 
     @Override
-    public ResourceLocation getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
+    public ResourceLocation getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot,
+                                            net.minecraft.world.item.ArmorMaterial.Layer layer) {
         String name = (slot == EquipmentSlot.LEGS) ? "phoenix_tech_suite_2" : "phoenix_tech_suite_1";
-        return new ResourceLocation("phoenix_tesla_network", "textures/armor/" + name + ".png");
+        return ResourceLocation.fromNamespaceAndPath("phoenix_tesla_network", "textures/armor/" + name + ".png");
     }
 
     @Override
@@ -1414,8 +1421,8 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
     public void addInfo(ItemStack itemStack, List<Component> lines) {
         super.addInfo(itemStack, lines);
 
-        if (net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
-            var level = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().overworld();
+        if (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
+            var level = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().overworld();
             var data = TeslaTeamEnergyData.get(level);
 
             assert Minecraft.getInstance().player != null;
@@ -1436,7 +1443,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         }
 
         if (type == ArmorItem.Type.HELMET) {
-            CompoundTag nbtData = itemStack.getOrCreateTag();
+            CompoundTag nbtData = StackNbt.getOrCreateTag(itemStack);
             boolean nv = nbtData.getBoolean("nightVision");
 
             lines.add(Component.translatable("metaarmor.message.nightvision." + (nv ? "enabled" : "disabled")));
@@ -1454,9 +1461,9 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                     .append(Component.keybind(SETTINGS_KEYBIND).withStyle(ChatFormatting.YELLOW))
                     .append(Component.literal(" to open the suite settings").withStyle(ChatFormatting.GRAY)));
 
-            if (itemStack.hasTag()) {
-                assert itemStack.getTag() != null;
-                if (itemStack.getTag().getInt("TeslaChargingTick") > 0) {
+            if (StackNbt.hasTag(itemStack)) {
+                assert StackNbt.getTag(itemStack) != null;
+                if (StackNbt.getTag(itemStack).getInt("TeslaChargingTick") > 0) {
                     lines.add(Component.literal("⚡ Wireless Charging Active")
                             .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
                 }
@@ -1491,7 +1498,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 }
 
                 ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
-                CompoundTag chestNBT = chestplate.getTag();
+                CompoundTag chestNBT = StackNbt.getTag(chestplate);
                 if (chestNBT != null && chestNBT.getInt("wingFlapTick") > 0) {
                     return event.setAndContinue(RawAnimation.begin().thenPlayAndHold("animation.phoenix.flap"));
                 }

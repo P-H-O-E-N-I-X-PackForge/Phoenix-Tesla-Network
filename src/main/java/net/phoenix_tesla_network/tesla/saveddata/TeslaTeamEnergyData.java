@@ -303,7 +303,7 @@ public class TeslaTeamEnergyData extends SavedData {
                 for (int i = 0; i < dimList.size(); i++) {
                     CompoundTag entry = dimList.getCompound(i);
                     BlockPos pos = BlockPos.of(entry.getLong("p"));
-                    ResourceLocation dimLoc = new ResourceLocation(entry.getString("d"));
+                    ResourceLocation dimLoc = ResourceLocation.parse(entry.getString("d"));
                     e.posToDimension.put(pos, ResourceKey.create(Registries.DIMENSION, dimLoc));
                 }
             }
@@ -319,7 +319,7 @@ public class TeslaTeamEnergyData extends SavedData {
                     continue;
                 }
                 ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION,
-                        new ResourceLocation(entry.getString("d")));
+                        ResourceLocation.parse(entry.getString("d")));
                 RangeNode node = new RangeNode(type, dim, BlockPos.of(entry.getLong("p")));
                 node.capacity = entry.contains("cap") ? new BigInteger(entry.getString("cap")) : BigInteger.ZERO;
                 node.working = entry.getBoolean("working");
@@ -402,7 +402,7 @@ public class TeslaTeamEnergyData extends SavedData {
     }
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag tag) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         ListTag netList = new ListTag();
         networks.forEach((uuid, energy) -> {
             CompoundTag teamTag = new CompoundTag();
@@ -466,7 +466,8 @@ public class TeslaTeamEnergyData extends SavedData {
 
     public static TeslaTeamEnergyData get(ServerLevel level) {
         ServerLevel overworld = level.getServer().getLevel(Level.OVERWORLD);
-        return (overworld == null ? level : overworld).getDataStorage().computeIfAbsent(
-                TeslaTeamEnergyData::load, TeslaTeamEnergyData::new, DATA_NAME);
+        return (overworld == null ? level : overworld).getDataStorage()
+                .computeIfAbsent(new net.minecraft.world.level.saveddata.SavedData.Factory<>(TeslaTeamEnergyData::new,
+                        (tag, provider) -> TeslaTeamEnergyData.load(tag), null), DATA_NAME);
     }
 }

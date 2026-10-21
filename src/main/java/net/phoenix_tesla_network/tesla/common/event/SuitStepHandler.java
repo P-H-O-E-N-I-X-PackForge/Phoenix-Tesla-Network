@@ -2,22 +2,22 @@ package net.phoenix_tesla_network.tesla.common.event;
 
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixArmorItem;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTechSuite;
 
-@Mod.EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID)
 public final class SuitStepHandler {
 
     private SuitStepHandler() {}
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        Player player = event.player;
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
 
         if (player.getPersistentData().getBoolean("phoenix_tesla_step_applied") &&
                 !(player.getItemBySlot(EquipmentSlot.FEET).getItem() instanceof PhoenixArmorItem)) {

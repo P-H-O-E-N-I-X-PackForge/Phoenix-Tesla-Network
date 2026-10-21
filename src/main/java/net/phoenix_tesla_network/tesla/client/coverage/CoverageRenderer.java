@@ -2,10 +2,11 @@ package net.phoenix_tesla_network.tesla.client.coverage;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.client.PhoenixRenderTypes;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
@@ -14,7 +15,7 @@ import net.phoenix_tesla_network.tesla.network.packet.S2CCoverageSyncPacket;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-@Mod.EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID, value = Dist.CLIENT)
 public final class CoverageRenderer {
 
     private static final int SEGMENTS = 96;
@@ -55,7 +56,7 @@ public final class CoverageRenderer {
         VertexConsumer vc = buffers.getBuffer(PhoenixRenderTypes.COVERAGE_LINES());
 
         var loss = ClientCoverageData.loss();
-        float pulse = 0.5f + 0.12f * (float) Math.sin((mc.level.getGameTime() + event.getPartialTick()) * 0.12);
+        float pulse = 0.5f + 0.12f * (float) Math.sin((mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false)) * 0.12);
 
         stack.pushPose();
         stack.translate(-camera.x, -camera.y, -camera.z);
@@ -207,9 +208,9 @@ public final class CoverageRenderer {
         ny /= len;
         nz /= len;
 
-        vc.vertex(last.pose(), (float) x1, (float) y1, (float) z1).color(c[0], c[1], c[2], alpha)
-                .normal(last.normal(), nx, ny, nz).endVertex();
-        vc.vertex(last.pose(), (float) x2, (float) y2, (float) z2).color(c[0], c[1], c[2], alpha)
-                .normal(last.normal(), nx, ny, nz).endVertex();
+        vc.addVertex(last.pose(), (float) x1, (float) y1, (float) z1).setColor(c[0], c[1], c[2], alpha)
+                .setNormal(last, nx, ny, nz);
+        vc.addVertex(last.pose(), (float) x2, (float) y2, (float) z2).setColor(c[0], c[1], c[2], alpha)
+                .setNormal(last, nx, ny, nz);
     }
 }

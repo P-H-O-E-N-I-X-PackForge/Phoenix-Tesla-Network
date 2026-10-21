@@ -24,14 +24,14 @@ public class PhoenixArmorRenderer extends GeoArmorRenderer<PhoenixArmorItem> {
                                RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer,
                                float partialTick, int packedLight, int packedOverlay) {
                 if (getCurrentSlot() == EquipmentSlot.CHEST) {
-                    ResourceLocation wingsTex = new ResourceLocation("phoenix_tesla_network",
+                    ResourceLocation wingsTex = ResourceLocation.fromNamespaceAndPath("phoenix_tesla_network",
                             "textures/armor/phoenix_wings.png");
 
                     RenderType wingsRenderType = RenderType.armorCutoutNoCull(wingsTex);
 
                     getRenderer().reRender(model, poseStack, bufferSource, animatable, wingsRenderType,
                             bufferSource.getBuffer(wingsRenderType), partialTick, packedLight, packedOverlay,
-                            1, 1, 1, 1);
+                            0xFFFFFFFF);
                 }
             }
         });

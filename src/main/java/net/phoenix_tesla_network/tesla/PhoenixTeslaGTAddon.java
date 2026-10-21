@@ -4,13 +4,9 @@ import com.gregtechceu.gtceu.api.addon.GTAddon;
 import com.gregtechceu.gtceu.api.addon.IGTAddon;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
-import net.minecraft.data.recipes.FinishedRecipe;
-import net.phoenix_tesla_network.tesla.common.data.materials.PhoenixElements;
+import net.minecraft.data.recipes.RecipeOutput;
 
-import java.util.function.Consumer;
-
-@SuppressWarnings("unused")
-@GTAddon
+@GTAddon(PhoenixTeslaNetwork.MOD_ID)
 public class PhoenixTeslaGTAddon implements IGTAddon {
 
     @Override
@@ -19,21 +15,7 @@ public class PhoenixTeslaGTAddon implements IGTAddon {
     }
 
     @Override
-    public void initializeAddon() {}
-
-    @Override
-    public String addonModId() {
-        return PhoenixTeslaNetwork.MOD_ID;
-    }
-
-    @Override
-    public void registerTagPrefixes() {}
-
-    @Override
-    public void addRecipes(Consumer<FinishedRecipe> provider) {}
-
-    @Override
-    public void registerElements() {
-        PhoenixElements.init();
+    public void addRecipes(RecipeOutput provider) {
+        // TODO: hatch/charger recipes (ported with the rest of the content)
     }
 }

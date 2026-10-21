@@ -1,6 +1,6 @@
 package net.phoenix_tesla_network.tesla.integration.jade;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.world.level.block.Block;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
@@ -18,7 +18,7 @@ public class PhoenixJadePlugin implements IWailaPlugin {
     public void register(IWailaCommonRegistration registration) {
         PhoenixTeslaNetwork.LOGGER.info("[PhoenixJade] register(common) called");
 
-        registration.registerBlockDataProvider(new TeslaNetworkProvider(), MetaMachineBlockEntity.class);
+        registration.registerBlockDataProvider(new TeslaNetworkProvider(), MetaMachine.class);
     }
 
     @Override

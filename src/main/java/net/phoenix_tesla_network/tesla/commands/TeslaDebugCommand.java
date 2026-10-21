@@ -7,17 +7,16 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
-import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
 import com.mojang.brigadier.CommandDispatcher;
 
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class TeslaDebugCommand {
 
     @SubscribeEvent
@@ -54,7 +53,7 @@ public class TeslaDebugCommand {
                 source.sendSuccess(() -> Component.literal("  [LINKED] ")
                         .append(Component.literal(pos.toShortString()).withStyle(ChatFormatting.WHITE))
                         .append(" -> Team: ")
-                        .append(Component.literal(TeamUtils.getTeamName(teamId)).withStyle(ChatFormatting.AQUA))
+                        .append(Component.literal(teamId.toString().substring(0, 8)).withStyle(ChatFormatting.AQUA))
                         .append(verified ? Component.literal(" [VERIFIED]").withStyle(ChatFormatting.GREEN) :
                                 Component.literal(" [MAP MISSING]").withStyle(ChatFormatting.RED)),
                         false);
@@ -81,7 +80,7 @@ public class TeslaDebugCommand {
             boolean online = data.isOnline(team);
 
             MutableComponent teamHeader = Component.literal("Network: ")
-                    .append(Component.literal(TeamUtils.getTeamName(team)).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal(team.toString().substring(0, 8)).withStyle(ChatFormatting.AQUA))
                     .append(online ? Component.literal(" [ONLINE]").withStyle(ChatFormatting.GREEN) :
                             Component.literal(" [OFFLINE]").withStyle(ChatFormatting.RED));
             source.sendSuccess(() -> teamHeader, false);
@@ -100,21 +99,6 @@ public class TeslaDebugCommand {
             source.sendSuccess(() -> Component.literal("  Live Heartbeats: ").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(String.valueOf(finalLiveCount)).withStyle(ChatFormatting.LIGHT_PURPLE)),
                     false);
-
-            if (!teamData.rangeNodes.isEmpty()) {
-                source.sendSuccess(() -> Component.literal("  Towers & Range Extenders:").withStyle(
-                        ChatFormatting.GRAY, ChatFormatting.ITALIC), false);
-                for (var node : teamData.rangeNodes.values()) {
-                    source.sendSuccess(() -> Component.literal("    - ")
-                            .append(Component.literal(node.type.name()).withStyle(ChatFormatting.AQUA))
-                            .append(" " + node.pos.toShortString())
-                            .append(Component.literal(" (" + node.dimension.location().getPath() + ")")
-                                    .withStyle(ChatFormatting.DARK_GRAY))
-                            .append(node.working ? Component.literal(" [WORKING]").withStyle(ChatFormatting.GREEN) :
-                                    Component.literal(" [OFF]").withStyle(ChatFormatting.RED)),
-                            false);
-                }
-            }
 
             var hatches = data.getHatches(team);
             if (!hatches.isEmpty()) {
