@@ -13,6 +13,7 @@ import net.phoenix_tesla_network.tesla.client.keybind.PhoenixKeybinds;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixArmorItem;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.network.PhoenixNetwork;
+import net.phoenix_tesla_network.tesla.network.packet.C2STeslaDischargePacket;
 import net.phoenix_tesla_network.tesla.network.packet.C2SToggleTeslaModePacket;
 
 @Mod.EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -42,6 +43,12 @@ public class ClientTickHandler {
         while (PhoenixKeybinds.TESLA_MODE.consumeClick()) {
             if (mc.player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof PhoenixArmorItem) {
                 PhoenixNetwork.CHANNEL.sendToServer(new C2SToggleTeslaModePacket());
+            }
+        }
+
+        while (PhoenixKeybinds.TESLA_DISCHARGE.consumeClick()) {
+            if (mc.screen == null && !mc.player.getItemBySlot(EquipmentSlot.FEET).isEmpty()) {
+                PhoenixNetwork.CHANNEL.sendToServer(new C2STeslaDischargePacket());
             }
         }
     }
