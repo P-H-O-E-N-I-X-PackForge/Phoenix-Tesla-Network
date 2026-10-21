@@ -1,0 +1,429 @@
+features:
+  # Whether the Tech Suite's on-screen HUD (flight mode, tuning sliders, network
+  # status, rebirth cooldown, energy bar) is drawn at all. Set to false to hide it entirely.
+  techSuiteHUDEnabled: true
+
+  # The connection mode for Tesla Towers.
+  # TEAM_AUTO: All towers under a team/player share the same cloud automatically.
+  # DATA_STICK: Towers must be manually linked to hatches using a Data Stick.
+  # Allowed values:
+  # - TEAM_AUTO
+  # - DATA_STICK
+  teslaConnectionMode: DATA_STICK
+
+  # Which Tesla laser hatch sizes exist. Needs a restart (and a world that used a larger set will
+  # lose the hatches of any size you take away).
+  # STANDARD: 256A, 1024A, 4096A.
+  # EXTENDED:  + 16384A, 65536A, 262144A, 1048576A.
+  # MAXIMUM:   + 4194304A, 16777216A (more than any pack should ever need).
+  # Allowed values:
+  # - STANDARD
+  # - EXTENDED
+  # - MAXIMUM
+  laserHatchSizes: STANDARD
+
+wingFlight:
+  # EU/t drained from the Tesla network during powered elytra/sonic flight.
+  # Speed and boost scale proportionally with this value.
+  # Default: 5000
+  poweredFlightEUt: 5000
+
+  # EU/t drained from the Tesla network during creative flight mode.
+  # Set to 0 for truly free creative flight.
+  # Fly speed scales proportionally with this value.
+  # Default: 1000
+  creativeFlightEUt: 1000
+
+  # Base boost scale for powered elytra flight at minimum speed setting.
+  # The actual boost = boostMin + (speedSlider * (boostMax - boostMin))
+  # Default: 0.01
+  poweredBoostMin: 0.01
+
+  # Max boost scale for powered elytra flight at maximum speed setting.
+  # Scales further with poweredFlightEUt so higher drain = faster top speed.
+  # Default: 0.16
+  poweredBoostMax: 0.16
+
+  # Min creative fly speed (at speed slider = 0).
+  # Default: 0.05
+  creativeSpeedMin: 0.05
+
+  # Max creative fly speed (at speed slider = 10).
+  # Scales further with creativeFlightEUt so higher drain = faster top speed.
+  # Default: 0.35
+  creativeSpeedMax: 0.35
+
+  # Horizontal speed, in blocks/tick, for plain "Creative" mode's free-strafing flight
+  # at speed slider = 5 (the slider's "normal" midpoint, range 0-20, matching vanilla
+  # creative-fly speed) - not creativeSpeedMin/Max's vanilla Abilities.flyingSpeed units,
+  # since vanilla's own flight accumulates well beyond that raw value tick over tick via
+  # friction, but free-strafing sets velocity directly with no such buildup, so it needs
+  # its own, much larger-looking value to reach an equivalent actual speed. Scales
+  # proportionally with the slider on both sides, same as verticalSpeed: 0 = stopped,
+  # 10 = 3.5x this, 20 = 7x this.
+  # Default: 0.55 (matches vanilla creative-fly speed at slider = 5)
+  creativeFreeSpeedBase: 0.55
+
+  # Min speed clamp for powered flight, at speed slider = 0 (the SPEED slider drives this
+  # cap - previously only Drift affected it, so maxing Speed never raised the ceiling).
+  # Default: 0.6
+  poweredDriftMin: 0.6
+
+  # Max speed clamp for powered flight, at speed slider = 20. Drift loosens it further on
+  # top (up to +50% at drift slider = 10).
+  # Default: 4.0
+  poweredDriftMax: 4.0
+
+  # Coasting half-life, in seconds, at drift slider = 0: velocity snaps to zero the instant
+  # you stop thrusting as long as this is 0 - not meant to be changed.
+  # Default: 0.0
+  coastHalfLifeMin: 0.0
+
+  # Coasting half-life, in seconds, at drift slider = 9 (time to bleed half your speed while
+  # airborne and not thrusting). Drift slider = 10 stays a hard zero-decay special case.
+  # Scaling a half-life linearly instead of raw per-tick retention keeps the whole slider
+  # meaningful - retention compounds, so even 0.7/tick is <0.1% of your speed after 1 second.
+  # Default: 8.0
+  coastHalfLifeMax: 8.0
+
+  # Climb-speed multiplier for powered/sonic flight at vertical-speed slider = 5
+  # (the slider's "normal" midpoint, range 0-20) - matches the flat 8x climb boost
+  # this used to be hardcoded to, before the slider existed. Scales proportionally
+  # with the slider on both sides: 0 = none, 10 = double this, 20 = quadruple this.
+  # Default: 8.0
+  poweredVerticalBase: 8.0
+
+  # Min forward-accel boost for the leggings' sprint boost (at sprint-speed slider = 0).
+  # Actual boost = sprintAccelMin + ((sprintSpeed/20) * (sprintAccelMax - sprintAccelMin))
+  # Default: 0.03
+  sprintAccelMin: 0.03
+
+  # Max forward-accel boost for the leggings' sprint boost (at sprint-speed slider = 20).
+  # The slider is eased (slider^1.6), so the low and middle settings stay gentle.
+  # Default: 0.6
+  sprintAccelMax: 0.6
+
+  # Min upward-impulse strength for the boots' boosted jump (at jump-height slider = 1).
+  # The slider is on the Wing Flight Control screen; 0 turns the boosted jump off.
+  # Actual impulse = jumpHeightMin + (((jumpHeight - 1)/19) * (jumpHeightMax - jumpHeightMin))
+  # Default: 0.21
+  jumpHeightMin: 0.21
+
+  # Max upward-impulse strength for the boots' boosted jump (at jump-height slider = 20).
+  # Default: 0.65
+  jumpHeightMax: 0.65
+
+  # How high (in blocks) the boots let you step up without jumping, at the step-height slider's
+  # maximum (20). The slider runs: 0 = vanilla, 1 = just over one block (1.0023), up to this at 20.
+  # Default: 6.0
+  stepHeightMax: 6.0
+
+towers:
+  # Basic Tesla Tower (tier 1). Finite range by default - extend it with Tesla Range Extenders.
+  # GT tier numbers used by every tier setting below: 0=ULV 1=LV 2=MV 3=HV 4=EV 5=IV 6=LuV 7=ZPM
+  # 8=UV 9=UHV 10=UEV 11=UIV 12=UXV 13=OpV 14=MAX
+  # Glass defaults: tempered + laminated + fusion.
+  tier1Basic:
+    # Whether this tower is registered at all. Disabling removes the block from the game
+    # (existing placed towers of a disabled type will be lost). Needs a restart.
+    enabled: true
+
+    # Lowest energy hatch tier this tower accepts (GT tier number).
+    # Needs a restart.
+    minHatchTier: 1
+
+    # Highest energy hatch tier this tower accepts (GT tier number). Applies to energy, substation
+    # and laser hatches. Needs a restart.
+    maxHatchTier: 5
+
+    # Whether energy input hatches can be placed on this tower. If false the tower has no mandatory hatch. Needs a restart.
+    allowEnergyInput: true
+
+    # Whether energy output hatches can be placed on this tower. Needs a restart.
+    allowEnergyOutput: true
+
+    # Whether substation input hatches can be placed on this tower. Needs a restart.
+    allowSubstationInput: true
+
+    # Whether substation output hatches can be placed on this tower. Needs a restart.
+    allowSubstationOutput: true
+
+    # Whether laser input hatches can be placed on this tower. Needs a restart.
+    allowLaserInput: true
+
+    # Whether laser output hatches can be placed on this tower. Needs a restart.
+    allowLaserOutput: true
+
+    # Whether item and fluid hatches can be placed on this tower. Needs a restart.
+    allowItemFluidHatches: true
+
+    # Whether a maintenance hatch can be placed on this tower. Needs a restart.
+    allowMaintenanceHatch: true
+
+    # Whether GT Tempered Glass can be used in this tower's glass slots. Needs a restart.
+    # Any combination of the three glass options works. If all three are false the tower falls back
+    # to allowing all of them (otherwise it could never be built).
+    allowTemperedGlass: true
+
+    # Whether GT Laminated Glass can be used in this tower's glass slots. Needs a restart.
+    allowLaminatedGlass: true
+
+    # Whether Fusion Glass can be used in this tower's glass slots. Needs a restart.
+    allowFusionGlass: true
+
+    # Lowest Tesla Battery tier this tower accepts. Tesla Batteries exist for LV (1) to MAX (14).
+    # Needs a restart.
+    minBatteryTier: 1
+
+    # Highest Tesla Battery tier this tower accepts. Needs a restart.
+    maxBatteryTier: 5
+
+    # Radius, in blocks, of the area this tower covers while infiniteRange is false.
+    # Hatches, linked machines, chargers and suits outside it (and outside every extender) lose access.
+    rangeBlocks: 128
+
+    # If true the tower covers its whole dimension and rangeBlocks is ignored.
+    infiniteRange: false
+
+    # If true the network also reaches other dimensions: range is measured ignoring which dimension
+    # something is in, so an infinite-range cross-dimensional tower covers everything everywhere.
+    crossDimension: false
+
+  # Advanced Tesla Tower (tier 2). Infinite range inside its own dimension by default.
+  # Glass defaults: laminated + fusion.
+  tier2Advanced:
+    # Whether this tower is registered at all. Disabling removes the block from the game
+    # (existing placed towers of a disabled type will be lost). Needs a restart.
+    enabled: true
+
+    # Lowest energy hatch tier this tower accepts (GT tier number).
+    # Needs a restart.
+    minHatchTier: 1
+
+    # Highest energy hatch tier this tower accepts (GT tier number). Applies to energy, substation
+    # and laser hatches. Needs a restart.
+    maxHatchTier: 9
+
+    # Whether energy input hatches can be placed on this tower. If false the tower has no mandatory hatch. Needs a restart.
+    allowEnergyInput: true
+
+    # Whether energy output hatches can be placed on this tower. Needs a restart.
+    allowEnergyOutput: true
+
+    # Whether substation input hatches can be placed on this tower. Needs a restart.
+    allowSubstationInput: true
+
+    # Whether substation output hatches can be placed on this tower. Needs a restart.
+    allowSubstationOutput: true
+
+    # Whether laser input hatches can be placed on this tower. Needs a restart.
+    allowLaserInput: true
+
+    # Whether laser output hatches can be placed on this tower. Needs a restart.
+    allowLaserOutput: true
+
+    # Whether item and fluid hatches can be placed on this tower. Needs a restart.
+    allowItemFluidHatches: true
+
+    # Whether a maintenance hatch can be placed on this tower. Needs a restart.
+    allowMaintenanceHatch: true
+
+    # Whether GT Tempered Glass can be used in this tower's glass slots. Needs a restart.
+    # Any combination of the three glass options works. If all three are false the tower falls back
+    # to allowing all of them (otherwise it could never be built).
+    allowTemperedGlass: false
+
+    # Whether GT Laminated Glass can be used in this tower's glass slots. Needs a restart.
+    allowLaminatedGlass: true
+
+    # Whether Fusion Glass can be used in this tower's glass slots. Needs a restart.
+    allowFusionGlass: true
+
+    # Lowest Tesla Battery tier this tower accepts. Tesla Batteries exist for LV (1) to MAX (14).
+    # Needs a restart.
+    minBatteryTier: 1
+
+    # Highest Tesla Battery tier this tower accepts. Needs a restart.
+    maxBatteryTier: 9
+
+    # Radius, in blocks, of the area this tower covers while infiniteRange is false.
+    # Hatches, linked machines, chargers and suits outside it (and outside every extender) lose access.
+    rangeBlocks: 128
+
+    # If true the tower covers its whole dimension and rangeBlocks is ignored.
+    infiniteRange: true
+
+    # If true the network also reaches other dimensions: range is measured ignoring which dimension
+    # something is in, so an infinite-range cross-dimensional tower covers everything everywhere.
+    crossDimension: false
+
+  # Tesla Tower (tier 3, the original tower - existing towers keep this behavior).
+  # Infinite range and cross-dimensional by default.
+  # Glass defaults: fusion only.
+  tier3Ultimate:
+    # Whether this tower is registered at all. Disabling removes the block from the game
+    # (existing placed towers of a disabled type will be lost). Needs a restart.
+    enabled: true
+
+    # Lowest energy hatch tier this tower accepts (GT tier number).
+    # Needs a restart.
+    minHatchTier: 0
+
+    # Highest energy hatch tier this tower accepts (GT tier number). Applies to energy, substation
+    # and laser hatches. Needs a restart.
+    maxHatchTier: 14
+
+    # Whether energy input hatches can be placed on this tower. If false the tower has no mandatory hatch. Needs a restart.
+    allowEnergyInput: true
+
+    # Whether energy output hatches can be placed on this tower. Needs a restart.
+    allowEnergyOutput: true
+
+    # Whether substation input hatches can be placed on this tower. Needs a restart.
+    allowSubstationInput: true
+
+    # Whether substation output hatches can be placed on this tower. Needs a restart.
+    allowSubstationOutput: true
+
+    # Whether laser input hatches can be placed on this tower. Needs a restart.
+    allowLaserInput: true
+
+    # Whether laser output hatches can be placed on this tower. Needs a restart.
+    allowLaserOutput: true
+
+    # Whether item and fluid hatches can be placed on this tower. Needs a restart.
+    allowItemFluidHatches: true
+
+    # Whether a maintenance hatch can be placed on this tower. Needs a restart.
+    allowMaintenanceHatch: true
+
+    # Whether GT Tempered Glass can be used in this tower's glass slots. Needs a restart.
+    # Any combination of the three glass options works. If all three are false the tower falls back
+    # to allowing all of them (otherwise it could never be built).
+    allowTemperedGlass: false
+
+    # Whether GT Laminated Glass can be used in this tower's glass slots. Needs a restart.
+    allowLaminatedGlass: false
+
+    # Whether Fusion Glass can be used in this tower's glass slots. Needs a restart.
+    allowFusionGlass: true
+
+    # Lowest Tesla Battery tier this tower accepts. Tesla Batteries exist for LV (1) to MAX (14).
+    # Needs a restart.
+    minBatteryTier: 1
+
+    # Highest Tesla Battery tier this tower accepts. Needs a restart.
+    maxBatteryTier: 14
+
+    # Radius, in blocks, of the area this tower covers while infiniteRange is false.
+    # Hatches, linked machines, chargers and suits outside it (and outside every extender) lose access.
+    rangeBlocks: 128
+
+    # If true the tower covers its whole dimension and rangeBlocks is ignored.
+    infiniteRange: true
+
+    # If true the network also reaches other dimensions: range is measured ignoring which dimension
+    # something is in, so an infinite-range cross-dimensional tower covers everything everywhere.
+    crossDimension: true
+
+  # Tesla Range Extender: a multiblock that adds its own coverage radius to the network.
+  # It only works while it is itself inside the coverage of a tower or another working extender,
+  # so extenders can be chained outward from a tower.
+  relay:
+    # Whether the Tesla Range Extender is registered at all. Needs a restart.
+    enabled: true
+
+    # Radius, in blocks, each working extender adds to the network around itself.
+    rangeBlocks: 128
+
+  # Transmission loss. Energy moving between the team network and a hatch, linked machine, wireless
+  # charger or the suit's tool charging is scaled by the efficiency below, based on how far the
+  # receiving end is from the nearest tower or range extender covering it.
+  loss:
+    # Master switch. False means lossless transfer everywhere (no other loss setting matters).
+    # 
+    # loss % = min(maxLossPercent, baseLossPercent
+    #               + lossPercentPerUnit * (distance / distanceUnitBlocks) ^ exponent)
+    #   distance = blocks from the receiving end to the nearest covering tower or extender,
+    #   so extenders cut loss. If only a cross-dimensional tower covers it, crossDimensionLossPercent
+    #   is used instead of the distance term.
+    # A machine receives (100 - loss)% of what the network spends, and the network receives
+    # (100 - loss)% of what a generator sends.
+    enabled: true
+
+    # Flat loss on every transfer, even right next to a tower. Percent.
+    baseLossPercent: 0.0
+
+    # Extra loss per distanceUnitBlocks of distance (before the exponent). Percent.
+    lossPercentPerUnit: 5.0
+
+    # Distance, in blocks, that lossPercentPerUnit is measured per.
+    distanceUnitBlocks: 128.0
+
+    # 1 = loss grows linearly with distance, above 1 = nearly lossless close in and steep far out,
+    # below 1 = most of the loss comes early and flattens out.
+    exponent: 1.0
+
+    # Loss used instead of the distance term when only a cross-dimensional tower covers
+    # the receiving end (it is in a different dimension from the tower). Percent.
+    crossDimensionLossPercent: 10.0
+
+    # Loss never goes above this. Percent.
+    maxLossPercent: 50.0
+
+    # Whether the Phoenix Tech Suite's tool charging from the network is subject to loss.
+    # The suit's own running costs (flight, rebirth, ...) are never reduced by loss.
+    applyToSuit: true
+
+  # Whether the Phoenix Tech Suite (flight, wireless tool charging, rebirth, ...) must be inside
+  # the network's range to use the network. Has no effect on infinite-range towers.
+  suitRespectsRange: true
+
+# How much energy (EU) one Tesla Battery of each tier stores. A tower's buffer is the sum of its
+# batteries. Changing a value changes how much every existing battery of that tier holds.
+teslaBatteries:
+  # ULV Tesla Battery capacity, in EU. Default 960,000.
+  ulvCapacity: 160000.0
+
+  # LV Tesla Battery capacity, in EU. Default 960,000.
+  lvCapacity: 960000.0
+
+  # MV Tesla Battery capacity, in EU. Default 6,720,000.
+  mvCapacity: 6720000.0
+
+  # HV Tesla Battery capacity, in EU. Default 57,600,000.
+  hvCapacity: 5.76E7
+
+  # EV Tesla Battery capacity, in EU. Default 37,500,000.
+  evCapacity: 3.75E7
+
+  # IV Tesla Battery capacity, in EU. Default 750,000,000.
+  ivCapacity: 7.5E8
+
+  # LuV Tesla Battery capacity, in EU. Default 6,000,000,000.
+  luvCapacity: 6.0E9
+
+  # ZPM Tesla Battery capacity, in EU. Default 48,000,000,000.
+  zpmCapacity: 4.8E10
+
+  # UV Tesla Battery capacity, in EU. Default 384,000,000,000.
+  uvCapacity: 3.84E11
+
+  # UHV Tesla Battery capacity, in EU. Default 1,000,000,000,000.
+  uhvCapacity: 1.0E12
+
+  # UEV Tesla Battery capacity, in EU. Default 5,000,000,000,000.
+  uevCapacity: 5.0E12
+
+  # UIV Tesla Battery capacity, in EU. Default 25,000,000,000,000.
+  uivCapacity: 2.5E13
+
+  # UXV Tesla Battery capacity, in EU. Default 100,000,000,000,000.
+  uxvCapacity: 1.0E14
+
+  # OPV Tesla Battery capacity, in EU. Default 3.689349e+21.
+  opvCapacity: 3.689349E21
+
+  # MAX Tesla Battery capacity, in EU. Default 8.301035e+27.
+  maxCapacity: 8.301035E27
+

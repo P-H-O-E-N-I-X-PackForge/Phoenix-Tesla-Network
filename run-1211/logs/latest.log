@@ -1,0 +1,146 @@
+[20Oct2026 21:04:53.280] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.43, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.248, --fml.neoFormVersion, 20240808.144430, --nogui, --world, world-extra]
+[20Oct2026 21:04:53.285] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.8+9-LTS
+[20Oct2026 21:04:53.287] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.8 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
+[20Oct2026 21:04:53.461] [main/INFO] [net.neoforged.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[20Oct2026 21:04:53.564] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/C:/Users/conno/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[20Oct2026 21:04:54.508] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: library:Registrate.MC1._21._67. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\com.tterrag.registrate\Registrate\MC1.21-1.3.0+67\66ddc4cd56472fea1ea1a24182901e6c92a51c0a\Registrate-MC1.21-1.3.0+67.jar
+[20Oct2026 21:04:54.508] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: configuration. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\dev.toma.configuration\configuration-1.21.1\3.1.1-neoforge\ea42854e41bd486bd803b76aac6588c7b9db9e06\configuration-1.21.1-3.1.1-neoforge.jar
+[20Oct2026 21:04:54.508] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: modularui. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\brachy.modularui\modularui-mc1.21.1\3.3.1-SNAPSHOT\c0e6d8f291065b032ae9d5b9f7bd5318aab1155c\modularui-mc1.21.1-3.3.1-SNAPSHOT.jar
+[20Oct2026 21:04:54.509] [main/INFO] [net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator/]: Found 3 dependencies adding them to mods collection
+[20Oct2026 21:04:54.511] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		Configuration 3.1.1 (configuration)
+		Curios API 9.5.1+1.21.1 (curios)
+		EMI 1.1.24+1.21.1+neoforge (emi)
+		GeckoLib 4 4.8.4 (geckolib)
+		GregTech 8.0.0-SNAPSHOT+36a6b38 (gtceu)
+		Jade 15.10.6+neoforge (jade)
+		Minecraft 1.21.1 (minecraft)
+		ModularUI 3.3.1-SNAPSHOT (modularui)
+		NeoForge 21.1.248 (neoforge)
+		Phoenix Tesla Network 0.5.0 (phoenix_tesla_network)
+		Phoenix Wiki 0.5.9 (phoenix_wiki)
+[20Oct2026 21:04:56.395] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[20Oct2026 21:04:56.404] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[20Oct2026 21:04:56.438] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, ., --nogui, --world, world-extra]
+[20Oct2026 21:04:56.578] [main/WARN] [mixin/]: Reference map 'configuration.refmap.json' for configuration.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.579] [main/WARN] [mixin/]: Reference map 'modularui.refmap.json' for modularui.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.595] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for gtceu.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.595] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for mixin_configs/gtceu-neoforge.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.596] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for mixin_configs/gtceu-emi.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.597] [main/WARN] [mixin/]: Reference map 'curios.refmap.json' for curios.neoforge.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.597] [main/WARN] [mixin/]: Reference map 'curios.refmap.json' for curios.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:56.598] [main/WARN] [mixin/]: Reference map 'geckolib.refmap.json' for geckolib.mixins.json could not be read. If this is a development environment you can ignore this message
+[20Oct2026 21:04:57.004] [main/WARN] [mixin/]: Error loading class: mezz/jei/neoforge/platform/FluidHelper (java.lang.ClassNotFoundException: mezz.jei.neoforge.platform.FluidHelper)
+[20Oct2026 21:04:57.005] [main/WARN] [mixin/]: @Mixin target mezz.jei.neoforge.platform.FluidHelper was not found gtceu.mixins.json:jei.FluidHelperMixin from mod gtceu
+[20Oct2026 21:04:57.251] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
+[20Oct2026 21:05:07.585] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[20Oct2026 21:05:07.589] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[20Oct2026 21:05:07.595] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[20Oct2026 21:05:07.597] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[20Oct2026 21:05:07.599] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[20Oct2026 21:05:07.672] [modloading-worker-0/INFO] [PhoenixWiki/]: Phoenix Wiki loaded (library mod. see PhoenixWikiAPI to open a wiki screen)
+[20Oct2026 21:05:07.721] [modloading-worker-0/INFO] [net.neoforged.neoforge.common.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.248, for MC 1.21.1
+[20Oct2026 21:05:07.797] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered configuration config for auto-sync function
+[20Oct2026 21:05:07.839] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered gtceu config for auto-sync function
+[20Oct2026 21:05:07.846] [modloading-worker-0/INFO] [GTCEu/]: High-Tier is Enabled.
+[20Oct2026 21:05:09.542] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered phoenix_tesla_network config for auto-sync function
+[20Oct2026 21:05:09.666] [modloading-sync-worker/INFO] [GTCEu/]: Firing material register late event
+[20Oct2026 21:05:10.028] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:water
+[20Oct2026 21:05:10.060] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:lava
+[20Oct2026 21:05:10.061] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:milk
+[20Oct2026 21:05:11.556] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from com.gregtechceu.gtceu.integration.jade.GTJadePlugin
+[20Oct2026 21:05:11.605] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from com.gregtechceu.gtceu.integration.jade.GTJadePlugin in 38.08 ms
+[20Oct2026 21:05:11.606] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from snownee.jade.addon.vanilla.VanillaPlugin
+[20Oct2026 21:05:11.626] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from snownee.jade.addon.vanilla.VanillaPlugin in 18.36 ms
+[20Oct2026 21:05:11.626] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from snownee.jade.addon.universal.UniversalPlugin
+[20Oct2026 21:05:11.633] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from snownee.jade.addon.universal.UniversalPlugin in 6.372 ms
+[20Oct2026 21:05:11.633] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from snownee.jade.addon.debug.DebugPlugin
+[20Oct2026 21:05:11.634] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from snownee.jade.addon.debug.DebugPlugin in 14.40 ?s
+[20Oct2026 21:05:11.635] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from snownee.jade.addon.core.CorePlugin
+[20Oct2026 21:05:11.636] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from snownee.jade.addon.core.CorePlugin in 68.90 ?s
+[20Oct2026 21:05:11.637] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from snownee.jade.addon.access.AccessibilityPlugin
+[20Oct2026 21:05:11.637] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from snownee.jade.addon.access.AccessibilityPlugin in 9.800 ?s
+[20Oct2026 21:05:11.638] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.phoenix_tesla_network.tesla.integration.jade.PhoenixJadePlugin
+[20Oct2026 21:05:11.639] [modloading-worker-0/INFO] [net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork/]: [PhoenixJade] register(common) called
+[20Oct2026 21:05:11.641] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Loaded plugin from net.phoenix_tesla_network.tesla.integration.jade.PhoenixJadePlugin in 2.175 ms
+[20Oct2026 21:05:11.796] [main/ERROR] [net.minecraft.server.dedicated.Settings/]: Failed to load properties from file: server.properties
+java.nio.file.NoSuchFileException: server.properties
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:85) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108) ~[?:?]
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.newByteChannel(WindowsFileSystemProvider.java:234) ~[?:?]
+	at java.base/java.nio.file.Files.newByteChannel(Files.java:380) ~[?:?]
+	at java.base/java.nio.file.Files.newByteChannel(Files.java:432) ~[?:?]
+	at java.base/java.nio.file.spi.FileSystemProvider.newInputStream(FileSystemProvider.java:420) ~[?:?]
+	at java.base/java.nio.file.Files.newInputStream(Files.java:160) ~[?:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.Settings.loadFromFile(Settings.java:38) ~[neoforge-21.1.248.jar%23125!/:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.DedicatedServerProperties.fromFile(DedicatedServerProperties.java:132) ~[neoforge-21.1.248.jar%23125!/:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.DedicatedServerSettings.<init>(DedicatedServerSettings.java:12) ~[neoforge-21.1.248.jar%23125!/:?]
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.Main.main(Main.java:125) ~[neoforge-21.1.248.jar%23125!/:?]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at MC-BOOTSTRAP/fml_loader@4.0.43/net.neoforged.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:136) ~[loader-4.0.43.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/fml_loader@4.0.43/net.neoforged.fml.loading.targets.CommonLaunchHandler.serverService(CommonLaunchHandler.java:128) ~[loader-4.0.43.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/fml_loader@4.0.43/net.neoforged.fml.loading.targets.NeoForgeServerDevLaunchHandler.runService(NeoForgeServerDevLaunchHandler.java:23) ~[loader-4.0.43.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/fml_loader@4.0.43/net.neoforged.fml.loading.targets.CommonLaunchHandler.lambda$launchService$4(CommonLaunchHandler.java:118) ~[loader-4.0.43.jar%23102!/:4.0]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.run(Launcher.java:103) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.main(Launcher.java:74) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-11.0.5.jar%2382!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-11.0.5.jar%2382!/:?]
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.run(BootstrapLauncher.java:210) [bootstraplauncher-2.0.2.jar:?]
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:69) [bootstraplauncher-2.0.2.jar:?]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?]
+[20Oct2026 21:05:11.822] [main/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[20Oct2026 21:05:11.878] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/conno/Desktop/PFT%20Core/Phoenix-Tesla-Network/build/moddev/artifacts/neoforge-21.1.248.jar%23125!/assets/.mcassetsroot' uses unexpected schema
+[20Oct2026 21:05:11.878] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/conno/Desktop/PFT%20Core/Phoenix-Tesla-Network/build/moddev/artifacts/neoforge-21.1.248.jar%23125!/data/.mcassetsroot' uses unexpected schema
+[20Oct2026 21:05:12.024] [main/INFO] [net.minecraft.server.MinecraftServer/]: Found new data pack gtceu:dynamic_data, loading it automatically
+[20Oct2026 21:05:12.705] [main/INFO] [net.minecraft.server.Main/]: No existing world data, creating new world
+[20Oct2026 21:05:31.329] [main/INFO] [GTCEu/]: GregTech Data loading took 18584ms
+[20Oct2026 21:05:36.240] [main/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Loaded 39654 recipes
+[20Oct2026 21:05:38.192] [main/INFO] [net.minecraft.advancements.AdvancementTree/]: Loaded 1434 advancements
+[20Oct2026 21:05:38.230] [main/INFO] [Curios API/]: Loaded 11 curio slots
+[20Oct2026 21:05:38.239] [main/INFO] [Curios API/]: Loaded 1 curio entities
+[20Oct2026 21:05:38.324] [main/WARN] [net.minecraft.core.MappedRegistry/]: Not all defined tags for registry ResourceKey[minecraft:root / minecraft:block] are present in data pack: c:mineable/crowbar, c:mineable/hammer, c:mineable/knife, c:mineable/saw
+[20Oct2026 21:05:40.170] [main/INFO] [snownee.jade.Jade/]: LootTableMineableCollector took 32.38 ms
+[20Oct2026 21:05:40.317] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting minecraft server version 1.21.1
+[20Oct2026 21:05:40.318] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Loading properties
+[20Oct2026 21:05:40.318] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Default game type: SURVIVAL
+[20Oct2026 21:05:40.318] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Generating keypair
+[20Oct2026 21:05:40.388] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting Minecraft server on *:25565
+[20Oct2026 21:05:40.495] [Server thread/INFO] [net.minecraft.server.network.ServerConnectionListener/]: Using default channel type
+[20Oct2026 21:05:40.553] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[20Oct2026 21:05:40.554] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: The server will make no attempt to authenticate usernames. Beware.
+[20Oct2026 21:05:40.554] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[20Oct2026 21:05:40.554] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: To change this, set "online-mode" to "true" in the server.properties file.
+[20Oct2026 21:05:40.639] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Preparing level "world-extra"
+[20Oct2026 21:05:47.372] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
+[20Oct2026 21:05:47.403] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[20Oct2026 21:05:47.969] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[20Oct2026 21:05:48.385] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[20Oct2026 21:05:48.886] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[20Oct2026 21:05:49.465] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[20Oct2026 21:05:49.875] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[20Oct2026 21:05:50.390] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 18%
+[20Oct2026 21:05:50.877] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 18%
+[20Oct2026 21:05:51.378] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 30%
+[20Oct2026 21:05:51.879] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 48%
+[20Oct2026 21:05:52.390] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 51%
+[20Oct2026 21:05:52.926] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 69%
+[20Oct2026 21:05:53.038] [Server thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Time elapsed: 5666 ms
+[20Oct2026 21:05:53.039] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (12.452s)! For help, type "help"
+[20Oct2026 21:05:53.118] [Server thread/INFO] [net.neoforged.neoforge.gametest.GameTestHooks/]: Enabled Gametest Namespaces: [phoenix_tesla_network]
+[20Oct2026 21:05:53.125] [Server thread/INFO] [net.neoforged.neoforge.server.permission.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[20Oct2026 21:05:53.131] [Server thread/WARN] [net.neoforged.neoforge.common.TagConventionLogWarning/]: 
+   Dev warning - Legacy Tags detected. Please migrate your 'forge' namespace tags to the 'c' namespace! See net.neoforged.neoforge.common.Tags.java for all tags.
+   NOTE: Many tags have been moved around or renamed. Some new ones were added so please review the new tags.
+    And make sure you follow tag conventions for new tags! The convention is `c` with nouns generally being plural and adjectives being singular.
+   You can disable this message in NeoForge's common config by setting `logLegacyTagWarnings` to "SILENCED" or see individual tags with "DEV_VERBOSE".
+

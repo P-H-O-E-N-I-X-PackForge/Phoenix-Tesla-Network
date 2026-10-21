@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.addon.IGTAddon;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
 import net.minecraft.data.recipes.RecipeOutput;
+import net.phoenix_tesla_network.tesla.common.data.recipe.*;
 
 @GTAddon(PhoenixTeslaNetwork.MOD_ID)
 public class PhoenixTeslaGTAddon implements IGTAddon {
@@ -16,6 +17,9 @@ public class PhoenixTeslaGTAddon implements IGTAddon {
 
     @Override
     public void addRecipes(RecipeOutput provider) {
-        // TODO: hatch/charger recipes (ported with the rest of the content)
+        TeslaHatchRecipes.init(provider);
+        TeslaMultiAmpHatchRecipes.init(provider);
+        CustomComponetRecipes.init(provider);
+        WirelessChargerRecipes.init(provider);
     }
 }
