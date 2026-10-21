@@ -1246,11 +1246,14 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         java.math.BigInteger networkCost = BigInteger.valueOf(5000);
         long armorCost = 5000L;
 
+        UUID teamId = TeamUtils.getTeamIdOrPlayerFallback(player.getUUID());
+        if (teamId == null) teamId = player.getUUID();
+
         TeslaTeamEnergyData teslaData = TeslaTeamEnergyData.get(level);
-        TeslaTeamEnergyData.TeamEnergy network = teslaData.getOrCreate(player.getUUID());
+        TeslaTeamEnergyData.TeamEnergy network = teslaData.getOrCreate(teamId);
 
         boolean hasEnergy = false;
-        if (TeslaRange.canPlayerUseNetwork(teslaData, player.getUUID(), player) &&
+        if (TeslaRange.canPlayerUseNetwork(teslaData, teamId, player) &&
                 network.stored.compareTo(networkCost) >= 0) {
             network.drain(networkCost);
             hasEnergy = true;
