@@ -2,6 +2,7 @@ package net.phoenix_tesla_network.tesla.network;
 
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.phoenix_tesla_network.tesla.network.packet.C2SToggleTeslaModePacket;
+import net.phoenix_tesla_network.tesla.network.packet.C2STeslaDischargePacket;
 import net.phoenix_tesla_network.tesla.network.packet.S2CCoverageSyncPacket;
 import net.phoenix_tesla_network.tesla.network.packet.UpdateWingSettingsPacket;
 
@@ -12,6 +13,8 @@ public class PhoenixNetwork {
                 (msg, ctx) -> msg.handle(ctx));
         registrar.playToServer(C2SToggleTeslaModePacket.TYPE, C2SToggleTeslaModePacket.STREAM_CODEC,
                 C2SToggleTeslaModePacket::handle);
+        registrar.playToServer(C2STeslaDischargePacket.TYPE, C2STeslaDischargePacket.STREAM_CODEC,
+                C2STeslaDischargePacket::handle);
         registrar.playToClient(S2CCoverageSyncPacket.TYPE, S2CCoverageSyncPacket.STREAM_CODEC,
                 (msg, ctx) -> msg.handle(ctx));
     }
