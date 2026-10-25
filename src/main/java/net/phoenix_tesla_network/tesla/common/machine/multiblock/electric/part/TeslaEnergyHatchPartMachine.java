@@ -22,9 +22,9 @@ import net.phoenix_tesla_network.tesla.api.gui.TeslaBackground;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
-import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaWirelessRegistry;
+import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
@@ -122,7 +122,8 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
             if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] Unsubscribing from tick (Tesla Tower)");
             unsubscribeFromTick();
         } else {
-            if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] Updating tick subscription (Other multiblock)");
+            if (TESLA_DEBUG)
+                PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] Updating tick subscription (Other multiblock)");
             updateTickSubscription();
         }
     }
@@ -139,7 +140,8 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
         boolean awaitingAutoLink = ownerTeamUUID == null && PhoenixTeslaConfigs.INSTANCE.features.teslaConnectionMode ==
                 PhoenixTeslaConfigs.FeatureConfigs.TeslaConnectionMode.TEAM_AUTO;
 
-        if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] updateTickSubscription called at {}", getBlockPos());
+        if (TESLA_DEBUG)
+            PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] updateTickSubscription called at {}", getBlockPos());
         if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] isWireless={}, controllers={}",
                 isWireless(), getControllers().size());
 
@@ -150,7 +152,8 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
             } else {
                 shouldTick = getControllers().stream()
                         .noneMatch(ctrl -> ctrl instanceof TeslaTowerMachine);
-                if (TESLA_DEBUG) PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] In multiblock, shouldTick={}", shouldTick);
+                if (TESLA_DEBUG)
+                    PhoenixTeslaNetwork.LOGGER.info("[TESLA DEBUG] In multiblock, shouldTick={}", shouldTick);
             }
         }
 
