@@ -54,7 +54,6 @@ public class PhoenixPredicates {
                 .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.batteries"));
     }
 
-    /** Hatches of the given abilities, restricted to a voltage tier range. */
     public static MultiPredicate tieredAbilities(int minTier, int maxTier, PartAbility... abilities) {
         int lo = Math.min(minTier, maxTier);
         int hi = Math.max(minTier, maxTier);

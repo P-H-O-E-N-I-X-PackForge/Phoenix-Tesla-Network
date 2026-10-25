@@ -22,7 +22,7 @@ intRanged: 10
 intSlider: 15
 
 # Requires game restart
-intGameRestartRestriction: 99
+intGameRestartRestriction: 50
 
 # Synchronized value
 intSynchronized: 123
@@ -56,7 +56,7 @@ longArray:
   - 133
 
 floatArray:
-  - 135.32
+  - 500.0
   - 1561.23
 
 stringArray:

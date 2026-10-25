@@ -71,12 +71,6 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
     private static final int ADVANCED_CONTROLLER_Y = 1;
     private static final int[] ADVANCED_CHAMBER_BOTTOMS = { 4, 11 };
 
-    /**
-     * Whether the base axis returned by {@code getSpireAxis()} must also be rotated by the machine's facing for
-     * Basic/Advanced towers. The Ultimate tower renders correctly without any rotation, which means
-     * {@code getSpireAxis()} is already in world space, so this defaults to false. Only flip it if the tower's
-     * center itself (not just the per-ring offsets) is wrong on some facings.
-     */
     private static final boolean ROTATE_AXIS_BY_FACING = false;
 
     private static RingLayout layoutFor(TeslaTowerType type) {
@@ -103,7 +97,6 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         });
     }
 
-    // ------------- SIZE OVERRIDES -------------
     private static float getRadiusForRing(TeslaTowerType type, int ringIndex) {
         if (type == TeslaTowerType.BASIC) {
             return 2.35f;
@@ -114,39 +107,30 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         }
     }
 
-    // Playtest tweaks. Negative Y moves the whole effect down (Basic should sit closer to the floor of its layer).
     private static final float BASIC_Y_OFFSET = -0.5f;
-    // Ultimate: top ring was poking outside the glass cage (shrink), bottom ring could be larger (grow).
+
     private static final float ULTIMATE_TOP_RING_SCALE = 0.7f;
     private static final float ULTIMATE_BOTTOM_RING_SCALE = 1.1f;
 
     private static float getYOffset(TeslaTowerType type) {
         return type == TeslaTowerType.BASIC ? BASIC_Y_OFFSET : 0.0f;
     }
-    // ------------------------------------------
 
-    /**
-     * Rotates a horizontal vector authored for a SOUTH-facing machine (front = +Z) into the machine's real facing.
-     * This is the single rotation used for everything, so offsets and the axis can never disagree on direction.
-     */
     private static float[] rotateToFacing(Direction facing, float x, float z) {
         return switch (facing) {
             case NORTH -> new float[] { -x, -z };
             case WEST -> new float[] { -z, x };
             case EAST -> new float[] { z, -x };
-            default -> new float[] { x, z }; // SOUTH
+            default -> new float[] { x, z };
         };
     }
 
-    // ------------- SPIN SPEED CURVE (radians per tick) -------------
-    // Slow when nearly empty, fast through the middle of the charge range, slow again near full.
     private static final float SLOW_SPEED = 0.2f;
     private static final float FAST_SPEED = 1.0f;
-    private static final float RAMP_UP_START = 0.10f; // starts speeding up here...
-    private static final float FAST_START = 0.25f;    // ...and reaches full speed at 1/4
-    private static final float FAST_END = 5f / 6f;    // full speed holds until 5/6...
-    private static final float RAMP_DOWN_END = 0.95f; // ...then eases back to slow by here
-    // ---------------------------------------------------------------
+    private static final float RAMP_UP_START = 0.10f;
+    private static final float FAST_START = 0.25f;
+    private static final float FAST_END = 5f / 6f;
+    private static final float RAMP_DOWN_END = 0.95f;
 
     private static float smoothstep(float edge0, float edge1, float x) {
         float t = Math.max(0f, Math.min(1f, (x - edge0) / (edge1 - edge0)));
@@ -215,7 +199,6 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
 
         float[] yPositions = layout.heights();
 
-        // Identify the highest/lowest ring by actual height, so this doesn't depend on array ordering
         int highestRing = 0;
         int lowestRing = 0;
         for (int k = 1; k < yPositions.length; k++) {
@@ -223,7 +206,6 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
             if (yPositions[k] < yPositions[lowestRing]) lowestRing = k;
         }
 
-        // Base center relative to the controller (render space is machine-relative, world-aligned)
         Vec3 axis = machine.getSpireAxis().subtract(Vec3.atLowerCornerOf(machine.getBlockPos()));
         float baseAxisX = (float) axis.x;
         float baseAxisZ = (float) axis.z;
@@ -237,7 +219,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         poseStack.pushPose();
 
         for (int ringIndex = 0; ringIndex < yPositions.length; ringIndex++) {
-            // Per-ring offsets are authored for a SOUTH-facing machine; rotate them into the real facing
+
             float[] offsets = getLocalOffsetForRing(towerType, ringIndex);
             float worldOffsetX = offsets[0];
             float worldOffsetZ = offsets[1];
@@ -246,7 +228,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                 worldOffsetX = r[0];
                 worldOffsetZ = r[1];
             } else {
-                // Ultimate: pick the offset by height rank (0 = lowest, 1 = middle, 2 = highest)
+
                 int rank = ringIndex == highestRing ? 2 : (ringIndex == lowestRing ? 0 : 1);
                 float[] u = getUltimateRingOffset(rank);
                 worldOffsetX = u[0];
@@ -259,7 +241,6 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
 
             Vec3 currentTopCenter = new Vec3(xBase, yBase, zBase);
 
-            // Fetch the specific radius for this exact container
             float currentRadius = getRadiusForRing(towerType, ringIndex);
             if (towerType == TeslaTowerType.ULTIMATE) {
                 if (ringIndex == highestRing) {
@@ -277,7 +258,6 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                 double z = zBase + Math.sin(angle) * currentRadius;
                 double pulse = Math.sin((time + ringIndex * 10 + i) * 0.1) * 0.2;
 
-                // Keep the corrected negative operator to fix upside down
                 double y = yBase - TEEPEE_DROP + pulse;
 
                 Vec3 targetPos = new Vec3(x, y, z);
@@ -286,7 +266,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                     drawArc(poseStack, vc, currentTopCenter, targetPos, time, 5, 0.18f, 1.0f, 0L, style);
 
                     if (machine.getLevel().isClientSide && machine.getLevel().random.nextFloat() < 0.05f) {
-                        // targetPos is already machine-relative and world-aligned, so no inverse rotation is needed
+
                         machine.getLevel().addParticle(
                                 PhoenixParticles.TESLA_SPARK.get(),
                                 targetPos.x + machine.getBlockPos().getX(),
@@ -302,27 +282,22 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
 
     private static float[] getLocalOffsetForRing(TeslaTowerType type, int ringIndex) {
         if (type == TeslaTowerType.BASIC) {
-            // Basic Tier (1 ring -> ringIndex 0)
+
             return new float[] { 0.5f, 0.5f };
 
         } else if (type == TeslaTowerType.ADVANCED) {
-            // Advanced Tier (2 rings)
+
             return new float[] { 0.5f, 1.5f };
         }
 
-        return new float[] { 0.0f, 0.0f }; // Ultimate or default
+        return new float[] { 0.0f, 0.0f };
     }
 
-    /**
-     * Ultimate tower ring offsets in blocks, {x, z}, by ring height rank: 0 = bottom, 1 = middle, 2 = top.
-     * The values are literals inside this method body on purpose, so a debug-session hot reload picks up edits.
-     * Ultimate is not rotated by facing, so +X is east and +Z is south in the world.
-     */
     private static float[] getUltimateRingOffset(int rank) {
         return switch (rank) {
-            case 0 -> new float[] { 0.0f, 0.5f }; // bottom ring
-            case 1 -> new float[] { 0.0f, 0.5f }; // middle ring
-            default -> new float[] { 0.0f, 0.5f }; // top ring
+            case 0 -> new float[] { 0.0f, 0.5f };
+            case 1 -> new float[] { 0.0f, 0.5f };
+            default -> new float[] { 0.0f, 0.5f };
         };
     }
 

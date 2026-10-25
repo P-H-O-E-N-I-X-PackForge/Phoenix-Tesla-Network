@@ -15,7 +15,5 @@ public class PhoenixTeslaGTAddon implements IGTAddon {
     }
 
     @Override
-    public void addRecipes(RecipeOutput provider) {
-        // The recipes live in PhoenixCore (they use its materials).
-    }
+    public void addRecipes(RecipeOutput provider) {}
 }

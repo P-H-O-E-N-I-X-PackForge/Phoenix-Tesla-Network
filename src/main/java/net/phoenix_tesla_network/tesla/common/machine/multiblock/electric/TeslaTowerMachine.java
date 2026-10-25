@@ -21,6 +21,7 @@ import com.gregtechceu.gtceu.utils.GradientUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -34,16 +35,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.core.Direction;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
-import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
-import net.phoenix_tesla_network.tesla.common.machine.multiblock.unique.UniqueWorkableElectricMultiblockMachine;
 import net.phoenix_tesla_network.tesla.api.machine.trait.ITeslaBattery;
 import net.phoenix_tesla_network.tesla.api.range.ITeslaLinkNode;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.block.TeslaBatteryBlock;
+import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine;
+import net.phoenix_tesla_network.tesla.common.machine.multiblock.unique.UniqueWorkableElectricMultiblockMachine;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
@@ -924,10 +924,6 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
     @SaveField
     private UUID ownerTeamUUID;
 
-    /**
-     * The Tesla network this tower belongs to: the bound/assigned team if there is one, otherwise the team derived
-     * from the machine owner. Read-only, so it is safe to call before the structure has formed (e.g. from Jade).
-     */
     public @Nullable UUID getOwnerTeamUUID() {
         if (ownerTeamUUID != null) return ownerTeamUUID;
         UUID owner = getOwnerUUID();

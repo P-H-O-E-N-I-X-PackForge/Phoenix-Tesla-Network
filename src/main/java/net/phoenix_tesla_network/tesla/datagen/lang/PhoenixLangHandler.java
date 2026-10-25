@@ -5,8 +5,6 @@ import com.tterrag.registrate.providers.RegistrateLangProvider;
 public class PhoenixLangHandler {
 
     public static void init(RegistrateLangProvider provider) {
-        provider.add("metaarmor.message.step_assist.disabled", "PhoenixTech™ Suite: StepAssist Disabled");
-        provider.add("metaarmor.message.step_assist.enabled", "PhoenixTech™ Suite: StepAssist Enabled");
         provider.add("item.gtceu.tool.ev_screwdriver", "%s Electric Screwdriver (EV)");
         provider.add("item.gtceu.tool.mv_screwdriver", "%s Electric Screwdriver (MV)");
         provider.add("item.gtceu.tool.luv_screwdriver", "%s Electric Screwdriver (LuV)");
@@ -39,8 +37,6 @@ public class PhoenixLangHandler {
         provider.add("tooltip.phoenix_tesla_network.crystal_rose.made_from", "Forged from %s.");
         provider.add("tooltip.phoenix_tesla_network.nanites.generic", "Microscopic machines swarming with potential.");
         provider.add("tooltip.phoenix_tesla_network.nanites.made_from", "Constructed from %s.");
-        provider.add("metaarmor.tooltip.wings", "Contains Phoenix Wings");
-        provider.add("metaarmor.tooltip.tesla_connection", "Controls Tesla Network Connection");
 
         provider.add("gtceu.top.recipe_output", "Predicted Output:");
         provider.add("item.phoenix_tesla_network.jade.thread_header", "Alchemical Thread #%s: %s%%");
@@ -55,8 +51,6 @@ public class PhoenixLangHandler {
         provider.add("config.jade.plugin_phoenix_tesla_network.source_tank_info", "Source Tank Info");
 
         provider.add("key.categories.phoenix_tesla_network", "phoenix_tesla_network");
-        provider.add("key.phoenix_tesla_network.wing_flight_gui", "Wing Flight Settings");
-        provider.add("key.phoenix_tesla_network.tesla_mode", "Enable Tesla Mode");
         provider.add("key.phoenix_tesla_network.tesla_discharge", "Activate Tesla Discharge");
         provider.add("key.phoenix_tesla_network.manipulator_menu", "Matter Manipulator Menu");
 

@@ -1,14 +1,16 @@
 package net.phoenix_tesla_network.tesla.common.data.item;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
-import com.gregtechceu.gtceu.api.item.armor.ArmorComponentItem;
+import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.item.component.ElectricStats;
+import com.gregtechceu.gtceu.api.item.component.ModularItemComponent;
 import com.gregtechceu.gtceu.common.item.armor.GTArmorMaterials;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Rarity;
-import net.neoforged.neoforge.common.Tags;
 
 import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.util.entry.ItemEntry;
@@ -30,53 +32,145 @@ public class PhoenixTeslaItems {
             .model((ctx, prov) -> prov.handheld(ctx, prov.modLoc("item/tools/tesla_binder")))
             .register();
 
-    public static ItemEntry<ArmorComponentItem> PHOENIX_HELMET = REGISTRATE
-            .item("phoenix_helmet", (p) -> new ArmorComponentItem(GTArmorMaterials.ARMOR, ArmorItem.Type.HELMET, p)
-                    .setArmorLogic(new PhoenixTechSuite(ArmorItem.Type.HELMET,
-                            16384,
-                            500_000_000L,
-                            8)))
+    /**
+     * Same battery as before (500M EU, tier 8) plus module slots. Slot counts: chest 6 (link, rebirth, wing + GTM
+     * extras), others 5. CHECK: that ElectricStats and ModularItemComponent can be attached together on a
+     * ModularArmorItem, and whether you'd rather make the battery a BatteryItemModule (see the notes).
+     */
+    /** GTArmorMaterials.ARMOR is gone in 8.0. Placeholder so it builds; swap for your own material (see notes). */
+    private static final net.minecraft.core.Holder<net.minecraft.world.item.ArmorMaterial> PHOENIX_MATERIAL = GTArmorMaterials.NANO_MUSCLE;
+
+    // More than the quarktech suite: 8 per piece, 10 on the chest.
+    private static final int SLOTS_SMALL = 8;
+    private static final int SLOTS_CHEST = 10;
+
+    private static void suite(PhoenixTechArmorItem item, int moduleSlots) {
+        // ElectricStats' constructor is protected: anonymous subclass, same as the old ArmorLogicSuite did.
+        item.attachComponents(new ElectricStats(500_000_000L, GTValues.UV, true, false) {},
+                new ModularItemComponent(moduleSlots, GTValues.UV));
+    }
+
+    public static ItemEntry<PhoenixTechArmorItem> PHOENIX_HELMET = REGISTRATE
+            .item("phoenix_helmet", p -> new PhoenixTechArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.HELMET, p))
             .lang("Phoenix Tech Suite Helmet")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.HEAD_ARMOR)
             .tag(CustomTags.PPE_ARMOR)
+            .onRegister(i -> suite(i, SLOTS_SMALL))
             .register();
 
     public static ItemEntry<PhoenixArmorItem> PHOENIX_CHESTPLATE = REGISTRATE
             .item("phoenix_chestplate",
-                    (p) -> new PhoenixArmorItem(GTArmorMaterials.ARMOR, ArmorItem.Type.CHESTPLATE, p,
-                            new PhoenixTechSuite(ArmorItem.Type.CHESTPLATE, 16384, 500_000_000L, 6)))
+                    p -> new PhoenixArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.CHESTPLATE, p))
             .lang("Phoenix Tech Suite Chestplate")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.CHEST_ARMOR)
             .tag(ItemTags.FREEZE_IMMUNE_WEARABLES)
             .tag(CustomTags.PPE_ARMOR)
+            .onRegister(i -> suite(i, SLOTS_CHEST))
             .register();
 
-    public static ItemEntry<ArmorComponentItem> PHOENIX_LEGGINGS = REGISTRATE
-            .item("phoenix_leggings", (p) -> new ArmorComponentItem(GTArmorMaterials.ARMOR, ArmorItem.Type.LEGGINGS, p)
-                    .setArmorLogic(new PhoenixTechSuite(ArmorItem.Type.LEGGINGS,
-                            16384,
-                            500_000_000L,
-                            6)))
+    public static ItemEntry<PhoenixTechArmorItem> PHOENIX_LEGGINGS = REGISTRATE
+            .item("phoenix_leggings",
+                    p -> new PhoenixTechArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.LEGGINGS, p))
             .lang("Phoenix Tech Suite Leggings")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.LEG_ARMOR)
             .tag(CustomTags.PPE_ARMOR)
+            .onRegister(i -> suite(i, SLOTS_SMALL))
             .register();
 
-    public static ItemEntry<ArmorComponentItem> PHOENIX_BOOTS = REGISTRATE
-            .item("phoenix_boots", (p) -> new ArmorComponentItem(GTArmorMaterials.ARMOR, ArmorItem.Type.BOOTS, p)
-                    .setArmorLogic(new PhoenixTechSuite(ArmorItem.Type.BOOTS,
-                            16384,
-                            500_000_000L,
-                            6)))
+    public static ItemEntry<PhoenixTechArmorItem> PHOENIX_BOOTS = REGISTRATE
+            .item("phoenix_boots", p -> new PhoenixTechArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.BOOTS, p))
             .lang("Phoenix Tech Suite Boots")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.FOOT_ARMOR)
             .tag(CustomTags.PPE_ARMOR)
-            .tag(CustomTags.STEP_BOOTS)
+            .onRegister(i -> suite(i, SLOTS_SMALL))
             .register();
+
+    // ---- Module items ------------------------------------------------------------------------------------
+    // CosmicCore's module items are plain ComponentItems whose registry name equals the module id (item
+    // "stealth_module_1" <-> module cosmiccore:stealth_module_1). Names below MUST match PhoenixModules.init().
+    // Textures are vanilla placeholders: add item/modules/<name>.png and switch to prov.modLoc(...) when ready.
+
+    /**
+     * @param slot  where it installs, shown in the tooltip ("Chestplate", "Boots", ...)
+     * @param extra optional extra tooltip line (compatibility notes etc.), or null
+     */
+    private static ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> moduleItem(String name, String lang,
+                                                                                      String description,
+                                                                                      String placeholder,
+                                                                                      String slot, String extra) {
+        REGISTRATE.addRawLang("module.phoenix_tesla_network." + name, lang);
+        REGISTRATE.addRawLang("module.phoenix_tesla_network." + name + ".description", description);
+        if (extra != null) REGISTRATE.addRawLang("tooltip.phoenix_tesla_network.module." + name + ".extra", extra);
+        return REGISTRATE.item(name, com.gregtechceu.gtceu.api.item.ComponentItem::new)
+                .lang(lang)
+                .properties(p -> p.stacksTo(1).rarity(Rarity.EPIC))
+                .model((ctx, prov) -> prov.generated(ctx,
+                        net.minecraft.resources.ResourceLocation.withDefaultNamespace(
+                                placeholder.contains("/") ? placeholder : "item/" + placeholder)))
+                .onRegister(i -> i.attachComponents(
+                        new com.gregtechceu.gtceu.common.item.behavior.TooltipBehavior(lines -> {
+                            lines.add(Component.translatable("module.phoenix_tesla_network." + name + ".description")
+                                    .withStyle(net.minecraft.ChatFormatting.GRAY));
+                            lines.add(Component.translatable("tooltip.phoenix_tesla_network.module.slot", slot)
+                                    .withStyle(net.minecraft.ChatFormatting.AQUA));
+                            if (extra != null) {
+                                lines.add(Component.translatable(
+                                        "tooltip.phoenix_tesla_network.module." + name + ".extra")
+                                        .withStyle(net.minecraft.ChatFormatting.YELLOW));
+                            }
+                        })))
+                .register();
+    }
+
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> TESLA_LINK_MODULE = moduleItem(
+            "tesla_link_module", "Tesla Link Module",
+            "Fire immunity, retaliation lightning and wireless top-up of the suit battery from your Tesla network.",
+            "nether_star", "Chestplate", null);
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_REBIRTH_MODULE = moduleItem(
+            "phoenix_rebirth_module", "Phoenix Rebirth Module",
+            "Negates fall and wall-crash damage and revives you from lethal damage using network energy.",
+            "totem_of_undying", "Chestplate", "Draws on your Tesla network; has a short cooldown.");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_PURIFIER_MODULE = moduleItem(
+            "phoenix_purifier_module", "Phoenix Purifier Module",
+            "Removes harmful potion effects at a battery cost.", "milk_bucket", "Helmet", null);
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_TESLA_DISCHARGE_MODULE = moduleItem(
+            "phoenix_tesla_discharge_module", "Tesla Discharge Module",
+            "Press the discharge key to strike nearby mobs with lightning.", "block/lightning_rod", "Boots",
+            "Bind the discharge key in Controls. 5 second cooldown.");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_WING_MODULE = moduleItem(
+            "phoenix_wing_module", "Phoenix Wing Module",
+            "Wing flight: elytra glide and creative-style flight. Not compatible with GTM jetpacks.", "elytra",
+            "Chestplate", "Cannot be combined with GTM jetpack or creative flight modules.");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_SPRINT_MODULE = moduleItem(
+            "phoenix_sprint_module", "Phoenix Sprint Module",
+            "Powered sprint boost with an adjustable strength.", "sugar", "Leggings",
+            "Cannot be combined with GTM speed modules.");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_JUMP_MODULE = moduleItem(
+            "phoenix_jump_module", "Phoenix Jump Module",
+            "Powered super jump with an adjustable height.", "rabbit_foot", "Boots",
+            "Cannot be combined with GTM jump boost modules.");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_STEP_MODULE = moduleItem(
+            "phoenix_step_module", "Phoenix Step Module",
+            "Raises your step height so you can walk up tall blocks.", "iron_boots", "Boots",
+            "Cannot be combined with GTM step height modules.");
+
+    static {
+        // UI strings used by the module settings screens.
+        String ns = "gui.phoenix_tesla_network.";
+        // Shared tooltip line: registered once here, not per module item (duplicate keys crash).
+        REGISTRATE.addRawLang("tooltip.phoenix_tesla_network.module.slot", "Installs on: %s");
+        REGISTRATE.addRawLang(ns + "wing.mode", "Mode (0 basic, 1 powered, 2 creative, 3 creative+wings)");
+        REGISTRATE.addRawLang(ns + "wing.speed", "Flight speed");
+        REGISTRATE.addRawLang(ns + "wing.drift", "Drift");
+        REGISTRATE.addRawLang(ns + "wing.vertical", "Vertical speed");
+        REGISTRATE.addRawLang(ns + "wing.keep_flying", "Keep flying on land");
+        REGISTRATE.addRawLang(ns + "sprint.speed", "Sprint boost");
+        REGISTRATE.addRawLang(ns + "jump.height", "Jump height");
+    }
 
     public static ItemEntry<TeslaStabilizerItem> ULV_TESLA_STABILIZER = REGISTRATE
             .item("ulv_tesla_stabilizer", TeslaStabilizerItem::new)

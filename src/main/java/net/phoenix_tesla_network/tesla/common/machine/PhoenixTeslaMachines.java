@@ -30,6 +30,7 @@ import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -37,7 +38,6 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.pattern.PhoenixPredicates;
 import net.phoenix_tesla_network.tesla.client.renderer.machine.multiblock.PhoenixDynamicRenderHelpers;
@@ -67,8 +67,10 @@ public class PhoenixTeslaMachines {
 
     public static final int[] MULTI_AMP_TESLA_HATCH = GTValues.tiersBetween(EV, GTCEuAPI.isHighTier() ? MAX : UHV);
 
-    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER_BASIC = registerTower(TeslaTowerType.BASIC);
-    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER_ADVANCED = registerTower(TeslaTowerType.ADVANCED);
+    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER_BASIC = registerTower(
+            TeslaTowerType.BASIC);
+    public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER_ADVANCED = registerTower(
+            TeslaTowerType.ADVANCED);
     public static final MachineEntry<MultiblockMachineDefinition> TESLA_TOWER = registerTower(TeslaTowerType.ULTIMATE);
 
     public static final MachineEntry<MultiblockMachineDefinition> TESLA_RELAY = registerRelay();
@@ -84,7 +86,6 @@ public class PhoenixTeslaMachines {
     private static MachineEntry<MultiblockMachineDefinition> registerTower(TeslaTowerType type) {
         if (!type.profile().enabled) return null;
 
-        // Determine the correct casing block and model string based on the tower tier
         var casingBlock = switch (type) {
             case BASIC -> PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING;
             case ADVANCED -> PhoenixTeslaBlocks.ADVANCED_TESLA_CASING;
@@ -145,19 +146,15 @@ public class PhoenixTeslaMachines {
     }
 
     private static MultiPredicate hatchPredicate(MultiblockMachineDefinition definition,
-                                                        PhoenixTeslaConfigs.TowerProfile profile) {
+                                                 PhoenixTeslaConfigs.TowerProfile profile) {
         return hatchPredicate(definition, profile, PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING.get());
     }
 
-    /**
-     * Max hatches of each ability a tower accepts. Autobuild fills open slots up to this number, so lowering it
-     * also reduces how many hatches autobuild places.
-     */
     private static final int MAX_HATCHES_PER_TYPE = 10;
 
     static MultiPredicate hatchPredicate(MultiblockMachineDefinition definition,
-                                                PhoenixTeslaConfigs.TowerProfile profile,
-                                                Block casing) {
+                                         PhoenixTeslaConfigs.TowerProfile profile,
+                                         Block casing) {
         int min = profile.minHatchTier;
         int max = profile.maxHatchTier;
         MultiPredicate predicate = blocks(casing);
@@ -169,11 +166,7 @@ public class PhoenixTeslaMachines {
         if (profile.allowMaintenanceHatch) {
             predicate = predicate.or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1));
         }
-        // IMPORTANT: use exactly ONE predicate per ability. GT's MultiPredicate.test() runs every limited
-        // predicate on every block without short-circuiting, so two predicates for the same hatch both count each
-        // hatch and the stricter cap silently wins. Autobuild also fills each remaining slot from the limited
-        // predicates in turn, which is how the old min1/max2 + max10 pair produced 11 input hatches (over the cap of
-        // 10) and a tower that would not form. One predicate keeps "at least 1" and a single clear maximum.
+
         if (profile.allowEnergyInput) {
             predicate = predicate.or(PhoenixPredicates.tieredAbilities(min, max, PartAbility.INPUT_ENERGY)
                     .setMinGlobalLimited(1).setMaxGlobalLimited(MAX_HATCHES_PER_TYPE).setPreviewCount(1));
@@ -237,7 +230,7 @@ public class PhoenixTeslaMachines {
     }
 
     private static IBlockPattern basicTowerPattern(MultiblockMachineDefinition definition,
-                                                  PhoenixTeslaConfigs.TowerProfile profile) {
+                                                   PhoenixTeslaConfigs.TowerProfile profile) {
         return MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
                 .slice("AABBBBBAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA",
                         "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA")
@@ -271,7 +264,7 @@ public class PhoenixTeslaMachines {
     }
 
     private static IBlockPattern advancedTowerPattern(MultiblockMachineDefinition definition,
-                                                     PhoenixTeslaConfigs.TowerProfile profile) {
+                                                      PhoenixTeslaConfigs.TowerProfile profile) {
         return MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
                 .slice("AABBBBBBBAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
                         "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AACCCCCCCAA",
@@ -368,7 +361,7 @@ public class PhoenixTeslaMachines {
     }
 
     private static IBlockPattern ultimateTowerPattern(MultiblockMachineDefinition definition,
-                                                     PhoenixTeslaConfigs.TowerProfile profile) {
+                                                      PhoenixTeslaConfigs.TowerProfile profile) {
         return MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
                 .slice("AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA",
                         "AAAAAAABBBBBAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA", "AAAAAAACCBCCAAAAAAA",
@@ -663,7 +656,8 @@ public class PhoenixTeslaMachines {
                 .rotationState(RotationState.ALL)
                 .recipeType(PhoenixTeslaRecipeTypes.TESLA_RELAY)
                 .appearanceBlock(PhoenixTeslaBlocks.INSANELY_SUPERCHARGED_TESLA_CASING)
-                .pattern(definition -> MultiblockPatternBuilder.start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
+                .pattern(definition -> MultiblockPatternBuilder
+                        .start(RelativeDirection.FRONT, RelativeDirection.UP, RelativeDirection.RIGHT)
                         .slice("TTTTT", "CGGGC", "CGGGC", "CGGGC", "CCCCC", "     ", "     ")
                         .slice("TTTTT", "C   C", "C   C", "C   C", "CCCCC", "     ", "     ")
                         .slice("TTTTT", "C F C", "C N C", "C F C", "CCFCC", "  F  ", "  E  ")
@@ -717,8 +711,9 @@ public class PhoenixTeslaMachines {
         return "tesla_hatches/tesla_" + iomode + "_" + amperage + "a";
     }
 
-    private static MachineEntry<MachineDefinition>[] registerTeslaHatch(String name, IO io, int amperage, PartAbility ability,
-                                                          int... tiers) {
+    private static MachineEntry<MachineDefinition>[] registerTeslaHatch(String name, IO io, int amperage,
+                                                                        PartAbility ability,
+                                                                        int... tiers) {
         String iomode = io == IO.OUT ? "input" : "output";
 
         return registerTieredMachines(
@@ -765,33 +760,45 @@ public class PhoenixTeslaMachines {
             "tesla_laser_output_hatch_4096a", IO.IN, 4096,
             PartAbility.INPUT_LASER);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_16384A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_16384A = registerGatedLaserHatch("input",
+            IO.OUT,
             16_384, PartAbility.OUTPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_16384A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_16384A = registerGatedLaserHatch("output",
+            IO.IN,
             16_384, PartAbility.INPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_65536A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_65536A = registerGatedLaserHatch("input",
+            IO.OUT,
             65_536, PartAbility.OUTPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_65536A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_65536A = registerGatedLaserHatch("output",
+            IO.IN,
             65_536, PartAbility.INPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_262144A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_262144A = registerGatedLaserHatch("input",
+            IO.OUT,
             262_144, PartAbility.OUTPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_262144A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_262144A = registerGatedLaserHatch("output",
+            IO.IN,
             262_144, PartAbility.INPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_1048576A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_1048576A = registerGatedLaserHatch("input",
+            IO.OUT,
             1_048_576, PartAbility.OUTPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_1048576A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_1048576A = registerGatedLaserHatch(
+            "output", IO.IN,
             1_048_576, PartAbility.INPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_4194304A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_4194304A = registerGatedLaserHatch("input",
+            IO.OUT,
             4_194_304, PartAbility.OUTPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_4194304A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_4194304A = registerGatedLaserHatch(
+            "output", IO.IN,
             4_194_304, PartAbility.INPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_16777216A = registerGatedLaserHatch("input", IO.OUT,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_INPUT_16777216A = registerGatedLaserHatch("input",
+            IO.OUT,
             16_777_216, PartAbility.OUTPUT_LASER);
-    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_16777216A = registerGatedLaserHatch("output", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_LASER_OUTPUT_16777216A = registerGatedLaserHatch(
+            "output", IO.IN,
             16_777_216, PartAbility.INPUT_LASER);
 
     private static MachineEntry<MachineDefinition>[] registerGatedLaserHatch(String direction, IO io, int amperage,
-                                                               PartAbility ability) {
+                                                                             PartAbility ability) {
         int required = amperage > 1_048_576 ? 2 : 1;
         boolean enabled = PhoenixTeslaConfigs.get().features.laserHatchSizes.ordinal() >= required;
         if (!enabled && !net.neoforged.neoforge.data.loading.DatagenModLoader.isRunningDataGen()) return null;
@@ -817,7 +824,8 @@ public class PhoenixTeslaMachines {
         }
     }
 
-    private static MachineEntry<MachineDefinition>[] registerTeslaLaserHatch(String name, IO io, int amperage, PartAbility ability) {
+    private static MachineEntry<MachineDefinition>[] registerTeslaLaserHatch(String name, IO io, int amperage,
+                                                                             PartAbility ability) {
         String iomode = io == IO.OUT ? "input" : "output";
         String laserDisplayName = getLaserName(io, amperage);
 
@@ -847,30 +855,38 @@ public class PhoenixTeslaMachines {
         return "tesla_hatches/tesla_" + iomode + "_" + "laser" + "_" + Math.min(amperage, 4096) + "a";
     }
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_2A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 2,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_2A = registerTeslaHatch(
+            "tesla_energy_input_hatch", IO.OUT, 2,
             PartAbility.OUTPUT_ENERGY, GTValues.ALL_TIERS);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_4A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 4,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_4A = registerTeslaHatch(
+            "tesla_energy_input_hatch", IO.OUT, 4,
             PartAbility.OUTPUT_ENERGY, MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_16A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 16,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_16A = registerTeslaHatch(
+            "tesla_energy_input_hatch", IO.OUT, 16,
             PartAbility.OUTPUT_ENERGY, MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_64A = registerTeslaHatch("tesla_energy_input_hatch", IO.OUT, 64,
+    public static final MachineEntry<MachineDefinition>[] TESLA_INPUT_64A = registerTeslaHatch(
+            "tesla_energy_input_hatch", IO.OUT, 64,
             PartAbility.SUBSTATION_OUTPUT_ENERGY,
             MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_2A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN, 2,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_2A = registerTeslaHatch(
+            "tesla_energy_output_hatch", IO.IN, 2,
             PartAbility.INPUT_ENERGY, GTValues.ALL_TIERS);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_4A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN, 4,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_4A = registerTeslaHatch(
+            "tesla_energy_output_hatch", IO.IN, 4,
             PartAbility.INPUT_ENERGY, MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_16A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_16A = registerTeslaHatch(
+            "tesla_energy_output_hatch", IO.IN,
             16, PartAbility.INPUT_ENERGY,
             MULTI_AMP_TESLA_HATCH);
 
-    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_64A = registerTeslaHatch("tesla_energy_output_hatch", IO.IN,
+    public static final MachineEntry<MachineDefinition>[] TESLA_OUTPUT_64A = registerTeslaHatch(
+            "tesla_energy_output_hatch", IO.IN,
             64, PartAbility.SUBSTATION_INPUT_ENERGY,
             MULTI_AMP_TESLA_HATCH);
 

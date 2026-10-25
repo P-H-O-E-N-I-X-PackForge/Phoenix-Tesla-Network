@@ -63,7 +63,6 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
     @SyncToClient
     private State state = State.IDLE;
 
-    // Conversion for plain FE items. Swap this for GTCEu's configured EU->FE ratio if you want it to follow the config.
     private static final long FE_PER_EU = 4;
 
     private final List<UUID> playersInRange = new ArrayList<>();
@@ -139,7 +138,6 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
                 inventories.add(new PlayerMainInvWrapper(player.getInventory()));
                 CuriosApi.getCuriosInventory(player).ifPresent(h -> inventories.add(h.getEquippedCurios()));
 
-                // Efficiency depends only on the player's position, so compute it once per player
                 double efficiency = TeslaLoss.efficiency(network, player.level().dimension(),
                         player.blockPosition());
 
@@ -153,8 +151,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
                         long accepted = chargeStack(stack, network, efficiency, totalBatchBudget);
 
                         if (accepted > 0) {
-                            // Charging mutates the stack in place. Writing it back makes the Curios handler fire
-                            // onContentsChanged so the change is saved and synced.
+
                             if (handler instanceof IItemHandlerModifiable modifiable) {
                                 modifiable.setStackInSlot(i, stack);
                             }
@@ -180,11 +177,6 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         }
     }
 
-    /**
-     * Charges a single stack, supporting both GT electric items and plain Forge Energy (FE) containers.
-     *
-     * @return EU accepted by the item (already bounded by the budget and network supply)
-     */
     private long chargeStack(ItemStack stack, TeslaTeamEnergyData.TeamEnergy network, double efficiency,
                              long budget) {
         long networkAvailable = TeslaLoss.netLong(network.stored
@@ -201,7 +193,6 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             return electric.charge(offer, getTier(), true, false);
         }
 
-        // Fallback: plain FE container (e.g. AE2 wireless terminals via ae2wtlib)
         IEnergyStorage fe = stack.getCapability(Capabilities.EnergyStorage.ITEM);
         if (fe != null && fe.canReceive()) {
             long feNeeded = (long) fe.getMaxEnergyStored() - fe.getEnergyStored();
@@ -209,7 +200,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             long feOffer = Math.min(feNeeded, maxOffer * FE_PER_EU);
             long acceptedFe = fe.receiveEnergy((int) Math.min(feOffer, Integer.MAX_VALUE), false);
             if (acceptedFe <= 0) return 0;
-            // Round up so partial EU are never given away for free
+
             return (acceptedFe + FE_PER_EU - 1) / FE_PER_EU;
         }
         return 0;

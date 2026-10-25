@@ -2,6 +2,7 @@ package net.phoenix_tesla_network.tesla.common.data.materials;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+import com.gregtechceu.gtceu.api.data.chemical.material.MaterialBuilder;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 
@@ -17,7 +18,7 @@ public class PhoenixProgressionMaterials {
     public static Material ADVANCED_QUIN_NAQUADIAN_ALLOY;
 
     public static void register() {
-        RESONANT_RHODIUM_ALLOY = new Material.Builder(PhoenixTeslaNetwork.id("resonant_rhodium_alloy"))
+        RESONANT_RHODIUM_ALLOY = new MaterialBuilder(PhoenixTeslaNetwork.id("resonant_rhodium_alloy"))
                 .ingot().fluid()
                 .color(0xE245F8).secondaryColor(0xA345B0).iconSet(MaterialIconSet.METALLIC)
                 .components(GTMaterials.Rhodium, 3, GTMaterials.Palladium, 4, GTMaterials.Cerium, 4)
@@ -26,9 +27,9 @@ public class PhoenixProgressionMaterials {
                 .flags(GENERATE_PLATE, GENERATE_RING, PHOSPHORESCENT, GENERATE_ROD, GENERATE_LONG_ROD, GENERATE_GEAR,
                         GENERATE_SMALL_GEAR, GENERATE_BOLT_SCREW, GENERATE_FRAME, GENERATE_DENSE, GENERATE_ROTOR,
                         GENERATE_FOIL)
-                .buildAndRegister();
+                .createMaterial();
 
-        ADVANCED_QUIN_NAQUADIAN_ALLOY = new Material.Builder(PhoenixTeslaNetwork.id("advanced_quin_naquadian_alloy"))
+        ADVANCED_QUIN_NAQUADIAN_ALLOY = new MaterialBuilder(PhoenixTeslaNetwork.id("advanced_quin_naquadian_alloy"))
                 .ingot()
                 .liquid(7400)
                 .color(0x000000)
@@ -50,6 +51,6 @@ public class PhoenixProgressionMaterials {
                         GENERATE_ROTOR,
                         GENERATE_FOIL,
                         GENERATE_LONG_ROD)
-                .buildAndRegister();
+                .createMaterial();
     }
 }

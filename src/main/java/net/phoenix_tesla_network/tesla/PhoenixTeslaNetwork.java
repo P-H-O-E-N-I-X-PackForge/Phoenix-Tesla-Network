@@ -49,6 +49,7 @@ public class PhoenixTeslaNetwork {
         PhoenixProgressionMaterials.register();
         PhoenixTeslaRecipeTypes.init();
         PhoenixTeslaItems.init();
+        net.phoenix_tesla_network.tesla.common.data.item.PhoenixModules.init();
         PhoenixTeslaMachines.init();
         PhoenixTeslaDatagen.init();
 

@@ -1,9 +1,8 @@
 package net.phoenix_tesla_network.tesla.common.data.item;
 
-import com.gregtechceu.gtceu.api.item.armor.ArmorComponentItem;
+import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,7 +11,6 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.phoenix_tesla_network.tesla.client.renderer.PhoenixArmorRenderer;
-import net.phoenix_tesla_network.tesla.util.StackNbt;
 
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoItem;
@@ -23,23 +21,25 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.function.Consumer;
 
-public class PhoenixArmorItem extends ArmorComponentItem implements GeoItem {
+public class PhoenixArmorItem extends PhoenixTechArmorItem implements GeoItem {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final PhoenixTechSuite logic;
 
-    public PhoenixArmorItem(net.minecraft.core.Holder<ArmorMaterial> material, Type type, Properties properties,
-                            PhoenixTechSuite logic) {
+    public PhoenixArmorItem(net.minecraft.core.Holder<ArmorMaterial> material, Type type, Properties properties) {
         super(material, type, properties);
-        this.logic = logic;
-        this.setArmorLogic(logic);
     }
 
+    /** Elytra glide is available while the wing module is installed, enabled and not overridden by a GTM jetpack. */
     @Override
     public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
-        if (entity instanceof Player player) {
-            CompoundTag nbt = StackNbt.getTag(stack);
-            return nbt != null && nbt.getBoolean("teslaMode");
+        if (!(entity instanceof Player)) return false;
+        var modular = GTCapabilityHelper.getModularItem(stack);
+        if (modular == null) return false;
+        for (var ctx : modular.getAllModuleInstances()) {
+            if (ctx.getModule() instanceof PhoenixWingModule wing && wing.isEnabled(ctx) &&
+                    !PhoenixWingModule.conflicted(ctx)) {
+                return true;
+            }
         }
         return false;
     }
@@ -71,9 +71,7 @@ public class PhoenixArmorItem extends ArmorComponentItem implements GeoItem {
                     return event.setAndContinue(RawAnimation.begin().thenLoop("animation.phoenix.creative_fly"));
                 }
 
-                ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
-                CompoundTag chestNBT = StackNbt.getTag(chestplate);
-                if (chestNBT != null && chestNBT.getInt("wingFlapTick") > 0) {
+                if (!player.onGround() && player.getDeltaMovement().y > 0.1) {
                     return event.setAndContinue(RawAnimation.begin().thenPlay("animation.phoenix.flap"));
                 }
 

@@ -36,12 +36,10 @@ public final class TeamUtils {
         return name == null ? "Unknown" : name.replaceFirst("#[0-9A-Fa-f]{2,8}$", "");
     }
 
-    /** The all-zero UUID is "no owner", not a real player or team. */
     public static boolean isNil(UUID id) {
         return id == null || (id.getMostSignificantBits() == 0L && id.getLeastSignificantBits() == 0L);
     }
 
-    /** Returns the player's name if the server can resolve it (online or cached), otherwise null. */
     public static String lookupPlayerName(UUID playerUUID) {
         if (playerUUID == null) return null;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
