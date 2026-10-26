@@ -12,23 +12,17 @@ public class PhoenixGuiTextures {
             .parse("phoenix_tesla_network:textures/gui/progress_bar/progress_bar_phoenix_fission.png"));
 
     public static final UITexture BATTERY_BAR_UHV = UITexture.fullImage(
-            net.minecraft.resources.ResourceLocation
-                    .parse("phoenix_tesla_network:textures/gui/widget/tesla/uhv_battery.png"));
+            net.minecraft.resources.ResourceLocation.parse("phoenix_tesla_network:textures/gui/widget/tesla/uhv_battery.png"));
     public static final UITexture BATTERY_BAR_UEV = UITexture.fullImage(
-            net.minecraft.resources.ResourceLocation
-                    .parse("phoenix_tesla_network:textures/gui/widget/tesla/uev_battery.png"));
+            net.minecraft.resources.ResourceLocation.parse("phoenix_tesla_network:textures/gui/widget/tesla/uev_battery.png"));
     public static final UITexture BATTERY_BAR_UIV = UITexture.fullImage(
-            net.minecraft.resources.ResourceLocation
-                    .parse("phoenix_tesla_network:textures/gui/widget/tesla/uiv_battery.png"));
+            net.minecraft.resources.ResourceLocation.parse("phoenix_tesla_network:textures/gui/widget/tesla/uiv_battery.png"));
     public static final UITexture BATTERY_BAR_UXV = UITexture.fullImage(
-            net.minecraft.resources.ResourceLocation
-                    .parse("phoenix_tesla_network:textures/gui/widget/tesla/uxv_battery.png"));
+            net.minecraft.resources.ResourceLocation.parse("phoenix_tesla_network:textures/gui/widget/tesla/uxv_battery.png"));
     public static final UITexture BATTERY_BAR_OPV = UITexture.fullImage(
-            net.minecraft.resources.ResourceLocation
-                    .parse("phoenix_tesla_network:textures/gui/widget/tesla/opv_battery.png"));
+            net.minecraft.resources.ResourceLocation.parse("phoenix_tesla_network:textures/gui/widget/tesla/opv_battery.png"));
     public static final UITexture BATTERY_BAR_MAX = UITexture.fullImage(
-            net.minecraft.resources.ResourceLocation
-                    .parse("phoenix_tesla_network:textures/gui/widget/tesla/max_battery.png"));
+            net.minecraft.resources.ResourceLocation.parse("phoenix_tesla_network:textures/gui/widget/tesla/max_battery.png"));
 
     public static final UITexture TESLA_BACKGROUND = UITexture.fullImage(net.minecraft.resources.ResourceLocation
             .parse("phoenix_tesla_network:textures/gui/widget/tesla/tesla_background.png"));

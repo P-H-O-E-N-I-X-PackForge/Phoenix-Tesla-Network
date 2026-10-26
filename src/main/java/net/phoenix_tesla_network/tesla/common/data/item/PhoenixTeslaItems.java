@@ -3,7 +3,7 @@ package net.phoenix_tesla_network.tesla.common.data.item;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.item.component.ElectricStats;
-import com.gregtechceu.gtceu.api.item.component.ModularItemComponent;
+import com.gregtechceu.gtceu.api.item.component.ModularItemComponent; // verify package
 import com.gregtechceu.gtceu.common.item.armor.GTArmorMaterials;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Rarity;
+import net.neoforged.neoforge.common.Tags;
 
 import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.util.entry.ItemEntry;
@@ -38,7 +39,8 @@ public class PhoenixTeslaItems {
      * ModularArmorItem, and whether you'd rather make the battery a BatteryItemModule (see the notes).
      */
     /** GTArmorMaterials.ARMOR is gone in 8.0. Placeholder so it builds; swap for your own material (see notes). */
-    private static final net.minecraft.core.Holder<net.minecraft.world.item.ArmorMaterial> PHOENIX_MATERIAL = GTArmorMaterials.NANO_MUSCLE;
+    private static final net.minecraft.core.Holder<net.minecraft.world.item.ArmorMaterial> PHOENIX_MATERIAL =
+            GTArmorMaterials.NANO_MUSCLE;
 
     // More than the quarktech suite: 8 per piece, 10 on the chest.
     private static final int SLOTS_SMALL = 8;
@@ -90,8 +92,8 @@ public class PhoenixTeslaItems {
             .register();
 
     // ---- Module items ------------------------------------------------------------------------------------
-    // CosmicCore's module items are plain ComponentItems whose registry name equals the module id (item
-    // "stealth_module_1" <-> module cosmiccore:stealth_module_1). Names below MUST match PhoenixModules.init().
+    // Module items are plain ComponentItems. What lets a module install is the Equipment Foundry recipe in
+    // PhoenixTeslaGTAddon.addRecipes (item + module + which armor), not the item's name.
     // Textures are vanilla placeholders: add item/modules/<name>.png and switch to prov.modLoc(...) when ready.
 
     /**
@@ -139,37 +141,58 @@ public class PhoenixTeslaItems {
             "Removes harmful potion effects at a battery cost.", "milk_bucket", "Helmet", null);
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_TESLA_DISCHARGE_MODULE = moduleItem(
             "phoenix_tesla_discharge_module", "Tesla Discharge Module",
-            "Press the discharge key to strike nearby mobs with lightning.", "block/lightning_rod", "Boots",
-            "Bind the discharge key in Controls. 5 second cooldown.");
+            "Press the discharge key to strike nearby mobs with lightning.", "block/lightning_rod", "Boots", "Bind the discharge key in Controls. 5 second cooldown.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_WING_MODULE = moduleItem(
             "phoenix_wing_module", "Phoenix Wing Module",
-            "Wing flight: elytra glide and creative-style flight. Not compatible with GTM jetpacks.", "elytra",
-            "Chestplate", "Cannot be combined with GTM jetpack or creative flight modules.");
+            "Wing flight: elytra glide and creative-style flight. Not compatible with GTM jetpacks.", "elytra", "Chestplate", "Cannot be combined with GTM jetpack or creative flight modules.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_SPRINT_MODULE = moduleItem(
             "phoenix_sprint_module", "Phoenix Sprint Module",
-            "Powered sprint boost with an adjustable strength.", "sugar", "Leggings",
-            "Cannot be combined with GTM speed modules.");
+            "Powered sprint boost with an adjustable strength.", "sugar", "Leggings", "Cannot be combined with GTM speed modules.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_JUMP_MODULE = moduleItem(
             "phoenix_jump_module", "Phoenix Jump Module",
-            "Powered super jump with an adjustable height.", "rabbit_foot", "Boots",
-            "Cannot be combined with GTM jump boost modules.");
+            "Powered super jump with an adjustable height.", "rabbit_foot", "Boots", "Cannot be combined with GTM jump boost modules.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_STEP_MODULE = moduleItem(
             "phoenix_step_module", "Phoenix Step Module",
-            "Raises your step height so you can walk up tall blocks.", "iron_boots", "Boots",
-            "Cannot be combined with GTM step height modules.");
+            "Raises your step height so you can walk up tall blocks.", "iron_boots", "Boots", "Cannot be combined with GTM step height modules.");
+
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_LORE_SCANNER_MODULE = moduleItem(
+            "phoenix_lore_scanner_module", "Lore Scanner Module",
+            "Study what you are looking at. Other Phoenix mods can react to scans to unlock lore.", "spyglass",
+            "Helmet", "Aim and press the Lore Scan key (set in Controls).");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_MENDER_MODULE = moduleItem(
+            "phoenix_mender_module", "Mender Aura Module",
+            "Heals you and your Tesla teammates in range using network energy.", "golden_apple",
+            "Chestplate", "Adjustable radius. Needs a Tesla network connection.");
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_MAGNET_MODULE = moduleItem(
+            "phoenix_magnet_module", "Magnet Module",
+            "Pulls nearby dropped items to you.", "ender_eye", "Leggings", "Sneak to pause the magnet.");
+
+    public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_NAPHTHA_MODULE = moduleItem(
+            "phoenix_naphtha_module", "Naphtha Module",
+            "Burns naphtha from any fluid container in your inventory for speed, haste and jump. Highly flammable.",
+            "blaze_powder", "Chestplate",
+            "Only burns while sprinting (about 10 mB/s). Sets mobs you run into on fire.");
 
     static {
         // UI strings used by the module settings screens.
         String ns = "gui.phoenix_tesla_network.";
         // Shared tooltip line: registered once here, not per module item (duplicate keys crash).
         REGISTRATE.addRawLang("tooltip.phoenix_tesla_network.module.slot", "Installs on: %s");
-        REGISTRATE.addRawLang(ns + "wing.mode", "Mode (0 basic, 1 powered, 2 creative, 3 creative+wings)");
+        REGISTRATE.addRawLang(ns + "wing.mode", "Mode");
+        REGISTRATE.addRawLang(ns + "wing.mode.0", "Basic");
+        REGISTRATE.addRawLang(ns + "wing.mode.1", "Powered");
+        REGISTRATE.addRawLang(ns + "wing.mode.2", "Creative");
+        REGISTRATE.addRawLang(ns + "wing.mode.3", "Creative + Wings");
+        REGISTRATE.addRawLang(ns + "cycle_hint", "Left click: next. Right click: previous.");
         REGISTRATE.addRawLang(ns + "wing.speed", "Flight speed");
         REGISTRATE.addRawLang(ns + "wing.drift", "Drift");
         REGISTRATE.addRawLang(ns + "wing.vertical", "Vertical speed");
         REGISTRATE.addRawLang(ns + "wing.keep_flying", "Keep flying on land");
         REGISTRATE.addRawLang(ns + "sprint.speed", "Sprint boost");
         REGISTRATE.addRawLang(ns + "jump.height", "Jump height");
+        REGISTRATE.addRawLang(ns + "mender.radius", "Radius");
+        REGISTRATE.addRawLang(ns + "magnet.radius", "Radius");
+        REGISTRATE.addRawLang(ns + "naphtha.power", "Burn intensity");
     }
 
     public static ItemEntry<TeslaStabilizerItem> ULV_TESLA_STABILIZER = REGISTRATE

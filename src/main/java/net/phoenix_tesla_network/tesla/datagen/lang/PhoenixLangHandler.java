@@ -52,6 +52,12 @@ public class PhoenixLangHandler {
 
         provider.add("key.categories.phoenix_tesla_network", "phoenix_tesla_network");
         provider.add("key.phoenix_tesla_network.tesla_discharge", "Activate Tesla Discharge");
+        provider.add("key.phoenix_tesla_network.lore_scan", "Lore Scan");
+        provider.add("key.phoenix_tesla_network.suite_menu", "Phoenix Suite Modules");
+        provider.add("tooltip.phoenix_tesla_network.suite.menu", "Press %s to configure suite modules");
+        provider.add("gui.phoenix_tesla_network.suite.title", "Phoenix Tech Suite - Modules");
+        provider.add("gui.phoenix_tesla_network.suite.select", "Select a piece of the suite");
+        provider.add("gui.phoenix_tesla_network.suite.no_modules", "No modules installed");
         provider.add("key.phoenix_tesla_network.manipulator_menu", "Matter Manipulator Menu");
 
         provider.add("creativetab.phoenix_creative_tab", "Phoenix Core");

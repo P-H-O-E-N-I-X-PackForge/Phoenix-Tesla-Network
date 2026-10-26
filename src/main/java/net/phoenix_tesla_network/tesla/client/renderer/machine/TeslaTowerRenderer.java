@@ -108,7 +108,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
     }
 
     private static final float BASIC_Y_OFFSET = -0.5f;
-
+    
     private static final float ULTIMATE_TOP_RING_SCALE = 0.7f;
     private static final float ULTIMATE_BOTTOM_RING_SCALE = 1.1f;
 
@@ -121,16 +121,16 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
             case NORTH -> new float[] { -x, -z };
             case WEST -> new float[] { -z, x };
             case EAST -> new float[] { z, -x };
-            default -> new float[] { x, z };
+            default -> new float[] { x, z }; 
         };
     }
 
     private static final float SLOW_SPEED = 0.2f;
     private static final float FAST_SPEED = 1.0f;
-    private static final float RAMP_UP_START = 0.10f;
-    private static final float FAST_START = 0.25f;
-    private static final float FAST_END = 5f / 6f;
-    private static final float RAMP_DOWN_END = 0.95f;
+    private static final float RAMP_UP_START = 0.10f; 
+    private static final float FAST_START = 0.25f;    
+    private static final float FAST_END = 5f / 6f;    
+    private static final float RAMP_DOWN_END = 0.95f; 
 
     private static float smoothstep(float edge0, float edge1, float x) {
         float t = Math.max(0f, Math.min(1f, (x - edge0) / (edge1 - edge0)));
@@ -219,7 +219,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
         poseStack.pushPose();
 
         for (int ringIndex = 0; ringIndex < yPositions.length; ringIndex++) {
-
+            
             float[] offsets = getLocalOffsetForRing(towerType, ringIndex);
             float worldOffsetX = offsets[0];
             float worldOffsetZ = offsets[1];
@@ -228,7 +228,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                 worldOffsetX = r[0];
                 worldOffsetZ = r[1];
             } else {
-
+                
                 int rank = ringIndex == highestRing ? 2 : (ringIndex == lowestRing ? 0 : 1);
                 float[] u = getUltimateRingOffset(rank);
                 worldOffsetX = u[0];
@@ -266,7 +266,7 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
                     drawArc(poseStack, vc, currentTopCenter, targetPos, time, 5, 0.18f, 1.0f, 0L, style);
 
                     if (machine.getLevel().isClientSide && machine.getLevel().random.nextFloat() < 0.05f) {
-
+                        
                         machine.getLevel().addParticle(
                                 PhoenixParticles.TESLA_SPARK.get(),
                                 targetPos.x + machine.getBlockPos().getX(),
@@ -282,22 +282,22 @@ public class TeslaTowerRenderer extends DynamicRender<TeslaTowerMachine, TeslaTo
 
     private static float[] getLocalOffsetForRing(TeslaTowerType type, int ringIndex) {
         if (type == TeslaTowerType.BASIC) {
-
+            
             return new float[] { 0.5f, 0.5f };
 
         } else if (type == TeslaTowerType.ADVANCED) {
-
+            
             return new float[] { 0.5f, 1.5f };
         }
 
-        return new float[] { 0.0f, 0.0f };
+        return new float[] { 0.0f, 0.0f }; 
     }
 
     private static float[] getUltimateRingOffset(int rank) {
         return switch (rank) {
-            case 0 -> new float[] { 0.0f, 0.5f };
-            case 1 -> new float[] { 0.0f, 0.5f };
-            default -> new float[] { 0.0f, 0.5f };
+            case 0 -> new float[] { 0.0f, 0.5f }; 
+            case 1 -> new float[] { 0.0f, 0.5f }; 
+            default -> new float[] { 0.0f, 0.5f }; 
         };
     }
 
