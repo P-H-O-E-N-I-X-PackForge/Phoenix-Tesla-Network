@@ -200,7 +200,7 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             long feOffer = Math.min(feNeeded, maxOffer * FE_PER_EU);
             long acceptedFe = fe.receiveEnergy((int) Math.min(feOffer, Integer.MAX_VALUE), false);
             if (acceptedFe <= 0) return 0;
-            
+
             return (acceptedFe + FE_PER_EU - 1) / FE_PER_EU;
         }
         return 0;

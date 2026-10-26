@@ -1,5 +1,6 @@
 package net.phoenix_tesla_network.tesla.common.data.item;
 
+import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.item.armor.ArmorUtils;
 import com.gregtechceu.gtceu.api.item.armor.ModularArmorItem;
 import com.gregtechceu.gtceu.api.item.module.AttributeItemModule;
@@ -7,7 +8,6 @@ import com.gregtechceu.gtceu.api.item.module.ItemModule;
 import com.gregtechceu.gtceu.api.item.module.ModuleContext;
 import com.gregtechceu.gtceu.api.item.module.ModuleData;
 import com.gregtechceu.gtceu.api.item.module.ui.ItemModuleSettingsBuilder;
-import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.common.module.JumpBoostItemModule;
 import com.gregtechceu.gtceu.common.module.MovementSpeedItemModule;
 import com.gregtechceu.gtceu.common.module.SpeedItemModule;
@@ -87,11 +87,28 @@ public final class PhoenixMovementModules {
             this.level = level;
         }
 
-        public int level() { return level; }
-        public LevelData withLevel(int v) { return new LevelData(slot, module, moduleItem, enabled, v); }
-        @Override public ModuleData withModuleItem(ItemStack i) { return new LevelData(slot, module, i, enabled, level); }
-        @Override public ModuleData withEnabled(boolean e) { return new LevelData(slot, module, moduleItem, e, level); }
-        @Override public ModuleData copy() { return new LevelData(slot, module, moduleItem.copy(), enabled, level); }
+        public int level() {
+            return level;
+        }
+
+        public LevelData withLevel(int v) {
+            return new LevelData(slot, module, moduleItem, enabled, v);
+        }
+
+        @Override
+        public ModuleData withModuleItem(ItemStack i) {
+            return new LevelData(slot, module, i, enabled, level);
+        }
+
+        @Override
+        public ModuleData withEnabled(boolean e) {
+            return new LevelData(slot, module, moduleItem, e, level);
+        }
+
+        @Override
+        public ModuleData copy() {
+            return new LevelData(slot, module, moduleItem.copy(), enabled, level);
+        }
 
         @Override
         public boolean equals(Object o) {
@@ -111,15 +128,24 @@ public final class PhoenixMovementModules {
         }
 
         protected abstract int defaultLevel();
+
         protected abstract int minLevel();
+
         protected abstract String settingKey();
 
         public int level(ModuleContext ctx) {
             return Math.max(0, Math.min(20, ctx.getData(LevelData.class).level()));
         }
 
-        @Override public Class<? extends ModuleData> moduleDataClass() { return LevelData.class; }
-        @Override public MapCodec<? extends ModuleData> moduleDataCodec() { return LevelData.CODEC; }
+        @Override
+        public Class<? extends ModuleData> moduleDataClass() {
+            return LevelData.class;
+        }
+
+        @Override
+        public MapCodec<? extends ModuleData> moduleDataCodec() {
+            return LevelData.CODEC;
+        }
 
         @Override
         public ModuleData defaultModuleData(int slot, ItemModule module, ItemStack stack) {
@@ -150,9 +176,20 @@ public final class PhoenixMovementModules {
             super(id);
         }
 
-        @Override protected int defaultLevel() { return 5; }
-        @Override protected int minLevel() { return 0; }
-        @Override protected String settingKey() { return "gui.phoenix_tesla_network.sprint.speed"; }
+        @Override
+        protected int defaultLevel() {
+            return 5;
+        }
+
+        @Override
+        protected int minLevel() {
+            return 0;
+        }
+
+        @Override
+        protected String settingKey() {
+            return "gui.phoenix_tesla_network.sprint.speed";
+        }
 
         @Override
         public boolean canApplyTo(ItemStack stack) {
@@ -216,9 +253,20 @@ public final class PhoenixMovementModules {
             super(id);
         }
 
-        @Override protected int defaultLevel() { return 5; }
-        @Override protected int minLevel() { return 1; }
-        @Override protected String settingKey() { return "gui.phoenix_tesla_network.jump.height"; }
+        @Override
+        protected int defaultLevel() {
+            return 5;
+        }
+
+        @Override
+        protected int minLevel() {
+            return 1;
+        }
+
+        @Override
+        protected String settingKey() {
+            return "gui.phoenix_tesla_network.jump.height";
+        }
 
         @Override
         public boolean canApplyTo(ItemStack stack) {
@@ -240,7 +288,9 @@ public final class PhoenixMovementModules {
             pd.putBoolean(PREV_GROUND, player.onGround());
         }
 
-        /** Client: the old charge-decay impulse. The charge was a field on the shared logic object; now it's per player. */
+        /**
+         * Client: the old charge-decay impulse. The charge was a field on the shared logic object; now it's per player.
+         */
         @Override
         public void clientSideArmorTick(ModuleContext ctx, Player player) {
             if (!isEnabled(ctx) || level(ctx) <= 0) return;

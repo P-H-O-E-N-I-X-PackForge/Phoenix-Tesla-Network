@@ -4,9 +4,7 @@ import com.tterrag.registrate.providers.RegistrateLangProvider;
 
 public class PhoenixMaterialLangHandler {
 
-    public static void init(RegistrateLangProvider provider) {
-
-    }
+    public static void init(RegistrateLangProvider provider) {}
 
     private static String formatName(String name) {
         String[] parts = name.split("_");

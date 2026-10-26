@@ -3,46 +3,47 @@ package net.phoenix_tesla_network.tesla.common.data.item;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
 import com.gregtechceu.gtceu.api.item.armor.ArmorUtils;
-import com.tterrag.registrate.util.entry.RegistryEntry;
+import com.gregtechceu.gtceu.api.item.armor.ModularArmorItem;
 import com.gregtechceu.gtceu.api.item.module.IHUDProviderItemModule;
 import com.gregtechceu.gtceu.api.item.module.ItemModule;
 import com.gregtechceu.gtceu.api.item.module.ModuleContext;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
-import com.gregtechceu.gtceu.api.item.armor.ModularArmorItem;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.phoenix_tesla_network.tesla.network.packet.S2CTeslaStatusPacket;
-import net.phoenix_tesla_network.tesla.common.registry.PhoenixRegistration;
-import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import com.gregtechceu.gtceu.core.IFireImmuneEntity;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.effect.MobEffect;
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
+import net.phoenix_tesla_network.tesla.common.registry.PhoenixRegistration;
+import net.phoenix_tesla_network.tesla.network.packet.S2CTeslaStatusPacket;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+
+import com.tterrag.registrate.util.entry.RegistryEntry;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import java.math.BigInteger;
 import java.util.UUID;
@@ -55,7 +56,8 @@ import java.util.UUID;
  * ModuleData.java hasn't been seen. Entity persistent data holds the little state we need.
  *
  * Register with your Registrate, same as CosmicModules:
- *   REGISTRATE.simple("tesla_link_module", GTRegistries.Keys.ITEM_MODULE, () -> new TeslaLinkModule(id("tesla_link_module")));
+ * REGISTRATE.simple("tesla_link_module", GTRegistries.Keys.ITEM_MODULE, () -> new
+ * TeslaLinkModule(id("tesla_link_module")));
  */
 public final class PhoenixModules {
 
@@ -92,7 +94,7 @@ public final class PhoenixModules {
     }
 
     private static <T extends ItemModule> RegistryEntry<ItemModule, T> reg(String name,
-                                                                          java.util.function.Function<ResourceLocation, T> factory) {
+                                                                           java.util.function.Function<ResourceLocation, T> factory) {
         return PhoenixRegistration.REGISTRATE.simple(name, GTRegistries.Keys.ITEM_MODULE,
                 () -> factory.apply(PhoenixTeslaNetwork.id(name)));
     }
@@ -196,6 +198,7 @@ public final class PhoenixModules {
         // inventoryMenu.sendAllDataToRemote(); send a tiny S2C payload every ~20 ticks while online instead and
         // call TeslaLinkModule.Client.update(...) from its handler. (Payload registration not written here.)
         public static final class Client {
+
             public static volatile String stored = "", capacity = "";
             public static volatile boolean online = false;
 
@@ -214,7 +217,8 @@ public final class PhoenixModules {
                 return;
             }
             hud.newLine(Component.literal("Tesla: ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal(Client.stored + " / " + Client.capacity).withStyle(ChatFormatting.WHITE)));
+                    .append(Component.literal(Client.stored + " / " + Client.capacity)
+                            .withStyle(ChatFormatting.WHITE)));
         }
     }
 

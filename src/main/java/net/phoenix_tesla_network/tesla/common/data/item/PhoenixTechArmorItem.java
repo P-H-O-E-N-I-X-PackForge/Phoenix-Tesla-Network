@@ -7,13 +7,13 @@ import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.KeybindContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +40,7 @@ public class PhoenixTechArmorItem extends ModularArmorItem {
     public float getHeatResistance() {
         return 0.5f;
     }
+
     // The suit's own armor layers (restored from the old PhoenixTechSuite): phoenix_tech_suite_1.png covers the
     // helmet, chestplate and boots, phoenix_tech_suite_2.png the leggings.
     @Override

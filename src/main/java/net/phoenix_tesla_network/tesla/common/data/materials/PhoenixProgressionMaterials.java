@@ -1,6 +1,5 @@
 package net.phoenix_tesla_network.tesla.common.data.materials;
 
-import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.BlastProperty.GasTier;
 import com.gregtechceu.gtceu.api.fluids.FluidBuilder;
 import com.gregtechceu.gtceu.api.registry.registrate.entry.MaterialRegistryEntry;

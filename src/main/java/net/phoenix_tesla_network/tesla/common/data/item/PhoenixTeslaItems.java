@@ -3,7 +3,7 @@ package net.phoenix_tesla_network.tesla.common.data.item;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.item.component.ElectricStats;
-import com.gregtechceu.gtceu.api.item.component.ModularItemComponent; // verify package
+import com.gregtechceu.gtceu.api.item.component.ModularItemComponent;
 import com.gregtechceu.gtceu.common.item.armor.GTArmorMaterials;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
@@ -11,7 +11,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Rarity;
-import net.neoforged.neoforge.common.Tags;
 
 import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.util.entry.ItemEntry;
@@ -39,8 +38,7 @@ public class PhoenixTeslaItems {
      * ModularArmorItem, and whether you'd rather make the battery a BatteryItemModule (see the notes).
      */
     /** GTArmorMaterials.ARMOR is gone in 8.0. Placeholder so it builds; swap for your own material (see notes). */
-    private static final net.minecraft.core.Holder<net.minecraft.world.item.ArmorMaterial> PHOENIX_MATERIAL =
-            GTArmorMaterials.NANO_MUSCLE;
+    private static final net.minecraft.core.Holder<net.minecraft.world.item.ArmorMaterial> PHOENIX_MATERIAL = GTArmorMaterials.NANO_MUSCLE;
 
     // More than the quarktech suite: 8 per piece, 10 on the chest.
     private static final int SLOTS_SMALL = 8;
@@ -141,19 +139,24 @@ public class PhoenixTeslaItems {
             "Removes harmful potion effects at a battery cost.", "milk_bucket", "Helmet", null);
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_TESLA_DISCHARGE_MODULE = moduleItem(
             "phoenix_tesla_discharge_module", "Tesla Discharge Module",
-            "Press the discharge key to strike nearby mobs with lightning.", "block/lightning_rod", "Boots", "Bind the discharge key in Controls. 5 second cooldown.");
+            "Press the discharge key to strike nearby mobs with lightning.", "block/lightning_rod", "Boots",
+            "Bind the discharge key in Controls. 5 second cooldown.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_WING_MODULE = moduleItem(
             "phoenix_wing_module", "Phoenix Wing Module",
-            "Wing flight: elytra glide and creative-style flight. Not compatible with GTM jetpacks.", "elytra", "Chestplate", "Cannot be combined with GTM jetpack or creative flight modules.");
+            "Wing flight: elytra glide and creative-style flight. Not compatible with GTM jetpacks.", "elytra",
+            "Chestplate", "Cannot be combined with GTM jetpack or creative flight modules.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_SPRINT_MODULE = moduleItem(
             "phoenix_sprint_module", "Phoenix Sprint Module",
-            "Powered sprint boost with an adjustable strength.", "sugar", "Leggings", "Cannot be combined with GTM speed modules.");
+            "Powered sprint boost with an adjustable strength.", "sugar", "Leggings",
+            "Cannot be combined with GTM speed modules.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_JUMP_MODULE = moduleItem(
             "phoenix_jump_module", "Phoenix Jump Module",
-            "Powered super jump with an adjustable height.", "rabbit_foot", "Boots", "Cannot be combined with GTM jump boost modules.");
+            "Powered super jump with an adjustable height.", "rabbit_foot", "Boots",
+            "Cannot be combined with GTM jump boost modules.");
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_STEP_MODULE = moduleItem(
             "phoenix_step_module", "Phoenix Step Module",
-            "Raises your step height so you can walk up tall blocks.", "iron_boots", "Boots", "Cannot be combined with GTM step height modules.");
+            "Raises your step height so you can walk up tall blocks.", "iron_boots", "Boots",
+            "Cannot be combined with GTM step height modules.");
 
     public static final ItemEntry<com.gregtechceu.gtceu.api.item.ComponentItem> PHOENIX_LORE_SCANNER_MODULE = moduleItem(
             "phoenix_lore_scanner_module", "Lore Scanner Module",

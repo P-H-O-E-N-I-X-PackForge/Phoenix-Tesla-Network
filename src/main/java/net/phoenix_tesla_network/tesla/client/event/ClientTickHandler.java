@@ -2,11 +2,10 @@ package net.phoenix_tesla_network.tesla.client.event;
 
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.client.coverage.ClientCoverageData;
 import net.phoenix_tesla_network.tesla.client.keybind.PhoenixKeybinds;
@@ -31,13 +30,15 @@ public class ClientTickHandler {
         }
 
         while (PhoenixKeybinds.TESLA_DISCHARGE.consumeClick()) {
-            if (mc.screen == null && !mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).isEmpty()) {
+            if (mc.screen == null &&
+                    !mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).isEmpty()) {
                 PacketDistributor.sendToServer(new C2STeslaDischargePacket());
             }
         }
 
         while (PhoenixKeybinds.LORE_SCAN.consumeClick()) {
-            if (mc.screen == null && !mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).isEmpty()) {
+            if (mc.screen == null &&
+                    !mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).isEmpty()) {
                 PacketDistributor.sendToServer(new C2SLoreScanPacket());
             }
         }

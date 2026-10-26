@@ -1,7 +1,7 @@
 package net.phoenix_tesla_network.tesla.common.event;
 
-import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,9 +16,9 @@ import net.phoenix_tesla_network.tesla.common.data.item.PhoenixModules;
 
 /**
  * Full-set bonus (all four pieces worn), independent of which modules are installed:
- *  - Resilience: 10% less incoming damage.
- *  - Regrowth: slow regeneration while connected to your Tesla network.
- *  - Fires PhoenixSetBonusEvent on gain/loss so other mods can hook it.
+ * - Resilience: 10% less incoming damage.
+ * - Regrowth: slow regeneration while connected to your Tesla network.
+ * - Fires PhoenixSetBonusEvent on gain/loss so other mods can hook it.
  */
 @EventBusSubscriber(modid = PhoenixTeslaNetwork.MOD_ID)
 public final class PhoenixSetBonusHandler {

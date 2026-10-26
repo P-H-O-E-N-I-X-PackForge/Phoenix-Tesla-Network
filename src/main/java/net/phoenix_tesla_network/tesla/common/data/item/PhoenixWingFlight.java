@@ -1,69 +1,21 @@
 package net.phoenix_tesla_network.tesla.common.data.item;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
-import com.gregtechceu.gtceu.api.item.armor.ArmorLogicSuite;
-import com.gregtechceu.gtceu.api.item.armor.ArmorUtils;
-import com.gregtechceu.gtceu.core.IFireImmuneEntity;
 import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.core.Holder;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
-import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
-import net.phoenix_tesla_network.tesla.util.StackNbt;
-import net.phoenix_tesla_network.tesla.utils.TeamUtils;
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
+
 import java.math.BigInteger;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -116,9 +68,9 @@ public final class PhoenixWingFlight {
     }
 
     static void applyWingThrust(Player player, Level world, CompoundTag data,
-                                 PhoenixTeslaConfigs.WingFlightConfigs cfg,
-                                 float speedMult, float driftMult, float verticalScale,
-                                 TeslaTeamEnergyData teslaData, UUID teamID) {
+                                PhoenixTeslaConfigs.WingFlightConfigs cfg,
+                                float speedMult, float driftMult, float verticalScale,
+                                TeslaTeamEnergyData teslaData, UUID teamID) {
         if (player.horizontalCollision) {
 
             Vec3 stuck = player.getDeltaMovement();
@@ -236,8 +188,8 @@ public final class PhoenixWingFlight {
     }
 
     static double sigmoidAcceleration(double t, double peakTime,
-                                              double peakAcceleration,
-                                              double initialAcceleration) {
+                                      double peakAcceleration,
+                                      double initialAcceleration) {
         return ((2 * peakAcceleration) / (1 + Math.exp(-t / peakTime)) - peakAcceleration) + initialAcceleration;
     }
 
@@ -268,10 +220,10 @@ public final class PhoenixWingFlight {
     }
 
     static void handleElytraFlight(Player player, CompoundTag data, Level world,
-                                    PhoenixTeslaConfigs.WingFlightConfigs cfg,
-                                    float speedMult, float driftMult, float verticalScale,
-                                    boolean networkOnline, TeslaTeamEnergyData teslaData,
-                                    UUID teamID) {
+                                   PhoenixTeslaConfigs.WingFlightConfigs cfg,
+                                   float speedMult, float driftMult, float verticalScale,
+                                   boolean networkOnline, TeslaTeamEnergyData teslaData,
+                                   UUID teamID) {
         if (player.getAbilities().mayfly && !player.isCreative() && !player.isSpectator()) {
             player.getAbilities().mayfly = false;
             player.getAbilities().flying = false;
@@ -364,10 +316,10 @@ public final class PhoenixWingFlight {
     }
 
     static void handleCreativeFlight(Player player, CompoundTag data, Level world,
-                                      PhoenixTeslaConfigs.WingFlightConfigs cfg,
-                                      float speedMult, float driftMult, float verticalScale,
-                                      boolean networkOnline, TeslaTeamEnergyData teslaData,
-                                      UUID teamID) {
+                                     PhoenixTeslaConfigs.WingFlightConfigs cfg,
+                                     float speedMult, float driftMult, float verticalScale,
+                                     boolean networkOnline, TeslaTeamEnergyData teslaData,
+                                     UUID teamID) {
         String flightMode = data.getString("FlightMode");
         IElectricItem item = GTCapabilityHelper.getElectricItem(player.getItemBySlot(EquipmentSlot.CHEST));
 
@@ -480,7 +432,7 @@ public final class PhoenixWingFlight {
     }
 
     static double creativeDriftRetention(double vanillaRetention, float driftMult,
-                                                 PhoenixTeslaConfigs.WingFlightConfigs cfg) {
+                                         PhoenixTeslaConfigs.WingFlightConfigs cfg) {
         double slider = Math.rint(driftMult * 10.0);
         if (slider >= 10.0) return 1.0;
         if (slider <= 0.0) return 0.0;
@@ -497,7 +449,7 @@ public final class PhoenixWingFlight {
     }
 
     static void applyCreativeFreeFlight(Player player, Level world, PhoenixTeslaConfigs.WingFlightConfigs cfg,
-                                         float speedMult, float driftMult, float verticalScale) {
+                                        float speedMult, float driftMult, float verticalScale) {
         if (world.isClientSide) {
             (player.getAbilities()).setFlyingSpeed(0f);
             player.onUpdateAbilities();
@@ -556,7 +508,7 @@ public final class PhoenixWingFlight {
     }
 
     static void consumeFlightEnergy(IElectricItem item, TeslaTeamEnergyData teslaData, UUID teamID,
-                                     boolean networkOnline, java.math.BigInteger requiredBI, long cost) {
+                                    boolean networkOnline, java.math.BigInteger requiredBI, long cost) {
         boolean success = false;
         if (networkOnline && teslaData != null) {
             if (teslaData.getOrCreate(teamID).drain(requiredBI).compareTo(requiredBI) >= 0) {

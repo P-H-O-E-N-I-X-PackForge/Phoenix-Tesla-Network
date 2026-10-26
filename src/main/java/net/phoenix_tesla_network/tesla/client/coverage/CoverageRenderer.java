@@ -3,10 +3,9 @@ package net.phoenix_tesla_network.tesla.client.coverage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.client.PhoenixRenderTypes;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
@@ -56,7 +55,8 @@ public final class CoverageRenderer {
         VertexConsumer vc = buffers.getBuffer(PhoenixRenderTypes.COVERAGE_LINES());
 
         var loss = ClientCoverageData.loss();
-        float pulse = 0.5f + 0.12f * (float) Math.sin((mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false)) * 0.12);
+        float pulse = 0.5f + 0.12f * (float) Math
+                .sin((mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false)) * 0.12);
 
         stack.pushPose();
         stack.translate(-camera.x, -camera.y, -camera.z);

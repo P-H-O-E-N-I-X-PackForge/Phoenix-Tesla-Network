@@ -88,8 +88,10 @@ public class PhoenixTeslaBlocks {
 
                     ResourceLocation side, top, bottom;
                     if (placeholder) {
-                        side = ResourceLocation.fromNamespaceAndPath(PhoenixTeslaNetwork.MOD_ID, PLACEHOLDER_TEXTURE_DIR + "side");
-                        top = ResourceLocation.fromNamespaceAndPath(PhoenixTeslaNetwork.MOD_ID, PLACEHOLDER_TEXTURE_DIR + "top");
+                        side = ResourceLocation.fromNamespaceAndPath(PhoenixTeslaNetwork.MOD_ID,
+                                PLACEHOLDER_TEXTURE_DIR + "side");
+                        top = ResourceLocation.fromNamespaceAndPath(PhoenixTeslaNetwork.MOD_ID,
+                                PLACEHOLDER_TEXTURE_DIR + "top");
                         bottom = top;
                     } else {
                         String folderPath = "block/casings/batteries/tesla_" + tierName + "/";

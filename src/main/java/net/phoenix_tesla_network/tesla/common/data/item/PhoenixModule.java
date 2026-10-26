@@ -9,7 +9,9 @@ import net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets;
 
 import brachy.modularui.value.sync.PanelSyncManager;
 
-/** Base for Phoenix modules: settings start with a Phoenix-styled "enabled" toggle. Subclasses call super and add rows. */
+/**
+ * Base for Phoenix modules: settings start with a Phoenix-styled "enabled" toggle. Subclasses call super and add rows.
+ */
 public abstract class PhoenixModule extends ItemModule {
 
     protected PhoenixModule(ResourceLocation id) {

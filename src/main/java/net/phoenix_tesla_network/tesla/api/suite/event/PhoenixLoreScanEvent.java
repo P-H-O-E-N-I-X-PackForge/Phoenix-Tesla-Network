@@ -35,12 +35,33 @@ public class PhoenixLoreScanEvent extends PlayerEvent {
         this.entity = entity;
     }
 
-    @Nullable public BlockPos getPos() { return pos; }
-    @Nullable public BlockState getState() { return state; }
-    @Nullable public Entity getTargetEntity() { return entity; }
-    public boolean isBlock() { return state != null; }
-    public boolean isHandled() { return handled; }
-    @Nullable public Component getFeedback() { return feedback; }
+    @Nullable
+    public BlockPos getPos() {
+        return pos;
+    }
+
+    @Nullable
+    public BlockState getState() {
+        return state;
+    }
+
+    @Nullable
+    public Entity getTargetEntity() {
+        return entity;
+    }
+
+    public boolean isBlock() {
+        return state != null;
+    }
+
+    public boolean isHandled() {
+        return handled;
+    }
+
+    @Nullable
+    public Component getFeedback() {
+        return feedback;
+    }
 
     /** Claim the scan. The message is shown to the player on the action bar. */
     public void handle(Component message) {

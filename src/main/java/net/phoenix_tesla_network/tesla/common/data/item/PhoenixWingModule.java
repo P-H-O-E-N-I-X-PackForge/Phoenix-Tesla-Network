@@ -21,7 +21,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 
-import brachy.modularui.api.drawable.Text;
 import brachy.modularui.value.sync.PanelSyncManager;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -119,26 +118,72 @@ public class PhoenixWingModule extends PhoenixModule {
             this.keepFlyingOnLand = keep;
         }
 
-        public int mode() { return mode; }
-        public String flightMode() { return MODES[mode]; }
-        public int flightSpeed() { return flightSpeed; }
-        public int flightDrift() { return flightDrift; }
-        public int flightVertical() { return flightVertical; }
-        public boolean keepFlyingOnLand() { return keepFlyingOnLand; }
-        public boolean isCreative() { return mode >= 2; }
+        public int mode() {
+            return mode;
+        }
+
+        public String flightMode() {
+            return MODES[mode];
+        }
+
+        public int flightSpeed() {
+            return flightSpeed;
+        }
+
+        public int flightDrift() {
+            return flightDrift;
+        }
+
+        public int flightVertical() {
+            return flightVertical;
+        }
+
+        public boolean keepFlyingOnLand() {
+            return keepFlyingOnLand;
+        }
+
+        public boolean isCreative() {
+            return mode >= 2;
+        }
 
         private WingData w(ItemStack item, boolean en, int m, int s, int d, int v, boolean k) {
             return new WingData(slot, module, item, en, m, s, d, v, k);
         }
 
-        @Override public ModuleData withModuleItem(ItemStack i) { return w(i, enabled, mode, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand); }
-        @Override public ModuleData withEnabled(boolean e) { return w(moduleItem, e, mode, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand); }
-        @Override public ModuleData copy() { return w(moduleItem.copy(), enabled, mode, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand); }
-        public WingData withMode(int v) { return w(moduleItem, enabled, v, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand); }
-        public WingData withSpeed(int v) { return w(moduleItem, enabled, mode, v, flightDrift, flightVertical, keepFlyingOnLand); }
-        public WingData withDrift(int v) { return w(moduleItem, enabled, mode, flightSpeed, v, flightVertical, keepFlyingOnLand); }
-        public WingData withVertical(int v) { return w(moduleItem, enabled, mode, flightSpeed, flightDrift, v, keepFlyingOnLand); }
-        public WingData withKeep(boolean v) { return w(moduleItem, enabled, mode, flightSpeed, flightDrift, flightVertical, v); }
+        @Override
+        public ModuleData withModuleItem(ItemStack i) {
+            return w(i, enabled, mode, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand);
+        }
+
+        @Override
+        public ModuleData withEnabled(boolean e) {
+            return w(moduleItem, e, mode, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand);
+        }
+
+        @Override
+        public ModuleData copy() {
+            return w(moduleItem.copy(), enabled, mode, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand);
+        }
+
+        public WingData withMode(int v) {
+            return w(moduleItem, enabled, v, flightSpeed, flightDrift, flightVertical, keepFlyingOnLand);
+        }
+
+        public WingData withSpeed(int v) {
+            return w(moduleItem, enabled, mode, v, flightDrift, flightVertical, keepFlyingOnLand);
+        }
+
+        public WingData withDrift(int v) {
+            return w(moduleItem, enabled, mode, flightSpeed, v, flightVertical, keepFlyingOnLand);
+        }
+
+        public WingData withVertical(int v) {
+            return w(moduleItem, enabled, mode, flightSpeed, flightDrift, v, keepFlyingOnLand);
+        }
+
+        public WingData withKeep(boolean v) {
+            return w(moduleItem, enabled, mode, flightSpeed, flightDrift, flightVertical, v);
+        }
 
         @Override
         public boolean equals(Object o) {
@@ -153,8 +198,15 @@ public class PhoenixWingModule extends PhoenixModule {
         }
     }
 
-    @Override public Class<? extends ModuleData> moduleDataClass() { return WingData.class; }
-    @Override public MapCodec<? extends ModuleData> moduleDataCodec() { return WingData.CODEC; }
+    @Override
+    public Class<? extends ModuleData> moduleDataClass() {
+        return WingData.class;
+    }
+
+    @Override
+    public MapCodec<? extends ModuleData> moduleDataCodec() {
+        return WingData.CODEC;
+    }
 
     @Override
     public ModuleData defaultModuleData(int slot, ItemModule module, ItemStack moduleStack) {
@@ -218,16 +270,20 @@ public class PhoenixWingModule extends PhoenixModule {
                         "gui.phoenix_tesla_network.wing.mode.2", "gui.phoenix_tesla_network.wing.mode.3" },
                 () -> ctx.getData(WingData.class).mode(),
                 v -> ctx.setData(ctx.getData(WingData.class).withMode(v))));
-        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.intSliderRow("gui.phoenix_tesla_network.wing.speed",
+        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.intSliderRow(
+                "gui.phoenix_tesla_network.wing.speed",
                 () -> ctx.getData(WingData.class).flightSpeed(),
                 v -> ctx.setData(ctx.getData(WingData.class).withSpeed(v)), 0, 20));
-        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.intSliderRow("gui.phoenix_tesla_network.wing.drift",
+        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.intSliderRow(
+                "gui.phoenix_tesla_network.wing.drift",
                 () -> ctx.getData(WingData.class).flightDrift(),
                 v -> ctx.setData(ctx.getData(WingData.class).withDrift(v)), 0, 10));
-        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.intSliderRow("gui.phoenix_tesla_network.wing.vertical",
+        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.intSliderRow(
+                "gui.phoenix_tesla_network.wing.vertical",
                 () -> ctx.getData(WingData.class).flightVertical(),
                 v -> ctx.setData(ctx.getData(WingData.class).withVertical(v)), 0, 20));
-        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.toggleRow("gui.phoenix_tesla_network.wing.keep_flying",
+        b.add(net.phoenix_tesla_network.tesla.common.ui.PhoenixWidgets.toggleRow(
+                "gui.phoenix_tesla_network.wing.keep_flying",
                 () -> ctx.getData(WingData.class).keepFlyingOnLand(),
                 v -> ctx.setData(ctx.getData(WingData.class).withKeep(v))));
         return b;

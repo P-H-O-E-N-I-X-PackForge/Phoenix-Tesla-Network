@@ -2,10 +2,9 @@ package net.phoenix_tesla_network.tesla.client.keybind;
 
 import net.minecraft.client.KeyMapping;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 
 import com.mojang.blaze3d.platform.InputConstants;

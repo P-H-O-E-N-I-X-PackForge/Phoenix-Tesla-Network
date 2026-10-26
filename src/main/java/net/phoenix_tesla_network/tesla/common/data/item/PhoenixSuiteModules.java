@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
 import com.gregtechceu.gtceu.api.item.armor.ArmorUtils;
 import com.gregtechceu.gtceu.api.item.armor.ModularArmorItem;
-import com.gregtechceu.gtceu.api.item.module.ItemModule;
 import com.gregtechceu.gtceu.api.item.module.ModuleContext;
 
 import net.minecraft.core.BlockPos;
@@ -20,13 +19,13 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.neoforged.neoforge.common.NeoForge;
 import net.phoenix_tesla_network.tesla.api.suite.event.PhoenixLoreScanEvent;
 
@@ -35,9 +34,9 @@ import java.util.UUID;
 
 /**
  * Exploration / lore / teamwork modules. NOT COMPILED.
- *  - LoreScannerModule (helmet): scan what you're looking at; fires PhoenixLoreScanEvent for Phoenix Core to use.
- *  - MenderModule (chest): heals teammates (same Tesla team) in range from the network.
- *  - MagnetModule (leggings): pulls nearby dropped items to you. Sneak to pause.
+ * - LoreScannerModule (helmet): scan what you're looking at; fires PhoenixLoreScanEvent for Phoenix Core to use.
+ * - MenderModule (chest): heals teammates (same Tesla team) in range from the network.
+ * - MagnetModule (leggings): pulls nearby dropped items to you. Sneak to pause.
  */
 public final class PhoenixSuiteModules {
 
@@ -147,9 +146,20 @@ public final class PhoenixSuiteModules {
             super(id);
         }
 
-        @Override protected int defaultLevel() { return 8; }
-        @Override protected int minLevel() { return 2; }
-        @Override protected String settingKey() { return "gui.phoenix_tesla_network.mender.radius"; }
+        @Override
+        protected int defaultLevel() {
+            return 8;
+        }
+
+        @Override
+        protected int minLevel() {
+            return 2;
+        }
+
+        @Override
+        protected String settingKey() {
+            return "gui.phoenix_tesla_network.mender.radius";
+        }
 
         @Override
         public boolean canApplyTo(ItemStack stack) {
@@ -197,9 +207,20 @@ public final class PhoenixSuiteModules {
             super(id);
         }
 
-        @Override protected int defaultLevel() { return 6; }
-        @Override protected int minLevel() { return 1; }
-        @Override protected String settingKey() { return "gui.phoenix_tesla_network.magnet.radius"; }
+        @Override
+        protected int defaultLevel() {
+            return 6;
+        }
+
+        @Override
+        protected int minLevel() {
+            return 1;
+        }
+
+        @Override
+        protected String settingKey() {
+            return "gui.phoenix_tesla_network.magnet.radius";
+        }
 
         @Override
         public boolean canApplyTo(ItemStack stack) {
@@ -250,9 +271,20 @@ public final class PhoenixSuiteModules {
             super(id);
         }
 
-        @Override protected int defaultLevel() { return 6; }
-        @Override protected int minLevel() { return 1; }
-        @Override protected String settingKey() { return "gui.phoenix_tesla_network.naphtha.power"; }
+        @Override
+        protected int defaultLevel() {
+            return 6;
+        }
+
+        @Override
+        protected int minLevel() {
+            return 1;
+        }
+
+        @Override
+        protected String settingKey() {
+            return "gui.phoenix_tesla_network.naphtha.power";
+        }
 
         @Override
         public boolean canApplyTo(ItemStack stack) {
