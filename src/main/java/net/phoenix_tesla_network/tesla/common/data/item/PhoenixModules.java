@@ -36,6 +36,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.range.TeslaLoss;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
+import net.phoenix_tesla_network.tesla.api.suite.PhoenixSuiteApi;
 import net.phoenix_tesla_network.tesla.common.registry.PhoenixRegistration;
 import net.phoenix_tesla_network.tesla.network.packet.S2CTeslaStatusPacket;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
@@ -173,24 +174,45 @@ public final class PhoenixModules {
             // Don't charge while a container is open (matches old behavior).
             if (player.containerMenu != player.inventoryMenu) return;
 
-            IElectricItem item = GTCapabilityHelper.getElectricItem(ctx.getAppliedTo());
-            if (item == null) return;
-            long room = item.getMaxCharge() - item.getCharge();
-            if (room <= 0) return;
-
             var network = Tesla.network(player);
             if (network == null) return;
-
-            long request = Math.min(room, item.getTransferLimit());
             double eff = TeslaLoss.suitEfficiency(network, player.level().dimension(), player.blockPosition());
-            BigInteger drained = network.drain(TeslaLoss.gross(BigInteger.valueOf(request), eff));
-            if (drained.signum() > 0) {
-                item.charge(TeslaLoss.net(drained, eff).longValue(), item.getTier(), true, false);
-                if (player.level().getGameTime() % 5 == 0 && player.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, player.getX(), player.getY() + 1, player.getZ(),
-                            3, 0.2, 0.4, 0.2, 0.05);
+
+            // 1) Every worn piece, not just the chestplate. Each piece has its own battery.
+            boolean charged = false;
+            for (EquipmentSlot slot : SUIT_SLOTS) {
+                charged |= topUp(network, eff, GTCapabilityHelper.getElectricItem(player.getItemBySlot(slot)));
+            }
+
+            // 2) Everything else you carry: hotbar, inventory, offhand and curios. GT's own distributor does the
+            // sharing (it also handles Curios and FE-only items), fed from the chestplate battery we just topped up.
+            if (!player.isCreative()) {
+                ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+                IElectricItem chestCap = GTCapabilityHelper.getElectricItem(chest);
+                if (chestCap != null) {
+                    ArmorUtils.chargeCarriedItems(player, chest, chestCap, chestCap.getTransferLimit());
                 }
             }
+
+            if (charged && player.level().getGameTime() % 5 == 0 && player.level() instanceof ServerLevel sl) {
+                sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, player.getX(), player.getY() + 1, player.getZ(), 3,
+                        0.2, 0.4, 0.2, 0.05);
+            }
+        }
+
+        private static final EquipmentSlot[] SUIT_SLOTS = { EquipmentSlot.HEAD, EquipmentSlot.CHEST,
+                EquipmentSlot.LEGS, EquipmentSlot.FEET };
+
+        /** Pulls up to one transfer-limit's worth from the network into this battery. Returns true if any moved. */
+        private static boolean topUp(TeslaTeamEnergyData.TeamEnergy network, double eff, IElectricItem cap) {
+            if (cap == null) return false;
+            long room = cap.getMaxCharge() - cap.getCharge();
+            if (room <= 0) return false;
+            long request = Math.min(room, cap.getTransferLimit());
+            BigInteger drained = network.drain(TeslaLoss.gross(BigInteger.valueOf(request), eff));
+            if (drained.signum() <= 0) return false;
+            cap.charge(TeslaLoss.net(drained, eff).longValue(), cap.getTier(), true, false);
+            return true;
         }
 
         // ---- HUD ----------------------------------------------------------------------------------------------
@@ -209,16 +231,117 @@ public final class PhoenixModules {
             }
         }
 
+        /** 1234567 -> "1.23M". Handles anything up to 1000^20 and beyond (falls back to the last suffix). */
+        public static String formatBig(String digits) {
+            BigInteger value;
+            try {
+                value = new BigInteger(digits.isEmpty() ? "0" : digits);
+            } catch (NumberFormatException e) {
+                return digits;
+            }
+            String[] suffixes = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd" };
+            BigInteger thousand = BigInteger.valueOf(1000);
+            int index = 0;
+            java.math.BigDecimal scaled = new java.math.BigDecimal(value);
+            while (scaled.abs().compareTo(java.math.BigDecimal.valueOf(1000)) >= 0 && index < suffixes.length - 1) {
+                scaled = scaled.divide(java.math.BigDecimal.valueOf(1000), 6, java.math.RoundingMode.DOWN);
+                index++;
+            }
+            String text = scaled.setScale(index == 0 ? 0 : 2, java.math.RoundingMode.DOWN).stripTrailingZeros()
+                    .toPlainString();
+            return text + suffixes[index];
+        }
+
+        private static int percent(String stored, String capacity) {
+            try {
+                BigInteger cap = new BigInteger(capacity);
+                if (cap.signum() <= 0) return 0;
+                return new java.math.BigDecimal(new BigInteger(stored)).multiply(java.math.BigDecimal.valueOf(100))
+                        .divide(new java.math.BigDecimal(cap), 0, java.math.RoundingMode.DOWN).intValue();
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+
         @Override
         @OnlyIn(Dist.CLIENT)
         public void drawHUD(ModuleContext ctx, ArmorUtils.ModularHUD hud, GuiGraphics graphics) {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            Player player = mc.player;
+            if (player == null) return;
+
+            // --- network
             if (!Client.online) {
                 hud.newLine(Component.literal("Tesla: offline").withStyle(ChatFormatting.DARK_GRAY));
-                return;
+            } else {
+                hud.newLine(Component.literal("Tesla: ").withStyle(ChatFormatting.GOLD)
+                        .append(Component.literal(formatBig(Client.stored) + " / " + formatBig(Client.capacity) +
+                                " (" + percent(Client.stored, Client.capacity) + "%)")
+                                .withStyle(ChatFormatting.WHITE)));
             }
-            hud.newLine(Component.literal("Tesla: ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal(Client.stored + " / " + Client.capacity)
-                            .withStyle(ChatFormatting.WHITE)));
+
+            // --- suit battery (average over worn pieces)
+            long charge = 0, max = 0;
+            for (EquipmentSlot slot : SUIT_SLOTS) {
+                IElectricItem cap = GTCapabilityHelper.getElectricItem(player.getItemBySlot(slot));
+                if (cap != null) {
+                    charge += cap.getCharge();
+                    max += cap.getMaxCharge();
+                }
+            }
+            if (max > 0) {
+                hud.newLine(Component.literal("Suit: ").withStyle(ChatFormatting.AQUA)
+                        .append(Component.literal(formatBig(Long.toString(charge)) + " EU (" + (charge * 100 / max) +
+                                "%)").withStyle(ChatFormatting.WHITE)));
+            }
+
+            // --- speed (blocks per second, measured from position change)
+            double dx = player.getX() - player.xo;
+            double dz = player.getZ() - player.zo;
+            double dy = player.getY() - player.yo;
+            double horizontal = Math.sqrt(dx * dx + dz * dz) * 20;
+            hud.newLine(Component.literal("Speed: ").withStyle(ChatFormatting.GREEN)
+                    .append(Component.literal(String.format("%.1f", horizontal) + " b/s")
+                            .withStyle(ChatFormatting.WHITE))
+                    .append(Component.literal(Math.abs(dy) > 0.01 ? String.format("  (%+.1f vertical)", dy * 20) : "")
+                            .withStyle(ChatFormatting.GRAY)));
+
+            // --- flight
+            var wingCtx = PhoenixSuiteApi.findModule(player, PhoenixWingModule.class);
+            if (wingCtx != null) {
+                var wing = wingCtx.getData(PhoenixWingModule.WingData.class);
+                String state;
+                if (!wingCtx.getModule().isEnabled(wingCtx)) state = "off";
+                else if (PhoenixWingModule.conflicted(wingCtx)) state = "overridden";
+                else if (player.isFallFlying()) state = "gliding";
+                else if (player.getAbilities().flying) state = "flying";
+                else state = "grounded";
+                hud.newLine(Component.literal("Flight: ").withStyle(ChatFormatting.LIGHT_PURPLE)
+                        .append(Component.translatable("gui.phoenix_tesla_network.wing.mode." + wing.mode())
+                                .withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(" - " + state).withStyle(ChatFormatting.GRAY))
+                        .append(Component.literal("  spd " + wing.flightSpeed() + " drift " + wing.flightDrift())
+                                .withStyle(ChatFormatting.DARK_GRAY)));
+            }
+
+            // --- movement and utility modules with a level (sprint, jump, mender radius, magnet radius, naphtha, ...)
+            for (EquipmentSlot slot : SUIT_SLOTS) {
+                var modular = GTCapabilityHelper.getModularItem(player.getItemBySlot(slot));
+                if (modular == null) continue;
+                for (ModuleContext other : modular.getAllModuleInstances()) {
+                    if (other.getModule() instanceof PhoenixMovementModules.LevelModule level &&
+                            level.isEnabled(other)) {
+                        hud.newLine(Component.literal("").append(other.getModule().getDisplayName(other))
+                                .withStyle(ChatFormatting.GRAY)
+                                .append(Component.literal(": " + level.level(other)).withStyle(ChatFormatting.WHITE)));
+                    }
+                }
+            }
+
+            // --- set bonus
+            if (PhoenixSuiteApi.isFullSet(player)) {
+                hud.newLine(Component.literal("Set bonus: active").withStyle(ChatFormatting.GOLD));
+            }
         }
     }
 
