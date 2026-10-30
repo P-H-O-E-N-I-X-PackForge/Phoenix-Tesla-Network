@@ -23,7 +23,7 @@ public class C2SLoreScanPacket implements CustomPacketPayload {
 
     public static void handle(C2SLoreScanPacket msg, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer player) PhoenixSuiteModules.LoreScannerModule.trigger(player);
+            if (ctx.player() instanceof ServerPlayer player && net.phoenix_tesla_network.tesla.common.TeslaGates.check(player, net.phoenix_tesla_network.tesla.common.TeslaGates.LORE_SCAN)) PhoenixSuiteModules.LoreScannerModule.trigger(player);
         });
     }
 }

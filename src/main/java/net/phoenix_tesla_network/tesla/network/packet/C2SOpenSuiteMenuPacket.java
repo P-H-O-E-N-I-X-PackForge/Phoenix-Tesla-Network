@@ -22,7 +22,7 @@ public class C2SOpenSuiteMenuPacket implements CustomPacketPayload {
 
     public static void handle(C2SOpenSuiteMenuPacket msg, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer player && player.containerMenu == player.inventoryMenu) {
+            if (ctx.player() instanceof ServerPlayer player && net.phoenix_tesla_network.tesla.common.TeslaGates.check(player, net.phoenix_tesla_network.tesla.common.TeslaGates.SUITE_MENU) && player.containerMenu == player.inventoryMenu) {
                 PhoenixArmorUIFactory.INSTANCE.open(player);
             }
         });

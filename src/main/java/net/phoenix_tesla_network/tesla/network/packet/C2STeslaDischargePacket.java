@@ -25,7 +25,7 @@ public class C2STeslaDischargePacket implements CustomPacketPayload {
     /** Cooldown, energy and feedback all live in TeslaDischargeModule now. */
     public static void handle(C2STeslaDischargePacket msg, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer player) PhoenixModules.TeslaDischargeModule.trigger(player);
+            if (ctx.player() instanceof ServerPlayer player && net.phoenix_tesla_network.tesla.common.TeslaGates.check(player, net.phoenix_tesla_network.tesla.common.TeslaGates.DISCHARGE)) PhoenixModules.TeslaDischargeModule.trigger(player);
         });
     }
 }
