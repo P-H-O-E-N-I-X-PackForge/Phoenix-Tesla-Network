@@ -23,7 +23,12 @@ public final class TeslaGates {
     private TeslaGates() {}
 
     public static boolean allowed(ServerPlayer player, String feature) {
-        return SuiteGates.allowed(player, feature, SuiteGates.ANY_SCOPE);
+        try {
+            return SuiteGates.allowed(player, feature, SuiteGates.ANY_SCOPE);
+        } catch (NoClassDefFoundError e) {
+            // Tesla does not require the wiki: without it nothing can be bound, so everything is allowed
+            return true;
+        }
     }
 
     /** Like {@link #allowed}, and tells the player when the answer is no. */
