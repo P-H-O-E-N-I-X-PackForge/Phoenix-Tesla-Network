@@ -170,7 +170,7 @@ dependencies {
     // Phoenix Guilds is optional at runtime (reached by reflection from TeamUtils), so it is only on the dev
     // runtime classpath - for testing the integration - and never a compile dependency. It needs Phoenix Wiki.
     modRuntimeOnly("net.phoenixvine.guilds:phoenix_guilds:1.6.5")
-    modRuntimeOnly("net.phoenixvine.wiki:phoenix_wiki:0.5.5")
+    modImplementation("net.phoenixvine.wiki:phoenix_wiki:0.6.0")
 
     modImplementation "software.bernie.geckolib:geckolib-neoforge-1.20.1:${geckolib_version}"
     modImplementation "top.theillusivec4.curios:curios-forge:${curios_version}"

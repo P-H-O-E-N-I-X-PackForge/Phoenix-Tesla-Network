@@ -21,6 +21,7 @@ public class C2SToggleTeslaModePacket {
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
+            if (player != null && !net.phoenix_tesla_network.tesla.common.TeslaGates.check(player, net.phoenix_tesla_network.tesla.common.TeslaGates.TESLA_MODE)) return;
             if (player == null) return;
 
             ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
