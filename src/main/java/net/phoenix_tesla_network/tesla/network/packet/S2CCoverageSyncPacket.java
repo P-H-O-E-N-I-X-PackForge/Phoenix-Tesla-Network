@@ -29,7 +29,10 @@ public class S2CCoverageSyncPacket implements CustomPacketPayload {
     public static final byte RELAY_ACTIVE = 2;
     public static final byte RELAY_IDLE = 3;
 
-    public record Entry(byte kind, BlockPos pos, float radius) {}
+    /** Index into the loss params: 0 = basic, 1 = advanced, 2 = ultimate tower. Extenders use their tower's. */
+    public static final int LOSS_TYPES = 3;
+
+    public record Entry(byte kind, BlockPos pos, float radius, byte lossType) {}
 
     public record LossParams(boolean enabled, float base, float perUnit, float unit, float exponent, float max) {
 
@@ -50,35 +53,42 @@ public class S2CCoverageSyncPacket implements CustomPacketPayload {
     }
 
     private final List<Entry> entries;
-    private final LossParams loss;
+    private final LossParams[] loss;
 
-    public S2CCoverageSyncPacket(List<Entry> entries, LossParams loss) {
+    public S2CCoverageSyncPacket(List<Entry> entries, LossParams[] loss) {
         this.entries = entries;
         this.loss = loss;
     }
 
     public S2CCoverageSyncPacket(FriendlyByteBuf buf) {
-        this.loss = new LossParams(buf.readBoolean(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
-                buf.readFloat(), buf.readFloat());
+        this.loss = new LossParams[LOSS_TYPES];
+        for (int i = 0; i < LOSS_TYPES; i++) {
+            loss[i] = new LossParams(buf.readBoolean(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
+                    buf.readFloat(), buf.readFloat());
+        }
         int count = buf.readVarInt();
         this.entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            entries.add(new Entry(buf.readByte(), buf.readBlockPos(), buf.readFloat()));
+            entries.add(new Entry(buf.readByte(), buf.readBlockPos(), buf.readFloat(), buf.readByte()));
         }
     }
 
     public void encode(FriendlyByteBuf buf) {
-        buf.writeBoolean(loss.enabled());
-        buf.writeFloat(loss.base());
-        buf.writeFloat(loss.perUnit());
-        buf.writeFloat(loss.unit());
-        buf.writeFloat(loss.exponent());
-        buf.writeFloat(loss.max());
+        for (int i = 0; i < LOSS_TYPES; i++) {
+            LossParams l = loss[i];
+            buf.writeBoolean(l.enabled());
+            buf.writeFloat(l.base());
+            buf.writeFloat(l.perUnit());
+            buf.writeFloat(l.unit());
+            buf.writeFloat(l.exponent());
+            buf.writeFloat(l.max());
+        }
         buf.writeVarInt(entries.size());
         for (Entry entry : entries) {
             buf.writeByte(entry.kind());
             buf.writeBlockPos(entry.pos());
             buf.writeFloat(entry.radius());
+            buf.writeByte(entry.lossType());
         }
     }
 

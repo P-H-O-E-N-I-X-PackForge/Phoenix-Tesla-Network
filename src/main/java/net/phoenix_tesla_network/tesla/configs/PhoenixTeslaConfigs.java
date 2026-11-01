@@ -142,15 +142,30 @@ public class PhoenixTeslaConfigs {
 
     public static class LossConfigs {
 
+        public LossConfigs() {}
+
+        public LossConfigs(double baseLossPercent, double lossPercentPerUnit, double distanceUnitBlocks,
+                           double exponent, double crossDimensionLossPercent, double maxLossPercent) {
+            this.baseLossPercent = baseLossPercent;
+            this.lossPercentPerUnit = lossPercentPerUnit;
+            this.distanceUnitBlocks = distanceUnitBlocks;
+            this.exponent = exponent;
+            this.crossDimensionLossPercent = crossDimensionLossPercent;
+            this.maxLossPercent = maxLossPercent;
+        }
+
         @Configurable
         @Configurable.Comment({
-                "Master switch. False means lossless transfer everywhere (no other loss setting matters).",
+                "Master switch for this tower. False means lossless transfer through this tower (no other loss",
+                "setting of this tower matters).",
                 "",
                 "loss % = min(maxLossPercent, baseLossPercent",
                 "              + lossPercentPerUnit * (distance / distanceUnitBlocks) ^ exponent)",
                 "  distance = blocks from the receiving end to the nearest covering tower or extender,",
                 "  so extenders cut loss. If only a cross-dimensional tower covers it, crossDimensionLossPercent",
                 "  is used instead of the distance term.",
+                "Machines are charged by pushing energy in directly, so loss never stops a machine from",
+                "charging. It just costs more from the network.",
                 "A machine receives (100 - loss)% of what the network spends, and the network receives",
                 "(100 - loss)% of what a generator sends."
         })
@@ -205,10 +220,12 @@ public class PhoenixTeslaConfigs {
                 "Basic Tesla Tower (tier 1). Finite range by default - extend it with Tesla Range Extenders.",
                 "GT tier numbers used by every tier setting below: 0=ULV 1=LV 2=MV 3=HV 4=EV 5=IV 6=LuV 7=ZPM",
                 "8=UV 9=UHV 10=UEV 11=UIV 12=UXV 13=OpV 14=MAX",
-                "Glass defaults: tempered + laminated + fusion."
+                "Glass defaults: tempered + laminated + fusion.",
+                "Each tower has its own 'loss' section (transmission loss), so tiers can be balanced separately."
         })
         public TowerProfile tier1Basic = new TowerProfile(true, 1, 5, 1, 5, 128, false, false)
-                .glass(true, true, true);
+                .glass(true, true, true)
+                .loss(new LossConfigs(2.0, 8.0, 128.0, 1.0, 25.0, 60.0));
 
         @Configurable
         @Configurable.Comment({
@@ -216,7 +233,8 @@ public class PhoenixTeslaConfigs {
                 "Glass defaults: laminated + fusion."
         })
         public TowerProfile tier2Advanced = new TowerProfile(true, 1, 9, 1, 9, 128, true, false)
-                .glass(false, true, true);
+                .glass(false, true, true)
+                .loss(new LossConfigs(1.0, 5.0, 128.0, 1.0, 15.0, 40.0));
 
         @Configurable
         @Configurable.Comment({
@@ -225,7 +243,8 @@ public class PhoenixTeslaConfigs {
                 "Glass defaults: fusion only."
         })
         public TowerProfile tier3Ultimate = new TowerProfile(true, 0, 14, 1, 14, 128, true, true)
-                .glass(false, false, true);
+                .glass(false, false, true)
+                .loss(new LossConfigs(0.0, 2.5, 128.0, 1.0, 10.0, 25.0));
 
         @Configurable
         @Configurable.Comment({
@@ -234,14 +253,6 @@ public class PhoenixTeslaConfigs {
                 "so extenders can be chained outward from a tower."
         })
         public RelayConfig relay = new RelayConfig();
-
-        @Configurable
-        @Configurable.Comment({
-                "Transmission loss. Energy moving between the team network and a hatch, linked machine, wireless",
-                "charger or the suit's tool charging is scaled by the efficiency below, based on how far the",
-                "receiving end is from the nearest tower or range extender covering it."
-        })
-        public LossConfigs loss = new LossConfigs();
 
         @Configurable
         @Configurable.Comment({
@@ -271,6 +282,11 @@ public class PhoenixTeslaConfigs {
             this.allowTemperedGlass = tempered;
             this.allowLaminatedGlass = laminated;
             this.allowFusionGlass = fusion;
+            return this;
+        }
+
+        public TowerProfile loss(LossConfigs loss) {
+            this.loss = loss;
             return this;
         }
 
@@ -375,6 +391,16 @@ public class PhoenixTeslaConfigs {
                 "something is in, so an infinite-range cross-dimensional tower covers everything everywhere."
         })
         public boolean crossDimension = false;
+
+        @Configurable
+        @Configurable.Comment({
+                "Transmission loss for everything this tower serves: energy moving between the team network and a",
+                "hatch, linked machine, wireless charger or the suit's tool charging is scaled by this efficiency,",
+                "based on how far the receiving end is from the nearest covering source.",
+                "A Tesla Range Extender uses the loss settings of the tower that powers it. If several towers cover",
+                "the same spot, the one giving the lowest loss is used."
+        })
+        public LossConfigs loss = new LossConfigs();
     }
 
     public static class RelayConfig {

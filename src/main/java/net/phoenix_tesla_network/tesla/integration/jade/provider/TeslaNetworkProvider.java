@@ -18,7 +18,6 @@ import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaRelayMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaTowerMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine;
-import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
 
@@ -97,14 +96,16 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                     tag.putLong("LocalTransfer", transferRate);
                     tag.putInt("TransferMode", mode);
                     tag.putBoolean("InRange", TeslaRange.isInRange(teamData, sl.dimension(), pos));
-                    if (PhoenixTeslaConfigs.get().towers.loss.enabled) {
-                        var reach = TeslaRange.reach(teamData, sl.dimension(), pos);
-                        if (reach != null) {
-                            tag.putDouble("LossPercent", TeslaLoss.lossFraction(
-                                    PhoenixTeslaConfigs.get().towers.loss, reach) * 100.0);
-                            tag.putBoolean("LossCrossDim", reach.crossDimension());
-                            tag.putDouble("LossDistance", reach.distance());
-                        }
+                    var reach = TeslaRange.reach(teamData, sl.dimension(), pos);
+                    if (reach != null && TeslaRange.lossConfig(reach.lossType()).enabled) {
+                        tag.putDouble("LossPercent", TeslaLoss.lossFraction(reach) * 100.0);
+                        tag.putBoolean("LossCrossDim", reach.crossDimension());
+                        tag.putDouble("LossDistance", reach.distance());
+                        tag.putString("LossTower", switch (reach.lossType()) {
+                            case TOWER_BASIC -> "Basic";
+                            case TOWER_ADVANCED -> "Advanced";
+                            default -> "Tesla Tower";
+                        });
                     }
 
                     int physicalHatches = 0;
@@ -155,7 +156,9 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                     Math.round(data.getDouble("LossDistance")) + " blocks";
             tooltip.add(Component.literal("Link loss: ").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(String.format("%.1f%%", loss)).withStyle(lossColor))
-                    .append(Component.literal(" (" + where + ")").withStyle(ChatFormatting.DARK_GRAY)));
+                    .append(Component.literal(" (" + where +
+                            (data.contains("LossTower") ? ", " + data.getString("LossTower") : "") + ")")
+                            .withStyle(ChatFormatting.DARK_GRAY)));
         }
 
         int connections = data.getInt("TotalConnections");

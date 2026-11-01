@@ -11,7 +11,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
-import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.network.packet.S2CCoverageSyncPacket;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.util.StackNbt;
@@ -55,15 +54,21 @@ public final class TeslaCoverageSyncHandler {
                 kind = TeslaRange.isRelayActive(energy, node.dimension, node.pos) ?
                         S2CCoverageSyncPacket.RELAY_ACTIVE : S2CCoverageSyncPacket.RELAY_IDLE;
             }
-            entries.add(new S2CCoverageSyncPacket.Entry(kind, node.pos, radius));
+            var lossNodeType = TeslaRange.lossTypeOf(energy, node);
+            byte lossType = (byte) (lossNodeType == null ? TeslaTeamEnergyData.RangeNodeType.TOWER_ULTIMATE.ordinal() :
+                    lossNodeType.ordinal());
+            entries.add(new S2CCoverageSyncPacket.Entry(kind, node.pos, radius, lossType));
         }
 
-        var lossCfg = PhoenixTeslaConfigs.get().towers.loss;
-        var loss = lossCfg.enabled ?
-                new S2CCoverageSyncPacket.LossParams(true, (float) lossCfg.baseLossPercent,
-                        (float) lossCfg.lossPercentPerUnit, (float) lossCfg.distanceUnitBlocks,
-                        (float) lossCfg.exponent, (float) lossCfg.maxLossPercent) :
-                S2CCoverageSyncPacket.LossParams.OFF;
+        var loss = new S2CCoverageSyncPacket.LossParams[S2CCoverageSyncPacket.LOSS_TYPES];
+        for (int i = 0; i < loss.length; i++) {
+            var cfg = TeslaRange.lossConfig(TeslaTeamEnergyData.RangeNodeType.values()[i]);
+            loss[i] = cfg.enabled ?
+                    new S2CCoverageSyncPacket.LossParams(true, (float) cfg.baseLossPercent,
+                            (float) cfg.lossPercentPerUnit, (float) cfg.distanceUnitBlocks,
+                            (float) cfg.exponent, (float) cfg.maxLossPercent) :
+                    S2CCoverageSyncPacket.LossParams.OFF;
+        }
 
         PacketDistributor.sendToPlayer(player, new S2CCoverageSyncPacket(entries, loss));
     }

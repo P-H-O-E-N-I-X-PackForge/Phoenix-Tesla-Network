@@ -13,6 +13,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaT
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData.RangeNode;
+import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData.RangeNodeType;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData.TeamEnergy;
 
 import java.util.*;
@@ -20,7 +21,7 @@ import java.util.*;
 public final class TeslaRange {
 
     private record Emitter(RangeNode source, ResourceKey<Level> dimension, BlockPos pos, double radiusSqr,
-                           boolean anyDimension) {
+                           boolean anyDimension, RangeNodeType lossType) {
 
         boolean covers(ResourceKey<Level> dim, BlockPos target) {
             if (!anyDimension && !dimension.equals(dim)) return false;
@@ -28,7 +29,8 @@ public final class TeslaRange {
         }
     }
 
-    private record Coverage(List<Emitter> emitters, Set<String> activeRelayKeys, Map<String, RangeNode> relayParents) {
+    private record Coverage(List<Emitter> emitters, Set<String> activeRelayKeys, Map<String, RangeNode> relayParents,
+                            Map<String, RangeNodeType> relayLossTypes) {
 
         boolean covers(ResourceKey<Level> dim, BlockPos target) {
             for (Emitter emitter : emitters) {
@@ -37,23 +39,38 @@ public final class TeslaRange {
             return false;
         }
 
+        /**
+         * The covering source with the lowest loss at {@code target}, judged with each source's own tower loss
+         * config. Same-dimension sources win over cross-dimension ones; ties go to the nearer source.
+         */
         Reach reach(ResourceKey<Level> dim, BlockPos target) {
-            double best = Double.MAX_VALUE;
-            boolean crossOnly = false;
+            Reach best = null;
+            double bestLoss = Double.MAX_VALUE;
             for (Emitter emitter : emitters) {
                 if (!emitter.covers(dim, target)) continue;
-                if (emitter.dimension().equals(dim)) {
-                    best = Math.min(best, emitter.pos().distSqr(target));
-                } else {
-                    crossOnly = true;
+                boolean cross = !emitter.dimension().equals(dim);
+                double distance = cross ? 0 : Math.sqrt(emitter.pos().distSqr(target));
+                double loss = TeslaLoss.lossFraction(lossConfig(emitter.lossType()), distance, cross);
+                if (best == null || better(cross, loss, distance, best, bestLoss)) {
+                    best = new Reach(distance, cross, emitter.lossType());
+                    bestLoss = loss;
                 }
             }
-            if (best != Double.MAX_VALUE) return new Reach(Math.sqrt(best), false);
-            return crossOnly ? new Reach(0, true) : null;
+            return best;
+        }
+
+        private static boolean better(boolean cross, double loss, double distance, Reach best, double bestLoss) {
+            if (cross != best.crossDimension()) return !cross;
+            if (loss != bestLoss) return loss < bestLoss;
+            return distance < best.distance();
         }
     }
 
-    public record Reach(double distance, boolean crossDimension) {}
+    /**
+     * @param lossType which tower tier's loss config applies (always a tower type, never RELAY: an extender takes the
+     *                 type of the tower that powers it)
+     */
+    public record Reach(double distance, boolean crossDimension, RangeNodeType lossType) {}
 
     private record Cached(int version, Coverage coverage) {}
 
@@ -74,6 +91,21 @@ public final class TeslaRange {
     public static Reach reach(TeamEnergy team, ResourceKey<Level> dimension, BlockPos pos) {
         if (!team.rangeManaged) return null;
         return coverage(team).reach(dimension, pos);
+    }
+
+    /**
+     * Which tower tier's loss config governs {@code node}: a tower's own tier, or for a working extender the tier of
+     * the tower it hangs off. Null for an extender that is not connected.
+     */
+    public static RangeNodeType lossTypeOf(TeamEnergy team, RangeNode node) {
+        if (node.type.isTower()) return node.type;
+        if (!team.rangeManaged) return null;
+        return coverage(team).relayLossTypes().get(node.key());
+    }
+
+    /** The loss settings of one tower tier. */
+    public static PhoenixTeslaConfigs.LossConfigs lossConfig(RangeNodeType type) {
+        return profileFor(PhoenixTeslaConfigs.get().towers, type).loss;
     }
 
     public static boolean isRelayActive(TeamEnergy team, ResourceKey<Level> dimension, BlockPos pos) {
@@ -133,7 +165,8 @@ public final class TeslaRange {
                 PhoenixTeslaConfigs.TowerProfile profile = profileFor(cfg, node.type);
                 if (!profile.enabled) continue;
                 double radiusSqr = profile.infiniteRange ? -1 : square(profile.rangeBlocks);
-                emitters.add(new Emitter(node, node.dimension, node.pos, radiusSqr, profile.crossDimension));
+                emitters.add(new Emitter(node, node.dimension, node.pos, radiusSqr, profile.crossDimension,
+                        node.type));
             } else if (cfg.relay.enabled) {
                 relays.add(node);
             }
@@ -141,6 +174,7 @@ public final class TeslaRange {
 
         Set<String> activeRelays = new HashSet<>();
         Map<String, RangeNode> relayParents = new HashMap<>();
+        Map<String, RangeNodeType> relayLossTypes = new HashMap<>();
         double relayRadiusSqr = square(cfg.relay.rangeBlocks);
         boolean progressed = true;
         while (progressed && !relays.isEmpty()) {
@@ -149,18 +183,24 @@ public final class TeslaRange {
                 RangeNode relay = it.next();
                 Emitter parent = null;
                 double parentDist = Double.MAX_VALUE;
+                double parentLoss = Double.MAX_VALUE;
                 for (Emitter emitter : emitters) {
                     if (!emitter.covers(relay.dimension, relay.pos)) continue;
 
-                    double dist = emitter.dimension().equals(relay.dimension) ? emitter.pos().distSqr(relay.pos) :
-                            Double.MAX_VALUE / 2;
-                    if (parent == null || dist < parentDist) {
+                    boolean sameDim = emitter.dimension().equals(relay.dimension);
+                    double dist = sameDim ? emitter.pos().distSqr(relay.pos) : Double.MAX_VALUE / 2;
+                    double loss = TeslaLoss.lossFraction(lossConfig(emitter.lossType()),
+                            sameDim ? Math.sqrt(dist) : 0, !sameDim);
+                    if (parent == null || loss < parentLoss || (loss == parentLoss && dist < parentDist)) {
                         parent = emitter;
                         parentDist = dist;
+                        parentLoss = loss;
                     }
                 }
                 if (parent != null) {
-                    emitters.add(new Emitter(relay, relay.dimension, relay.pos, relayRadiusSqr, false));
+                    emitters.add(new Emitter(relay, relay.dimension, relay.pos, relayRadiusSqr, false,
+                            parent.lossType()));
+                    relayLossTypes.put(relay.key(), parent.lossType());
                     activeRelays.add(relay.key());
                     if (parent.dimension().equals(relay.dimension)) relayParents.put(relay.key(), parent.source());
                     it.remove();
@@ -169,7 +209,8 @@ public final class TeslaRange {
             }
         }
 
-        return new Coverage(List.copyOf(emitters), Set.copyOf(activeRelays), Map.copyOf(relayParents));
+        return new Coverage(List.copyOf(emitters), Set.copyOf(activeRelays), Map.copyOf(relayParents),
+                Map.copyOf(relayLossTypes));
     }
 
     public static double radiusBlocks(RangeNode node) {

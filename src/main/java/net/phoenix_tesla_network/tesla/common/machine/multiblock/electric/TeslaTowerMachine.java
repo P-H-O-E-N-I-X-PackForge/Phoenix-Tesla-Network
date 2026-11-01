@@ -255,21 +255,26 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
             long injectedThisTick = 0;
 
-            if (machine instanceof BatteryBufferMachine charger) {
-                var energy = charger.energyContainer;
-                if (energy != null) {
+            if (machine instanceof BatteryBufferMachine buffer) {
+                // Battery buffers are charge-only. They take whole packets (amps * voltage) and report how many
+                // they actually used, so only whole packets that the network can pay for after loss are offered,
+                // and the network is billed for exactly what was accepted. Rounding the offer up (the old
+                // behaviour) could make the buffer accept more than the network could pay for = free energy.
+                var energy = buffer.energyContainer;
+                if (energy != null && buffer.isWorkingEnabled()) {
                     long voltage = energy.getInputVoltage();
-                    long available = TeslaLoss.netLong(
-                            team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue(), efficiency);
-                    long maxTransfer = voltage * energy.getInputAmperage();
-                    long toPush = Math.min(available, maxTransfer);
-
-                    long accepted = energy.acceptEnergyFromNetwork(null, voltage,
-                            (long) Math.ceil((double) toPush / voltage));
-
-                    if (accepted > 0) {
-                        injectedThisTick = accepted * voltage;
-                        team.drain(TeslaLoss.gross(BigInteger.valueOf(injectedThisTick), efficiency));
+                    if (voltage > 0) {
+                        long netAvailable = TeslaLoss.netLong(
+                                team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue(), efficiency);
+                        long packets = Math.min(energy.getInputAmperage(), netAvailable / voltage);
+                        if (packets > 0) {
+                            long accepted = energy.acceptEnergyFromNetwork(null, voltage, packets);
+                            if (accepted > 0) {
+                                // Never bill for more packets than we offered, whatever the buffer reports.
+                                injectedThisTick = Math.min(accepted, packets) * voltage;
+                                team.drain(TeslaLoss.gross(BigInteger.valueOf(injectedThisTick), efficiency));
+                            }
+                        }
                     }
                 }
             } else if (machine instanceof TieredEnergyMachine tieredMachine) {
@@ -321,6 +326,11 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
             MetaMachine machine = MetaMachine.getMachine(targetLevel, targetPos);
             if (machine == null) continue;
+
+            // Battery buffers are charge-only. Their removeEnergy() can remove less than asked (per-battery
+            // transfer limits, integer split across batteries), and counting the full ask as pulled is what
+            // duplicated energy. They also push to their own front face, so they are not generators here.
+            if (machine instanceof BatteryBufferMachine) continue;
 
             long pulledThisTick = 0;
 
