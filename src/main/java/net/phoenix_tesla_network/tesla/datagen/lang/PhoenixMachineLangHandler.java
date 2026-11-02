@@ -23,6 +23,17 @@ public class PhoenixMachineLangHandler {
                 "§bWireless Receiver§r: Broadcasts energy from the Tesla Cloud.");
         provider.add("tooltip.phoenix_tesla_network.tesla_hatch.lore", "§6Nevvonian Core Tech: Frequency Locked.");
 
+        // The hatch registrations in PhoenixTeslaMachines look these up with a capital "PhoenixTeslaNetwork" prefix,
+        // so they need their own entries or the raw key shows up in the tooltip.
+        provider.add("tooltip.PhoenixTeslaNetwork.tesla_hatch.laser_input",
+                "§bOptical Collimator§r: Concentrates energy into a coherent Tesla-Laser beam.");
+        provider.add("tooltip.PhoenixTeslaNetwork.tesla_hatch.laser_output",
+                "§bPhotonic Receptor§r: Decodes high-frequency laser flux back into EU.");
+        provider.add("tooltip.PhoenixTeslaNetwork.tesla_hatch.input",
+                "§bWireless Transmitter§r: Siphons energy into the Tesla Cloud.");
+        provider.add("tooltip.PhoenixTeslaNetwork.tesla_hatch.output",
+                "§bWireless Receiver§r: Broadcasts energy from the Tesla Cloud.");
+
         provider.add("tech.phoenix_tesla_network.laser.input.low", "Tesla Optical Collimator");
         provider.add("tech.phoenix_tesla_network.laser.input.mid", "Tesla Optical Collimation Grid");
         provider.add("tech.phoenix_tesla_network.laser.input.high", "Tesla Phased Beam Matrix");

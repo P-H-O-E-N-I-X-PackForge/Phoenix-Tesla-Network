@@ -28,7 +28,9 @@ public class C2STeslaDischargePacket {
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
-            if (player != null && !net.phoenix_tesla_network.tesla.common.TeslaGates.check(player, net.phoenix_tesla_network.tesla.common.TeslaGates.DISCHARGE)) return;
+            if (player != null && !net.phoenix_tesla_network.tesla.common.TeslaGates.check(player,
+                    net.phoenix_tesla_network.tesla.common.TeslaGates.DISCHARGE))
+                return;
             if (player == null) return;
 
             ItemStack boots = player.getItemBySlot(EquipmentSlot.FEET);
