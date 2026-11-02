@@ -14,8 +14,10 @@ import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
+import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
+import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GradientUtil;
@@ -247,22 +249,16 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             long injectedThisTick = 0;
 
             if (machine instanceof ChargerMachine charger) {
-                var energy = charger.energyContainer;
-                if (energy != null) {
-                    long voltage = energy.getInputVoltage();
-                    long available = TeslaLoss.netLong(
-                            team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue(), efficiency);
-                    long maxTransfer = voltage * energy.getInputAmperage();
-                    long toPush = Math.min(available, maxTransfer);
-
-                    long accepted = energy.acceptEnergyFromNetwork(null, voltage,
-                            (long) Math.ceil((double) toPush / voltage));
-
-                    if (accepted > 0) {
-                        injectedThisTick = accepted * voltage;
-                        team.drain(TeslaLoss.gross(BigInteger.valueOf(injectedThisTick), efficiency));
-                    }
-                }
+                injectedThisTick = pushPackets(team, charger, ChargerMachine.class, "chargerInventory",
+                        charger.energyContainer, charger.isWorkingEnabled(), efficiency);
+            } else if (machine instanceof BatteryBufferMachine buffer) {
+                // Battery buffers are charge-only and must go through their packet interface: their stored energy
+                // is the sum of the batteries inside, so adding energy to the container directly just piles it up
+                // in a hidden internal store (= voided).
+                long direct = chargeBatteriesDirect(team, buffer, efficiency);
+                injectedThisTick = direct >= 0 ? direct :
+                        pushPackets(team, buffer, BatteryBufferMachine.class, "batteryInventory",
+                                buffer.energyContainer, buffer.isWorkingEnabled(), efficiency);
             } else if (machine instanceof TieredEnergyMachine tieredMachine) {
                 var energy = tieredMachine.energyContainer;
                 if (energy != null && energy.getInputVoltage() > 0) {
@@ -297,6 +293,151 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         }
     }
 
+    /**
+     * Pushes energy into a machine that only accepts whole packets (amps * voltage) and reports how many it used
+     * (battery buffers, item chargers). Only packets the network can pay for after loss are offered, and the network
+     * is billed for exactly what was accepted. Rounding the offer up (the old behaviour) let the machine accept more
+     * than the network could pay for = free energy.
+     *
+     * @return energy delivered to the machine
+     */
+    private static long pushPackets(TeslaTeamEnergyData.TeamEnergy team, Object machine, Class<?> machineType,
+                                    String inventoryField, NotifiableEnergyContainer energy,
+                                    boolean workingEnabled, double efficiency) {
+        if (energy == null || !workingEnabled) return 0;
+        long voltage = lowestItemVoltage(machine, machineType, inventoryField, energy.getInputVoltage());
+        if (voltage <= 0) return 0;
+
+        long netAvailable = TeslaLoss.netLong(team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue(),
+                efficiency);
+        long packets = Math.min(energy.getInputAmperage(), netAvailable / voltage);
+        if (packets <= 0) return 0;
+
+        long accepted = Math.min(energy.acceptEnergyFromNetwork(null, voltage, packets), packets);
+        if (accepted <= 0) return 0;
+
+        long delivered = accepted * voltage;
+        team.drain(TeslaLoss.gross(BigInteger.valueOf(delivered), efficiency));
+        return delivered;
+    }
+
+    private static final java.util.Map<String, java.lang.reflect.Field> INVENTORY_FIELDS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * The highest packet voltage that the non-full batteries / items inside a buffer or charger can take without the
+     * excess being parked in the machine's hidden internal store. A battery only takes up to its own tier voltage
+     * times its amps per tick, so sending OPV packets into HV batteries bills the network for the full packet while
+     * the batteries barely fill. Packets are therefore sent at the lowest tier among the batteries that still need
+     * charge (never above {@code max}). Returns 0 when nothing inside needs charge, and {@code max} if the inventory
+     * can't be inspected.
+     */
+    private static long lowestItemVoltage(Object machine, Class<?> type, String fieldName, long max) {
+        try {
+            var field = INVENTORY_FIELDS.computeIfAbsent(fieldName, n -> {
+                try {
+                    var f = type.getDeclaredField(n);
+                    f.setAccessible(true);
+                    return f;
+                } catch (ReflectiveOperationException | RuntimeException e) {
+                    return null;
+                }
+            });
+            if (field == null) return max;
+            var inventory = (com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler) field.get(machine);
+            int minTier = Integer.MAX_VALUE;
+            boolean needsCharge = false;
+            for (int i = 0; i < inventory.getSlots(); i++) {
+                var stack = inventory.getStackInSlot(i);
+                if (stack.isEmpty()) continue;
+                var item = com.gregtechceu.gtceu.api.capability.GTCapabilityHelper.getElectricItem(stack);
+                if (item == null) {
+                    needsCharge = true; // non-EU storage: no tier to respect
+                } else if (item.getCharge() < item.getMaxCharge()) {
+                    needsCharge = true;
+                    minTier = Math.min(minTier, item.getTier());
+                }
+            }
+            if (!needsCharge) return 0;
+            if (minTier == Integer.MAX_VALUE) return max;
+            return Math.min(max, GTValues.V[Math.min(minTier, GTValues.V.length - 1)]);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return max;
+        }
+    }
+
+    /** Amps of its own voltage that each battery in a buffer takes per tick. */
+    private static final long BATTERY_AMPS = 2L;
+
+    /**
+     * Charges the batteries of a buffer directly: every battery that is not full gets {@link #BATTERY_AMPS} amps of
+     * its own tier voltage per tick (an HV battery 2 x 512 EU, an EV battery 2 x 2048 EU, ...), regardless of the
+     * buffer's tier or what else is inside. The network pays only for what the batteries actually took (plus loss),
+     * so nothing is parked in the buffer's internal store and no energy appears from nowhere.
+     *
+     * @return energy delivered, or -1 if the buffer's inventory can't be accessed (caller falls back to packets)
+     */
+    private static long chargeBatteriesDirect(TeslaTeamEnergyData.TeamEnergy team, BatteryBufferMachine buffer,
+                                              double efficiency) {
+        if (!buffer.isWorkingEnabled()) return 0;
+        var inventory = batteryInventory(buffer, BatteryBufferMachine.class, "batteryInventory");
+        if (inventory == null) return -1;
+
+        long budget = TeslaLoss.netLong(team.stored.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue(), efficiency);
+        if (budget <= 0) return 0;
+
+        var batteries = new java.util.ArrayList<com.gregtechceu.gtceu.api.capability.IElectricItem>();
+        for (int i = 0; i < inventory.getSlots(); i++) {
+            var stack = inventory.getStackInSlot(i);
+            if (stack.isEmpty()) continue;
+            var item = com.gregtechceu.gtceu.api.capability.GTCapabilityHelper.getElectricItem(stack);
+            if (item != null && item.getCharge() < item.getMaxCharge()) batteries.add(item);
+        }
+        if (batteries.isEmpty()) return 0;
+
+        // Lowest tier first, each getting an equal share of what is left (capped at its own 2 amps), so a short
+        // supply is spread over all batteries instead of filling the first slots and starving the rest. Whatever a
+        // nearly-full battery does not take is passed on to the ones after it.
+        batteries.sort(java.util.Comparator.comparingInt(com.gregtechceu.gtceu.api.capability.IElectricItem::getTier));
+        int chargerTier = buffer.getTier();
+        long remaining = budget;
+        long total = 0;
+        for (int i = 0; i < batteries.size() && remaining > 0; i++) {
+            var item = batteries.get(i);
+            long perTick = BATTERY_AMPS * GTValues.V[Math.min(item.getTier(), GTValues.V.length - 1)];
+            long share = Math.min(perTick, Math.max(1L, remaining / (batteries.size() - i)));
+            long charged = item.charge(share, chargerTier, true, false);
+            remaining -= charged;
+            total += charged;
+        }
+
+        if (total > 0) {
+            team.drain(TeslaLoss.gross(BigInteger.valueOf(total), efficiency));
+            buffer.markDirty();
+            if (buffer.energyContainer != null) buffer.energyContainer.checkOutputSubscription();
+        }
+        return total;
+    }
+
+    private static com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler batteryInventory(Object machine,
+                                                                                                   Class<?> type,
+                                                                                                   String fieldName) {
+        try {
+            var field = INVENTORY_FIELDS.computeIfAbsent(fieldName, n -> {
+                try {
+                    var f = type.getDeclaredField(n);
+                    f.setAccessible(true);
+                    return f;
+                } catch (ReflectiveOperationException | RuntimeException e) {
+                    return null;
+                }
+            });
+            if (field == null) return null;
+            return (com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler) field.get(machine);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
+    }
+
     private void pullFromSoulLinkedGenerators(ServerLevel level, TeslaTeamEnergyData.TeamEnergy team) {
         if (team.soulLinkedMachines.isEmpty()) return;
 
@@ -312,6 +453,11 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
             MetaMachine machine = MetaMachine.getMachine(targetLevel, targetPos);
             if (machine == null) continue;
+
+            // Battery buffers are charge-only. Their removeEnergy() can remove less than asked (per-battery
+            // transfer limits, integer split across batteries), and counting the full ask as pulled duplicated
+            // energy. They also push to their own front face, so they are not generators here.
+            if (machine instanceof BatteryBufferMachine) continue;
 
             long pulledThisTick = 0;
 

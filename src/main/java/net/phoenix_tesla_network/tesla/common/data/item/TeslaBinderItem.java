@@ -93,15 +93,6 @@ public class TeslaBinderItem extends ComponentItem
 
                 CompoundTag tag = itemStack.getOrCreateTag();
                 if (tag.hasUUID("TargetTeam")) {
-                    if (machine instanceof BatteryBufferMachine) {
-                        player.sendSystemMessage(
-                                Component.literal("Danger: High Risk of Voiding. Connection terminated.")
-                                        .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
-                        serverLevel.playSound(null, clickedPos, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.5f,
-                                1.2f);
-                        return InteractionResult.FAIL;
-                    }
-
                     UUID teamUUID = tag.getUUID("TargetTeam");
                     TeslaTeamEnergyData data = TeslaTeamEnergyData.get(serverLevel);
 
@@ -109,7 +100,9 @@ public class TeslaBinderItem extends ComponentItem
 
                     if (isNowLinked) {
                         player.sendSystemMessage(
-                                Component.literal("Core Synchronized: Machine linked to soul frequency.")
+                                Component.literal(machine instanceof BatteryBufferMachine ?
+                                        "Core Synchronized: Battery Buffer linked to soul frequency (charge only)." :
+                                        "Core Synchronized: Machine linked to soul frequency.")
                                         .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.ITALIC));
                         serverLevel.playSound(null, clickedPos, SoundEvents.BEACON_POWER_SELECT,
                                 SoundSource.PLAYERS, 1f, 1.5f);

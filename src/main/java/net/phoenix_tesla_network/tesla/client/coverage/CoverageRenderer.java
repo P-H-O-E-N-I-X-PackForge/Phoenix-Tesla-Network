@@ -54,7 +54,6 @@ public final class CoverageRenderer {
         var buffers = mc.renderBuffers().bufferSource();
         VertexConsumer vc = buffers.getBuffer(PhoenixRenderTypes.COVERAGE_LINES());
 
-        var loss = ClientCoverageData.loss();
         float pulse = 0.5f + 0.12f * (float) Math.sin((mc.level.getGameTime() + event.getPartialTick()) * 0.12);
 
         stack.pushPose();
@@ -73,6 +72,7 @@ public final class CoverageRenderer {
                 drawSphere(stack, vc, cx, cy, cz, entry.radius(), color, alpha);
             }
 
+            var loss = ClientCoverageData.loss(entry);
             if (loss.enabled() && (entry.kind() == S2CCoverageSyncPacket.TOWER ||
                     entry.kind() == S2CCoverageSyncPacket.RELAY_ACTIVE)) {
                 float reach = unlimited ? UNLIMITED_SHELL_REACH : entry.radius();
