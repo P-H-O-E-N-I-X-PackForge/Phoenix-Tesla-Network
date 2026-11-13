@@ -1,13 +1,13 @@
-[13Nov2026 08:54:44.406] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgedatadev, --assetIndex, 17, --assetsDir, C:\\Users\\conno\\.gradle\\caches\\neoformruntime\\assets, --gameDir, ., --fml.fmlVersion, 4.0.43, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.248, --fml.neoFormVersion, 20240808.144430, --mod, phoenix_tesla_network, --all, --output, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\generated\resources, --existing, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\main\resources, --existing-mod, gtceu]
-[13Nov2026 08:54:44.419] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.8+9-LTS
-[13Nov2026 08:54:44.423] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.8 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
-[13Nov2026 08:54:44.672] [main/INFO] [net.neoforged.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgedatadev
-[13Nov2026 08:54:44.795] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/C:/Users/conno/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%23138!/ Service=ModLauncher Env=CLIENT
-[13Nov2026 08:54:45.779] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: library:Registrate.MC1._21._67. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\com.tterrag.registrate\Registrate\MC1.21-1.3.0+67\66ddc4cd56472fea1ea1a24182901e6c92a51c0a\Registrate-MC1.21-1.3.0+67.jar
-[13Nov2026 08:54:45.780] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: configuration. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\dev.toma.configuration\configuration-1.21.1\3.1.1-neoforge\ea42854e41bd486bd803b76aac6588c7b9db9e06\configuration-1.21.1-3.1.1-neoforge.jar
-[13Nov2026 08:54:45.780] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: modularui. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\brachy.modularui\modularui-mc1.21.1\3.3.1-SNAPSHOT\c0e6d8f291065b032ae9d5b9f7bd5318aab1155c\modularui-mc1.21.1-3.3.1-SNAPSHOT.jar
-[13Nov2026 08:54:45.780] [main/INFO] [net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator/]: Found 3 dependencies adding them to mods collection
-[13Nov2026 08:54:45.786] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/]: 
+[13Nov2026 09:09:59.805] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgedatadev, --assetIndex, 17, --assetsDir, C:\\Users\\conno\\.gradle\\caches\\neoformruntime\\assets, --gameDir, ., --fml.fmlVersion, 4.0.43, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.248, --fml.neoFormVersion, 20240808.144430, --mod, phoenix_tesla_network, --all, --output, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\generated\resources, --existing, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\main\resources, --existing-mod, gtceu]
+[13Nov2026 09:09:59.810] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.8+9-LTS
+[13Nov2026 09:09:59.815] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.8 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
+[13Nov2026 09:10:00.069] [main/INFO] [net.neoforged.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgedatadev
+[13Nov2026 09:10:00.230] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/C:/Users/conno/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%23138!/ Service=ModLauncher Env=CLIENT
+[13Nov2026 09:10:01.693] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: library:Registrate.MC1._21._67. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\com.tterrag.registrate\Registrate\MC1.21-1.3.0+67\66ddc4cd56472fea1ea1a24182901e6c92a51c0a\Registrate-MC1.21-1.3.0+67.jar
+[13Nov2026 09:10:01.694] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: configuration. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\dev.toma.configuration\configuration-1.21.1\3.1.1-neoforge\ea42854e41bd486bd803b76aac6588c7b9db9e06\configuration-1.21.1-3.1.1-neoforge.jar
+[13Nov2026 09:10:01.694] [main/WARN] [net.neoforged.jarjar.selection.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: modularui. Using Mod File: C:\Users\conno\.gradle\caches\modules-2\files-2.1\brachy.modularui\modularui-mc1.21.1\3.3.1-SNAPSHOT\c0e6d8f291065b032ae9d5b9f7bd5318aab1155c\modularui-mc1.21.1-3.3.1-SNAPSHOT.jar
+[13Nov2026 09:10:01.695] [main/INFO] [net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator/]: Found 3 dependencies adding them to mods collection
+[13Nov2026 09:10:01.698] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/]: 
      Mod List:
 		Name Version (Mod Id)
 
@@ -22,42 +22,39 @@
 		NeoForge 21.1.248 (neoforge)
 		Phoenix Tesla Network 0.5.0 (phoenix_tesla_network)
 		Phoenix Wiki 0.6.0 (phoenix_wiki)
-[13Nov2026 08:54:47.587] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
-[13Nov2026 08:54:47.600] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
-[13Nov2026 08:54:47.637] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgedatadev' with arguments [--gameDir, ., --assetsDir, C:\Users\conno\.gradle\caches\neoformruntime\assets, --assetIndex, 17, --mod, phoenix_tesla_network, --all, --output, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\generated\resources, --existing, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\main\resources, --existing-mod, gtceu]
-[13Nov2026 08:54:47.777] [main/WARN] [mixin/]: Reference map 'configuration.refmap.json' for configuration.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.779] [main/WARN] [mixin/]: Reference map 'modularui.refmap.json' for modularui.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.795] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for gtceu.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.796] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for mixin_configs/gtceu-neoforge.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.797] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for mixin_configs/gtceu-emi.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.797] [main/WARN] [mixin/]: Reference map 'curios.refmap.json' for curios.neoforge.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.798] [main/WARN] [mixin/]: Reference map 'curios.refmap.json' for curios.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:47.801] [main/WARN] [mixin/]: Reference map 'geckolib.refmap.json' for geckolib.mixins.json could not be read. If this is a development environment you can ignore this message
-[13Nov2026 08:54:48.063] [main/WARN] [mixin/]: Error loading class: mezz/jei/library/load/PluginCaller (java.lang.ClassNotFoundException: mezz.jei.library.load.PluginCaller)
-[13Nov2026 08:54:48.627] [main/WARN] [mixin/]: Error loading class: mezz/jei/neoforge/platform/FluidHelper (java.lang.ClassNotFoundException: mezz.jei.neoforge.platform.FluidHelper)
-[13Nov2026 08:54:48.628] [main/WARN] [mixin/]: @Mixin target mezz.jei.neoforge.platform.FluidHelper was not found gtceu.mixins.json:jei.FluidHelperMixin from mod gtceu
-[13Nov2026 08:54:48.743] [main/WARN] [mixin/]: Error loading class: mezz/jei/gui/recipes/RecipesGui (java.lang.ClassNotFoundException: mezz.jei.gui.recipes.RecipesGui)
-[13Nov2026 08:54:48.744] [main/WARN] [mixin/]: @Mixin target mezz.jei.gui.recipes.RecipesGui was not found gtceu.mixins.json:jei.RecipesGuiAccessor from mod gtceu
-[13Nov2026 08:54:48.745] [main/WARN] [mixin/]: Error loading class: mezz/jei/library/render/FluidTankRenderer (java.lang.ClassNotFoundException: mezz.jei.library.render.FluidTankRenderer)
-[13Nov2026 08:54:48.745] [main/WARN] [mixin/]: @Mixin target mezz.jei.library.render.FluidTankRenderer was not found gtceu.mixins.json:jei.FluidTankRendererMixin from mod gtceu
-[13Nov2026 08:54:48.872] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
-[13Nov2026 08:54:49.231] [main/INFO] [net.neoforged.neoforge.data.loading.DatagenModLoader/]: Initializing Data Gatherer for mods [phoenix_tesla_network]
-[13Nov2026 08:54:58.077] [modloading-worker-0/INFO] [PhoenixWiki/]: Phoenix Wiki loaded (library mod. see PhoenixWikiAPI to open a wiki screen)
-[13Nov2026 08:54:58.299] [modloading-worker-0/INFO] [net.neoforged.neoforge.common.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.248, for MC 1.21.1
-[13Nov2026 08:54:58.631] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered configuration config for auto-sync function
-[13Nov2026 08:54:58.704] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered gtceu config for auto-sync function
-[13Nov2026 08:54:58.713] [modloading-worker-0/INFO] [GTCEu/]: High-Tier is Enabled.
-[13Nov2026 08:55:00.901] [modloading-worker-0/WARN] [Configuration/IO]: Correcting config value 'loss' from 'null' to '{enabled=true, baseLossPercent=2.0, lossPercentPerUnit=8.0, distanceUnitBlocks=128.0, exponent=1.0, crossDimensionLossPercent=25.0, maxLossPercent=60.0, applyToSuit=true}'
-[13Nov2026 08:55:00.902] [modloading-worker-0/WARN] [Configuration/IO]: Correcting config value 'loss' from 'null' to '{enabled=true, baseLossPercent=1.0, lossPercentPerUnit=5.0, distanceUnitBlocks=128.0, exponent=1.0, crossDimensionLossPercent=15.0, maxLossPercent=40.0, applyToSuit=true}'
-[13Nov2026 08:55:00.903] [modloading-worker-0/WARN] [Configuration/IO]: Correcting config value 'loss' from 'null' to '{enabled=true, baseLossPercent=0.0, lossPercentPerUnit=2.5, distanceUnitBlocks=128.0, exponent=1.0, crossDimensionLossPercent=10.0, maxLossPercent=25.0, applyToSuit=true}'
-[13Nov2026 08:55:00.906] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered phoenix_tesla_network config for auto-sync function
-[13Nov2026 08:55:01.363] [modloading-sync-worker/INFO] [GTCEu/]: Firing material register late event
-[13Nov2026 08:55:01.851] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:water
-[13Nov2026 08:55:01.872] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:lava
-[13Nov2026 08:55:01.873] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:milk
-[13Nov2026 08:55:03.607] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/conno/Desktop/PFT%20Core/Phoenix-Tesla-Network/build/moddev/artifacts/neoforge-21.1.248.jar%23189!/assets/.mcassetsroot' uses unexpected schema
-[13Nov2026 08:55:03.607] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/conno/Desktop/PFT%20Core/Phoenix-Tesla-Network/build/moddev/artifacts/neoforge-21.1.248.jar%23189!/data/.mcassetsroot' uses unexpected schema
-[13Nov2026 08:55:03.878] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Registrate Provider for phoenix_tesla_network [Registries, Data Maps, Recipes, Advancements, Loot Tables, Tags (blocks), Tags (enchantments), Tags (items), Tags (fluids), Tags (entity_types), generic_server_provider, Blockstates, Item models, Lang (en_us/en_ud), generic_client_provider, Tags (materials), Tags (tag_prefixes)]
-[13Nov2026 08:55:05.887] [main/INFO] [net.minecraft.data.DataGenerator/]: Registrate Provider for phoenix_tesla_network [Registries, Data Maps, Recipes, Advancements, Loot Tables, Tags (blocks), Tags (enchantments), Tags (items), Tags (fluids), Tags (entity_types), generic_server_provider, Blockstates, Item models, Lang (en_us/en_ud), generic_client_provider, Tags (materials), Tags (tag_prefixes)] finished after 2006 ms
-[13Nov2026 08:55:05.887] [main/INFO] [net.minecraft.data.DataGenerator/]: All providers took: 2009 ms
-[13Nov2026 08:55:06.009] [main/INFO] [net.minecraft.data.HashCache/]: Caching: total files: 1291, old count: 0, new count: 1290, removed stale: 2, written: 1289
+[13Nov2026 09:10:03.724] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[13Nov2026 09:10:03.782] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[13Nov2026 09:10:03.886] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgedatadev' with arguments [--gameDir, ., --assetsDir, C:\Users\conno\.gradle\caches\neoformruntime\assets, --assetIndex, 17, --mod, phoenix_tesla_network, --all, --output, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\generated\resources, --existing, C:\Users\conno\Desktop\PFT Core\Phoenix-Tesla-Network\src\main\resources, --existing-mod, gtceu]
+[13Nov2026 09:10:04.438] [main/WARN] [mixin/]: Reference map 'configuration.refmap.json' for configuration.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.442] [main/WARN] [mixin/]: Reference map 'modularui.refmap.json' for modularui.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.465] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for gtceu.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.466] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for mixin_configs/gtceu-neoforge.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.467] [main/WARN] [mixin/]: Reference map 'gtceu.refmap.json' for mixin_configs/gtceu-emi.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.468] [main/WARN] [mixin/]: Reference map 'curios.refmap.json' for curios.neoforge.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.469] [main/WARN] [mixin/]: Reference map 'curios.refmap.json' for curios.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:04.473] [main/WARN] [mixin/]: Reference map 'geckolib.refmap.json' for geckolib.mixins.json could not be read. If this is a development environment you can ignore this message
+[13Nov2026 09:10:05.219] [main/WARN] [mixin/]: Error loading class: mezz/jei/library/load/PluginCaller (java.lang.ClassNotFoundException: mezz.jei.library.load.PluginCaller)
+[13Nov2026 09:10:05.796] [main/WARN] [mixin/]: Error loading class: mezz/jei/neoforge/platform/FluidHelper (java.lang.ClassNotFoundException: mezz.jei.neoforge.platform.FluidHelper)
+[13Nov2026 09:10:05.797] [main/WARN] [mixin/]: @Mixin target mezz.jei.neoforge.platform.FluidHelper was not found gtceu.mixins.json:jei.FluidHelperMixin from mod gtceu
+[13Nov2026 09:10:05.913] [main/WARN] [mixin/]: Error loading class: mezz/jei/gui/recipes/RecipesGui (java.lang.ClassNotFoundException: mezz.jei.gui.recipes.RecipesGui)
+[13Nov2026 09:10:05.914] [main/WARN] [mixin/]: @Mixin target mezz.jei.gui.recipes.RecipesGui was not found gtceu.mixins.json:jei.RecipesGuiAccessor from mod gtceu
+[13Nov2026 09:10:05.915] [main/WARN] [mixin/]: Error loading class: mezz/jei/library/render/FluidTankRenderer (java.lang.ClassNotFoundException: mezz.jei.library.render.FluidTankRenderer)
+[13Nov2026 09:10:05.915] [main/WARN] [mixin/]: @Mixin target mezz.jei.library.render.FluidTankRenderer was not found gtceu.mixins.json:jei.FluidTankRendererMixin from mod gtceu
+[13Nov2026 09:10:06.056] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
+[13Nov2026 09:10:06.455] [main/INFO] [net.neoforged.neoforge.data.loading.DatagenModLoader/]: Initializing Data Gatherer for mods [phoenix_tesla_network]
+[13Nov2026 09:10:14.591] [modloading-worker-0/INFO] [PhoenixWiki/]: Phoenix Wiki loaded (library mod. see PhoenixWikiAPI to open a wiki screen)
+[13Nov2026 09:10:14.727] [modloading-worker-0/INFO] [net.neoforged.neoforge.common.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.248, for MC 1.21.1
+[13Nov2026 09:10:14.992] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered configuration config for auto-sync function
+[13Nov2026 09:10:15.101] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered gtceu config for auto-sync function
+[13Nov2026 09:10:15.111] [modloading-worker-0/INFO] [GTCEu/]: High-Tier is Enabled.
+[13Nov2026 09:10:18.839] [modloading-worker-0/INFO] [Configuration/FileWatching]: Registered phoenix_tesla_network config for auto-sync function
+[13Nov2026 09:10:19.543] [modloading-sync-worker/INFO] [GTCEu/]: Firing material register late event
+[13Nov2026 09:10:20.005] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:water
+[13Nov2026 09:10:20.026] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:lava
+[13Nov2026 09:10:20.027] [modloading-sync-worker/WARN] [GTCEu/]: FluidStorageKey{gtceu:liquid} already has an associated fluid for material gtceu:milk
+[13Nov2026 09:10:22.204] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/conno/Desktop/PFT%20Core/Phoenix-Tesla-Network/build/moddev/artifacts/neoforge-21.1.248.jar%23189!/assets/.mcassetsroot' uses unexpected schema
+[13Nov2026 09:10:22.205] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/conno/Desktop/PFT%20Core/Phoenix-Tesla-Network/build/moddev/artifacts/neoforge-21.1.248.jar%23189!/data/.mcassetsroot' uses unexpected schema
+[13Nov2026 09:10:22.545] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Registrate Provider for phoenix_tesla_network [Registries, Data Maps, Recipes, Advancements, Loot Tables, Tags (blocks), Tags (enchantments), Tags (items), Tags (fluids), Tags (entity_types), generic_server_provider, Blockstates, Item models, Lang (en_us/en_ud), generic_client_provider, Tags (materials), Tags (tag_prefixes)]
+[13Nov2026 09:10:24.077] [main/INFO] [net.minecraft.data.DataGenerator/]: Registrate Provider for phoenix_tesla_network [Registries, Data Maps, Recipes, Advancements, Loot Tables, Tags (blocks), Tags (enchantments), Tags (items), Tags (fluids), Tags (entity_types), generic_server_provider, Blockstates, Item models, Lang (en_us/en_ud), generic_client_provider, Tags (materials), Tags (tag_prefixes)] finished after 1530 ms
+[13Nov2026 09:10:24.077] [main/INFO] [net.minecraft.data.DataGenerator/]: All providers took: 1532 ms
+[13Nov2026 09:10:24.139] [main/INFO] [net.minecraft.data.HashCache/]: Caching: total files: 1289, old count: 1289, new count: 1290, removed stale: 0, written: 2

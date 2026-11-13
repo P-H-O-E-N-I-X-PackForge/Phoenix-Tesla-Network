@@ -47,6 +47,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.unique.UniqueWo
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import brachy.modularui.api.drawable.Text;
 import brachy.modularui.api.widget.IWidget;
@@ -152,7 +153,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                     introSequencePlayed = true;
 
                     player.displayClientMessage(
-                            Component.literal("We See You, We Know You.")
+                            TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.we_see_you_we_know")
                                     .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC),
                             true);
 
@@ -162,7 +163,8 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                             () -> {
                                 Player recheckPlayer = serverLevel.getPlayerByUUID(ownerId);
                                 if (recheckPlayer != null) {
-                                    recheckPlayer.sendSystemMessage(Component.literal("The Signal Has Begun.")
+                                    recheckPlayer.sendSystemMessage(TeslaLang
+                                            .tr("phoenix_tesla_network.tesla_tower_machine.the_signal_has_begun")
                                             .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
                                 }
                             }));
@@ -1021,7 +1023,9 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             }
 
             player.sendSystemMessage(
-                    Component.literal("Tower frequency set to: " + TeamUtils.getTeamName(ownerTeamUUID))
+                    TeslaLang
+                            .tr("phoenix_tesla_network.tesla_tower_machine.tower_frequency_set_to",
+                                    TeamUtils.getTeamName(ownerTeamUUID))
                             .withStyle(ChatFormatting.AQUA));
             return InteractionResult.SUCCESS;
         }
@@ -1044,8 +1048,9 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                 }
 
                 syncToTeslaSavedData();
-                player.sendSystemMessage(Component.literal("Tower frequency copied to Binder.")
-                        .withStyle(ChatFormatting.GREEN));
+                player.sendSystemMessage(
+                        TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tower_frequency_copied_to_binder")
+                                .withStyle(ChatFormatting.GREEN));
                 return InteractionResult.SUCCESS;
             }
         }
@@ -1112,14 +1117,16 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
         if (!isFormed()) {
             widgets.add(new TextWidget<>(
-                    Text.of(Component.literal("Tesla Network: Inactive").withStyle(ChatFormatting.RED))));
+                    Text.of(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tesla_network_inactive")
+                            .withStyle(ChatFormatting.RED))));
             return widgets;
         }
 
-        widgets.add(new TextWidget<>(Text.dynamic(() -> Component.literal("Tesla Network: ")
-                .append(Component.literal(isWorkingEnabled() ? "ONLINE" : "OFFLINE")
-                        .withStyle(isWorkingEnabled() ? ChatFormatting.GREEN : ChatFormatting.RED)))));
-        widgets.add(new TextWidget<>(Text.dynamic(() -> Component.literal("Tower: ")
+        widgets.add(new TextWidget<>(
+                Text.dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.tesla_network")
+                        .append(Component.literal(isWorkingEnabled() ? "ONLINE" : "OFFLINE")
+                                .withStyle(isWorkingEnabled() ? ChatFormatting.GREEN : ChatFormatting.RED)))));
+        widgets.add(new TextWidget<>(Text.dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tower")
                 .append(Component.literal(getTowerType().displayName())
                         .withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))))));
         widgets.add(new TextWidget<>(Text.dynamic(() -> {
@@ -1130,19 +1137,20 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             } else {
                 rangeText = profile.rangeBlocks + " blocks" + (profile.crossDimension ? ", all dimensions" : "");
             }
-            return Component.literal("Range: ")
+            return TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.range")
                     .append(Component.literal(rangeText).withStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
         })));
-        widgets.add(new TextWidget<>(Text.dynamic(() -> Component.literal("Team: ")
+        widgets.add(new TextWidget<>(Text.dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.team")
                 .append(Component.literal(ownerTeamUUID == null ? "None" : TeamUtils.getTeamName(ownerTeamUUID))
                         .withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))))));
         if (energyBank != null) {
-            widgets.add(new TextWidget<>(Text.dynamic(() -> Component.literal("Stored: ")
+            widgets.add(new TextWidget<>(Text.dynamic(() -> TeslaLang.tr("jade.phoenix_tesla_network.tesla_stored")
                     .append(Component
                             .literal(formatTeslaValue(FormattingUtil.formatNumbers(energyBank.getStored()), false) +
                                     " EU")
                             .withStyle(Style.EMPTY.withColor(ChatFormatting.GOLD))))));
-            widgets.add(new TextWidget<>(Text.dynamic(() -> Component.literal("Capacity: ")
+            widgets.add(new TextWidget<>(Text.dynamic(() -> TeslaLang
+                    .tr("phoenix_tesla_network.tesla_tower_machine.capacity")
                     .append(Component
                             .literal(formatTeslaValue(FormattingUtil.formatNumbers(energyBank.getCapacity()), false) +
                                     " EU")
@@ -1150,22 +1158,23 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         }
         widgets.add(new TextWidget<>(Text.dynamic(() -> {
             long inputVal = displayedFlow(true);
-            return Component.literal("Total Input: ")
+            return TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.total_input")
                     .append(Component
                             .literal("+" + formatTeslaValue(FormattingUtil.formatNumbers(inputVal), false) + " EU/t")
                             .withStyle(ChatFormatting.GREEN));
         })));
         widgets.add(new TextWidget<>(Text.dynamic(() -> {
             long outputVal = displayedFlow(false);
-            return Component.literal("Total Output: ")
+            return TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.total_output")
                     .append(Component
                             .literal("-" + formatTeslaValue(FormattingUtil.formatNumbers(outputVal), false) + " EU/t")
                             .withStyle(ChatFormatting.RED));
         })));
         if (energyBank != null) {
-            widgets.add(new TextWidget<>(Text.dynamic(() -> Component.literal("Battery Tier: ")
-                    .append(Component.literal(GTValues.VN[energyBank.getHighestTier()])
-                            .withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))))));
+            widgets.add(new TextWidget<>(
+                    Text.dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.battery_tier")
+                            .append(Component.literal(GTValues.VN[energyBank.getHighestTier()])
+                                    .withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))))));
         }
         return widgets;
     }

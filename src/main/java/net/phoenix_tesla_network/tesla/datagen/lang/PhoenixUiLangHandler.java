@@ -180,5 +180,16 @@ public class PhoenixUiLangHandler {
                 "Core Synchronized: Machine linked to soul frequency.");
         provider.add("phoenix_tesla_network.ui_command.status_online", "§aONLINE");
         provider.add("phoenix_tesla_network.ui_command.status_offline", "§7OFFLINE");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.battery_tier", "Battery Tier: ");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.total_output", "Total Output: ");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.total_input", "Total Input: ");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.capacity", "Capacity: ");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.tower", "Tower: ");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.tesla_network_inactive", "Tesla Network: Inactive");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.tower_frequency_copied_to_binder",
+                "Tower frequency copied to Binder.");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.tower_frequency_set_to", "Tower frequency set to: %s");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.the_signal_has_begun", "The Signal Has Begun.");
+        provider.add("phoenix_tesla_network.tesla_tower_machine.we_see_you_we_know", "We See You, We Know You.");
     }
 }
