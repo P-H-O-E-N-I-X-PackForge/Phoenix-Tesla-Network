@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.phoenix_tesla_network.tesla.PhoenixTeslaNetwork;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -94,14 +95,14 @@ public enum TeslaTowerType {
             range = Component.literal(p.crossDimension ? "Infinite range, all dimensions" :
                     "Infinite range, same dimension only");
         } else {
-            range = Component.literal(p.rangeBlocks + " block range" +
-                    (p.crossDimension ? ", reaches other dimensions" : ", same dimension only") +
-                    " (extend with Tesla Range Extenders)");
+            range = TeslaLang.tr("phoenix_tesla_network.tesla_tower_type.block_range_extend_with_tesla", p.rangeBlocks,
+                    (p.crossDimension ? ", reaches other dimensions" : ", same dimension only"));
         }
         return List.of(
                 range,
-                Component.literal("Hatches: " + tierName(p.minHatchTier) + " - " + tierName(p.maxHatchTier)),
-                Component.literal("Tesla Batteries: " + tierName(p.minBatteryTier) + " - " +
+                TeslaLang.tr("phoenix_tesla_network.tesla_tower_type.hatches", tierName(p.minHatchTier),
+                        tierName(p.maxHatchTier)),
+                TeslaLang.tr("phoenix_tesla_network.tesla_tower_type.tesla_batteries", tierName(p.minBatteryTier),
                         tierName(p.maxBatteryTier)));
     }
 }

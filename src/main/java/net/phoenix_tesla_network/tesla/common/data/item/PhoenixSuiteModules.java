@@ -28,6 +28,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.phoenix_tesla_network.tesla.api.suite.event.PhoenixLoreScanEvent;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import java.math.BigInteger;
 import java.util.UUID;
@@ -92,7 +93,8 @@ public final class PhoenixSuiteModules {
             } else if (armor != null && armor.canUse(ARMOR_COST)) {
                 armor.discharge(ARMOR_COST, armor.getTier(), true, false, false);
             } else {
-                player.displayClientMessage(Component.literal("§c✦ Scan failed: no energy"), true);
+                player.displayClientMessage(
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_suite_modules.scan_failed_no_energy"), true);
                 return false;
             }
             player.getPersistentData().putLong(READY_AT, now + COOLDOWN_TICKS);
@@ -119,7 +121,8 @@ public final class PhoenixSuiteModules {
                 event = new PhoenixLoreScanEvent(player, pos, state, null);
                 fallbackName = state.getBlock().getName();
             } else {
-                player.displayClientMessage(Component.literal("§7✦ Nothing in range"), true);
+                player.displayClientMessage(
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_suite_modules.nothing_in_range"), true);
                 return true;
             }
 
@@ -129,7 +132,7 @@ public final class PhoenixSuiteModules {
             Vec3 at = entityCloser ? entityHit.getLocation() : blockHit.getLocation();
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 8, 0.2, 0.2, 0.2, 0.05);
             player.displayClientMessage(event.isHandled() && event.getFeedback() != null ? event.getFeedback() :
-                    Component.literal("§b✦ Scanned: ").append(fallbackName), true);
+                    TeslaLang.tr("phoenix_tesla_network.phoenix_suite_modules.scanned").append(fallbackName), true);
             return true;
         }
     }
@@ -330,13 +333,16 @@ public final class PhoenixSuiteModules {
             if (!burn(player)) {
                 if (!pd.getBoolean(DRY)) {
                     pd.putBoolean(DRY, true);
-                    player.displayClientMessage(Component.literal("§7The naphtha module sputters. Out of fuel."), true);
+                    player.displayClientMessage(
+                            TeslaLang.tr("phoenix_tesla_network.phoenix_suite_modules.the_naphtha_module_sputters_out"),
+                            true);
                 }
                 return;
             }
             if (pd.getBoolean(DRY)) {
                 pd.remove(DRY);
-                player.displayClientMessage(Component.literal("§6Smells like naphtha. Floor it."), true);
+                player.displayClientMessage(
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_suite_modules.smells_like_naphtha_floor_it"), true);
             }
 
             int amplifier = (level(ctx) - 1) / 5;

@@ -28,6 +28,7 @@ import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import brachy.modularui.api.drawable.Text;
 import brachy.modularui.factory.PosGuiData;
@@ -335,12 +336,13 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
                             BigInteger.valueOf(energyContainer.getEnergyStored()),
                             getIO() == IO.OUT);
 
-                    player.sendSystemMessage(Component
-                            .literal("Tesla Hatch: Connected to frequency " + TeamUtils.getTeamName(ownerTeamUUID) +
-                                    "...")
+                    player.sendSystemMessage(TeslaLang.tr(
+                            "phoenix_tesla_network.tesla_energy_hatch_part_machine.tesla_hatch_connected_to_frequency",
+                            TeamUtils.getTeamName(ownerTeamUUID))
                             .withStyle(ChatFormatting.AQUA));
                 } else {
-                    player.sendSystemMessage(Component.literal("Tesla Hatch: Already synced to this frequency.")
+                    player.sendSystemMessage(TeslaLang
+                            .tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.tesla_hatch_already_synced_to")
                             .withStyle(ChatFormatting.GRAY));
                 }
                 return InteractionResult.SUCCESS;
@@ -361,8 +363,9 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
                 .coverChildren()
                 .marginBottom(8);
 
-        var titleWidget = Text.dynamic(() -> Component.literal("TESLA HATCH")
-                .withStyle(ChatFormatting.AQUA))
+        var titleWidget = Text
+                .dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.tesla_hatch")
+                        .withStyle(ChatFormatting.AQUA))
                 .asWidget();
         titleWidget.marginRight(6);
         titleRow.child(titleWidget);
@@ -374,22 +377,26 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
                 .coverChildren()
                 .margin(8, 6)
                 .child(titleRow)
-                .child(Text.dynamic(() -> Component.literal("Direction: ")
-                        .withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(isUplink() ? "Uplink" : "Downlink")
-                                .withStyle(isUplink() ? ChatFormatting.GREEN : ChatFormatting.DARK_AQUA)))
+                .child(Text
+                        .dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.direction")
+                                .withStyle(ChatFormatting.GRAY)
+                                .append(Component.literal(isUplink() ? "Uplink" : "Downlink")
+                                        .withStyle(isUplink() ? ChatFormatting.GREEN : ChatFormatting.DARK_AQUA)))
                         .asWidget())
                 .child(Text.dynamic(() -> {
                     long stored = energyContainer != null ? energyContainer.getEnergyStored() : 0L;
                     long capacity = energyContainer != null ? energyContainer.getEnergyCapacity() : 0L;
-                    return Component.literal("Buffered: ").withStyle(ChatFormatting.GRAY)
+                    return TeslaLang.tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.buffered")
+                            .withStyle(ChatFormatting.GRAY)
                             .append(Component.literal(stored + " / " + capacity + " EU")
                                     .withStyle(ChatFormatting.WHITE));
                 }).asWidget())
                 .child(Text.dynamic(this::getLinkStatusComponent).asWidget())
-                .child(Text.dynamic(() -> Component.literal("Network: ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(isWireless() ? "Active" : "Inactive")
-                                .withStyle(isWireless() ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY)))
+                .child(Text
+                        .dynamic(() -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.network")
+                                .withStyle(ChatFormatting.GRAY)
+                                .append(Component.literal(isWireless() ? "Active" : "Inactive")
+                                        .withStyle(isWireless() ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY)))
                         .asWidget()));
     }
 
@@ -402,11 +409,13 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
     private Component getLinkStatusComponent() {
         UUID team = ownerTeamUUID;
         if (team == null) {
-            return Component.literal("Link: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal("Unlinked").withStyle(ChatFormatting.RED));
+            return TeslaLang.tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.link")
+                    .withStyle(ChatFormatting.GRAY)
+                    .append(TeslaLang.tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.unlinked")
+                            .withStyle(ChatFormatting.RED));
         }
         String teamName = TeamUtils.getTeamName(team);
-        return Component.literal("Link: ").withStyle(ChatFormatting.GRAY)
+        return TeslaLang.tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.link").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(teamName != null ? teamName : "Unknown Team")
                         .withStyle(ChatFormatting.LIGHT_PURPLE));
     }

@@ -19,5 +19,11 @@ public class PhoenixNetwork {
                 (msg, ctx) -> msg.handle(ctx));
         registrar.playToClient(S2CTeslaStatusPacket.TYPE, S2CTeslaStatusPacket.STREAM_CODEC,
                 S2CTeslaStatusPacket::handle);
+        registrar.playToClient(net.phoenix_tesla_network.tesla.network.packet.S2CTeslaTowerPacket.TYPE,
+                net.phoenix_tesla_network.tesla.network.packet.S2CTeslaTowerPacket.STREAM_CODEC,
+                net.phoenix_tesla_network.tesla.network.packet.S2CTeslaTowerPacket::handle);
+        registrar.playToServer(net.phoenix_tesla_network.tesla.network.packet.C2STeslaTowerRequestPacket.TYPE,
+                net.phoenix_tesla_network.tesla.network.packet.C2STeslaTowerRequestPacket.STREAM_CODEC,
+                net.phoenix_tesla_network.tesla.network.packet.C2STeslaTowerRequestPacket::handle);
     }
 }

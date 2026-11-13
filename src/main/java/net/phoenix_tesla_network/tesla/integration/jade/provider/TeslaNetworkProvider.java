@@ -20,6 +20,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaT
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
@@ -131,21 +132,24 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
         CompoundTag data = accessor.getServerData();
         if (!data.contains("TeslaTeam")) return;
 
-        tooltip.add(Component.literal("Network: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.network").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(data.getString("TeamName")).withStyle(ChatFormatting.AQUA)));
 
-        tooltip.add(Component.literal("Tesla Network: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.tesla_network")
+                .withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(data.getString("Stored")).withStyle(ChatFormatting.GOLD))
                 .append(Component.literal(" / " + data.getString("Capacity") + " EU")
                         .withStyle(ChatFormatting.YELLOW)));
 
         if (data.contains("RelayActive")) {
             boolean active = data.getBoolean("RelayActive");
-            tooltip.add(Component.literal("Range Extender: ").withStyle(ChatFormatting.GRAY)
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.range_extender")
+                    .withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(active ? "Extending" : "Not connected")
                             .withStyle(active ? ChatFormatting.GREEN : ChatFormatting.RED)));
         } else if (data.contains("InRange") && !data.getBoolean("InRange")) {
-            tooltip.add(Component.literal("Out of network range").withStyle(ChatFormatting.RED));
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.out_of_network_range")
+                    .withStyle(ChatFormatting.RED));
         }
 
         if (data.contains("LossPercent")) {
@@ -154,7 +158,8 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                     loss < 15.0 ? ChatFormatting.YELLOW : ChatFormatting.RED;
             String where = data.getBoolean("LossCrossDim") ? "cross-dimension" :
                     Math.round(data.getDouble("LossDistance")) + " blocks";
-            tooltip.add(Component.literal("Link loss: ").withStyle(ChatFormatting.GRAY)
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.link_loss")
+                    .withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(String.format("%.1f%%", loss)).withStyle(lossColor))
                     .append(Component.literal(" (" + where +
                             (data.contains("LossTower") ? ", " + data.getString("LossTower") : "") + ")")
@@ -162,8 +167,9 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
         }
 
         int connections = data.getInt("TotalConnections");
-        tooltip.add(Component.literal("Connections: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(String.valueOf(connections)).withStyle(ChatFormatting.WHITE)));
+        tooltip.add(
+                TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.connections").withStyle(ChatFormatting.GRAY)
+                        .append(Component.literal(String.valueOf(connections)).withStyle(ChatFormatting.WHITE)));
 
         if (data.contains("TransferMode") && data.getInt("TransferMode") != -1) {
             long rate = data.getLong("LocalTransfer");
@@ -175,20 +181,20 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
 
             switch (mode) {
                 case 0 -> {
-                    label = Component.literal("Providing: ");
+                    label = TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.providing");
                     color = ChatFormatting.GREEN;
                 }
                 case 2 -> {
-                    label = Component.literal("Transmitting: ");
+                    label = TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.transmitting");
                     color = ChatFormatting.AQUA;
                 }
                 case 3 -> {
-                    label = Component.literal("Generating: ");
+                    label = TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.generating");
                     color = ChatFormatting.GOLD;
                     icon = "§6⚡ ";
                 }
                 default -> {
-                    label = Component.literal("Taking: ");
+                    label = TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.taking");
                     color = ChatFormatting.RED;
                 }
             }
@@ -201,7 +207,8 @@ public class TeslaNetworkProvider implements IBlockComponentProvider, IServerDat
                                 .withStyle(color)));
             } else {
                 tooltip.add(label.withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal("IDLE").withStyle(ChatFormatting.DARK_GRAY)));
+                        .append(TeslaLang.tr("phoenix_tesla_network.tesla_network_provider.idle")
+                                .withStyle(ChatFormatting.DARK_GRAY)));
             }
         }
     }

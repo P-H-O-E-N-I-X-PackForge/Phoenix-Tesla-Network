@@ -41,6 +41,7 @@ import net.phoenix_tesla_network.tesla.common.registry.PhoenixRegistration;
 import net.phoenix_tesla_network.tesla.network.packet.S2CTeslaStatusPacket;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
@@ -272,9 +273,10 @@ public final class PhoenixModules {
 
             // --- network
             if (!Client.online) {
-                hud.newLine(Component.literal("Tesla: offline").withStyle(ChatFormatting.DARK_GRAY));
+                hud.newLine(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.tesla_offline")
+                        .withStyle(ChatFormatting.DARK_GRAY));
             } else {
-                hud.newLine(Component.literal("Tesla: ").withStyle(ChatFormatting.GOLD)
+                hud.newLine(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.tesla").withStyle(ChatFormatting.GOLD)
                         .append(Component.literal(formatBig(Client.stored) + " / " + formatBig(Client.capacity) +
                                 " (" + percent(Client.stored, Client.capacity) + "%)")
                                 .withStyle(ChatFormatting.WHITE)));
@@ -290,7 +292,7 @@ public final class PhoenixModules {
                 }
             }
             if (max > 0) {
-                hud.newLine(Component.literal("Suit: ").withStyle(ChatFormatting.AQUA)
+                hud.newLine(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.suit").withStyle(ChatFormatting.AQUA)
                         .append(Component.literal(formatBig(Long.toString(charge)) + " EU (" + (charge * 100 / max) +
                                 "%)").withStyle(ChatFormatting.WHITE)));
             }
@@ -300,7 +302,7 @@ public final class PhoenixModules {
             double dz = player.getZ() - player.zo;
             double dy = player.getY() - player.yo;
             double horizontal = Math.sqrt(dx * dx + dz * dz) * 20;
-            hud.newLine(Component.literal("Speed: ").withStyle(ChatFormatting.GREEN)
+            hud.newLine(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.speed").withStyle(ChatFormatting.GREEN)
                     .append(Component.literal(String.format("%.1f", horizontal) + " b/s")
                             .withStyle(ChatFormatting.WHITE))
                     .append(Component.literal(Math.abs(dy) > 0.01 ? String.format("  (%+.1f vertical)", dy * 20) : "")
@@ -316,11 +318,14 @@ public final class PhoenixModules {
                 else if (player.isFallFlying()) state = "gliding";
                 else if (player.getAbilities().flying) state = "flying";
                 else state = "grounded";
-                hud.newLine(Component.literal("Flight: ").withStyle(ChatFormatting.LIGHT_PURPLE)
+                hud.newLine(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.flight")
+                        .withStyle(ChatFormatting.LIGHT_PURPLE)
                         .append(Component.translatable("gui.phoenix_tesla_network.wing.mode." + wing.mode())
                                 .withStyle(ChatFormatting.WHITE))
                         .append(Component.literal(" - " + state).withStyle(ChatFormatting.GRAY))
-                        .append(Component.literal("  spd " + wing.flightSpeed() + " drift " + wing.flightDrift())
+                        .append(TeslaLang
+                                .tr("phoenix_tesla_network.phoenix_modules.spd_drift", wing.flightSpeed(),
+                                        wing.flightDrift())
                                 .withStyle(ChatFormatting.DARK_GRAY)));
             }
 
@@ -340,7 +345,8 @@ public final class PhoenixModules {
 
             // --- set bonus
             if (PhoenixSuiteApi.isFullSet(player)) {
-                hud.newLine(Component.literal("Set bonus: active").withStyle(ChatFormatting.GOLD));
+                hud.newLine(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.set_bonus_active")
+                        .withStyle(ChatFormatting.GOLD));
             }
         }
     }
@@ -428,7 +434,8 @@ public final class PhoenixModules {
             level.playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0f, 0.8f);
             level.sendParticles(ParticleTypes.FLASH, player.getX(), player.getY() + 1, player.getZ(), 1, 0, 0, 0, 0);
-            player.displayClientMessage(Component.literal("§6§l⚡ PHOENIX REBIRTH ACTIVATED ⚡"), true);
+            player.displayClientMessage(TeslaLang.tr("phoenix_tesla_network.phoenix_modules.phoenix_rebirth_activated"),
+                    true);
             return 0;
         }
     }
@@ -486,7 +493,9 @@ public final class PhoenixModules {
                 hasEnergy = true;
             }
             if (!hasEnergy) {
-                player.displayClientMessage(Component.literal("§c⚡ DISCHARGE FAILED: §7No energy available!"), true);
+                player.displayClientMessage(
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_modules.discharge_failed_no_energy_available"),
+                        true);
                 return false;
             }
             player.getPersistentData().putLong(READY_AT, now + COOLDOWN_TICKS);
@@ -506,9 +515,11 @@ public final class PhoenixModules {
                     0, 0);
             level.playSound(null, player.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS,
                     0.8f, 1.5f);
-            player.displayClientMessage(Component.literal(hitCount > 0 ?
-                    "§b⚡ DISCHARGE: §eHit " + hitCount + " target" + (hitCount > 1 ? "s" : "") + "!" :
-                    "§b⚡ DISCHARGE: §7No targets in range."), true);
+            player.displayClientMessage(
+                    hitCount > 1 ? TeslaLang.tr("phoenix_tesla_network.modules.discharge_hit_many", hitCount) :
+                            hitCount > 0 ? TeslaLang.tr("phoenix_tesla_network.modules.discharge_hit_one", hitCount) :
+                                    TeslaLang.tr("phoenix_tesla_network.modules.discharge_none"),
+                    true);
             return true;
         }
     }

@@ -426,6 +426,14 @@ public class PhoenixTeslaConfigs {
 
         @Configurable
         @Configurable.Comment({
+                "Open the Tesla Tower as a full-screen, animated UI (a storm, the tower powering up, the network",
+                "arcing to every machine drawing from it) instead of the stock machine panel. Off by default.",
+                "Sneak-clicking the tower still opens the stock panel either way."
+        })
+        public boolean fullScreenTowerUi = false;
+
+        @Configurable
+        @Configurable.Comment({
                 "The connection mode for Tesla Towers.",
                 "TEAM_AUTO: All towers under a team/player share the same cloud automatically.",
                 "DATA_STICK: Towers must be manually linked to hatches using a Data Stick."

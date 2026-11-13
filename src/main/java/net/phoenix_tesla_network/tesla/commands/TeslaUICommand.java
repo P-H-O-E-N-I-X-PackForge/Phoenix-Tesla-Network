@@ -2,12 +2,12 @@ package net.phoenix_tesla_network.tesla.commands;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import com.mojang.brigadier.CommandDispatcher;
 
@@ -30,12 +30,12 @@ public class TeslaUICommand {
         ServerLevel level = source.getLevel();
         TeslaTeamEnergyData data = TeslaTeamEnergyData.get(level);
 
-        source.sendSuccess(() -> Component.literal("§6=== Tesla Team Energy Data ==="), false);
+        source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.tesla_team_energy_data"), false);
 
         var networks = data.getNetworksView();
 
         if (networks.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("§cNo networks found."), false);
+            source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.no_networks_found"), false);
             return 1;
         }
 
@@ -44,17 +44,22 @@ public class TeslaUICommand {
             TeslaTeamEnergyData.TeamEnergy e = entry.getValue();
 
             boolean online = data.isOnline(team);
-            String status = online ? "§aONLINE" : "§7OFFLINE";
+            var status = online ? TeslaLang.tr("phoenix_tesla_network.ui_command.status_online") :
+                    TeslaLang.tr("phoenix_tesla_network.ui_command.status_offline");
 
-            source.sendSuccess(() -> Component.literal("§eTeam: §f" + team + " (" + status + "§f)"), false);
-            source.sendSuccess(() -> Component.literal("  §7Stored: §b" + e.stored), false);
-            source.sendSuccess(() -> Component.literal("  §7Capacity: §b" + e.capacity), false);
+            source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.team", team, status), false);
+            source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.stored", e.stored), false);
+            source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.capacity", e.capacity),
+                    false);
 
             int hatchCount = e.energyBuffered.size();
             int soulLinkCount = e.soulLinkedMachines.size();
 
-            source.sendSuccess(() -> Component.literal("  §7Physical Hatches: §f" + hatchCount), false);
-            source.sendSuccess(() -> Component.literal("  §dSoul-Linked Machines: §f" + soulLinkCount), false);
+            source.sendSuccess(
+                    () -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.physical_hatches", hatchCount), false);
+            source.sendSuccess(
+                    () -> TeslaLang.tr("phoenix_tesla_network.tesla_u_i_command.soul_linked_machines", soulLinkCount),
+                    false);
         }
 
         return 1;

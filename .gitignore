@@ -10,7 +10,7 @@ classes/
 *.launch
 
 # idea
-
+run-1211
 .idea/
 *.iml
 *.ipr
@@ -33,3 +33,4 @@ run-data/
 /src/generated/resources/.cache/*
 /run-1211/
 /run/
+/run-1211/

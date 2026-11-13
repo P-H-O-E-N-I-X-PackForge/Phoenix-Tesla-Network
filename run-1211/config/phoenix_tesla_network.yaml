@@ -3,6 +3,11 @@ features:
   # status, rebirth cooldown, energy bar) is drawn at all. Set to false to hide it entirely.
   techSuiteHUDEnabled: true
 
+  # Open the Tesla Tower as a full-screen, animated UI (a storm, the tower powering up, the network
+  # arcing to every machine drawing from it) instead of the stock machine panel. Off by default.
+  # Sneak-clicking the tower still opens the stock panel either way.
+  fullScreenTowerUi: true
+
   # The connection mode for Tesla Towers.
   # TEAM_AUTO: All towers under a team/player share the same cloud automatically.
   # DATA_STICK: Towers must be manually linked to hatches using a Data Stick.
@@ -123,6 +128,7 @@ towers:
   # GT tier numbers used by every tier setting below: 0=ULV 1=LV 2=MV 3=HV 4=EV 5=IV 6=LuV 7=ZPM
   # 8=UV 9=UHV 10=UEV 11=UIV 12=UXV 13=OpV 14=MAX
   # Glass defaults: tempered + laminated + fusion.
+  # Each tower has its own 'loss' section (transmission loss), so tiers can be balanced separately.
   tier1Basic:
     # Whether this tower is registered at all. Disabling removes the block from the game
     # (existing placed towers of a disabled type will be lost). Needs a restart.
@@ -188,6 +194,50 @@ towers:
     # If true the network also reaches other dimensions: range is measured ignoring which dimension
     # something is in, so an infinite-range cross-dimensional tower covers everything everywhere.
     crossDimension: false
+
+    # Transmission loss for everything this tower serves: energy moving between the team network and a
+    # hatch, linked machine, wireless charger or the suit's tool charging is scaled by this efficiency,
+    # based on how far the receiving end is from the nearest covering source.
+    # A Tesla Range Extender uses the loss settings of the tower that powers it. If several towers cover
+    # the same spot, the one giving the lowest loss is used.
+    loss:
+      # Master switch for this tower. False means lossless transfer through this tower (no other loss
+      # setting of this tower matters).
+      # 
+      # loss % = min(maxLossPercent, baseLossPercent
+      #               + lossPercentPerUnit * (distance / distanceUnitBlocks) ^ exponent)
+      #   distance = blocks from the receiving end to the nearest covering tower or extender,
+      #   so extenders cut loss. If only a cross-dimensional tower covers it, crossDimensionLossPercent
+      #   is used instead of the distance term.
+      # Machines are charged by pushing energy in directly, so loss never stops a machine from
+      # charging. It just costs more from the network.
+      # A machine receives (100 - loss)% of what the network spends, and the network receives
+      # (100 - loss)% of what a generator sends.
+      enabled: true
+
+      # Flat loss on every transfer, even right next to a tower. Percent.
+      baseLossPercent: 2.0
+
+      # Extra loss per distanceUnitBlocks of distance (before the exponent). Percent.
+      lossPercentPerUnit: 8.0
+
+      # Distance, in blocks, that lossPercentPerUnit is measured per.
+      distanceUnitBlocks: 128.0
+
+      # 1 = loss grows linearly with distance, above 1 = nearly lossless close in and steep far out,
+      # below 1 = most of the loss comes early and flattens out.
+      exponent: 1.0
+
+      # Loss used instead of the distance term when only a cross-dimensional tower covers
+      # the receiving end (it is in a different dimension from the tower). Percent.
+      crossDimensionLossPercent: 25.0
+
+      # Loss never goes above this. Percent.
+      maxLossPercent: 60.0
+
+      # Whether the Phoenix Tech Suite's tool charging from the network is subject to loss.
+      # The suit's own running costs (flight, rebirth, ...) are never reduced by loss.
+      applyToSuit: true
 
   # Advanced Tesla Tower (tier 2). Infinite range inside its own dimension by default.
   # Glass defaults: laminated + fusion.
@@ -256,6 +306,50 @@ towers:
     # If true the network also reaches other dimensions: range is measured ignoring which dimension
     # something is in, so an infinite-range cross-dimensional tower covers everything everywhere.
     crossDimension: false
+
+    # Transmission loss for everything this tower serves: energy moving between the team network and a
+    # hatch, linked machine, wireless charger or the suit's tool charging is scaled by this efficiency,
+    # based on how far the receiving end is from the nearest covering source.
+    # A Tesla Range Extender uses the loss settings of the tower that powers it. If several towers cover
+    # the same spot, the one giving the lowest loss is used.
+    loss:
+      # Master switch for this tower. False means lossless transfer through this tower (no other loss
+      # setting of this tower matters).
+      # 
+      # loss % = min(maxLossPercent, baseLossPercent
+      #               + lossPercentPerUnit * (distance / distanceUnitBlocks) ^ exponent)
+      #   distance = blocks from the receiving end to the nearest covering tower or extender,
+      #   so extenders cut loss. If only a cross-dimensional tower covers it, crossDimensionLossPercent
+      #   is used instead of the distance term.
+      # Machines are charged by pushing energy in directly, so loss never stops a machine from
+      # charging. It just costs more from the network.
+      # A machine receives (100 - loss)% of what the network spends, and the network receives
+      # (100 - loss)% of what a generator sends.
+      enabled: true
+
+      # Flat loss on every transfer, even right next to a tower. Percent.
+      baseLossPercent: 1.0
+
+      # Extra loss per distanceUnitBlocks of distance (before the exponent). Percent.
+      lossPercentPerUnit: 5.0
+
+      # Distance, in blocks, that lossPercentPerUnit is measured per.
+      distanceUnitBlocks: 128.0
+
+      # 1 = loss grows linearly with distance, above 1 = nearly lossless close in and steep far out,
+      # below 1 = most of the loss comes early and flattens out.
+      exponent: 1.0
+
+      # Loss used instead of the distance term when only a cross-dimensional tower covers
+      # the receiving end (it is in a different dimension from the tower). Percent.
+      crossDimensionLossPercent: 15.0
+
+      # Loss never goes above this. Percent.
+      maxLossPercent: 40.0
+
+      # Whether the Phoenix Tech Suite's tool charging from the network is subject to loss.
+      # The suit's own running costs (flight, rebirth, ...) are never reduced by loss.
+      applyToSuit: true
 
   # Tesla Tower (tier 3, the original tower - existing towers keep this behavior).
   # Infinite range and cross-dimensional by default.
@@ -326,6 +420,50 @@ towers:
     # something is in, so an infinite-range cross-dimensional tower covers everything everywhere.
     crossDimension: true
 
+    # Transmission loss for everything this tower serves: energy moving between the team network and a
+    # hatch, linked machine, wireless charger or the suit's tool charging is scaled by this efficiency,
+    # based on how far the receiving end is from the nearest covering source.
+    # A Tesla Range Extender uses the loss settings of the tower that powers it. If several towers cover
+    # the same spot, the one giving the lowest loss is used.
+    loss:
+      # Master switch for this tower. False means lossless transfer through this tower (no other loss
+      # setting of this tower matters).
+      # 
+      # loss % = min(maxLossPercent, baseLossPercent
+      #               + lossPercentPerUnit * (distance / distanceUnitBlocks) ^ exponent)
+      #   distance = blocks from the receiving end to the nearest covering tower or extender,
+      #   so extenders cut loss. If only a cross-dimensional tower covers it, crossDimensionLossPercent
+      #   is used instead of the distance term.
+      # Machines are charged by pushing energy in directly, so loss never stops a machine from
+      # charging. It just costs more from the network.
+      # A machine receives (100 - loss)% of what the network spends, and the network receives
+      # (100 - loss)% of what a generator sends.
+      enabled: true
+
+      # Flat loss on every transfer, even right next to a tower. Percent.
+      baseLossPercent: 0.0
+
+      # Extra loss per distanceUnitBlocks of distance (before the exponent). Percent.
+      lossPercentPerUnit: 2.5
+
+      # Distance, in blocks, that lossPercentPerUnit is measured per.
+      distanceUnitBlocks: 128.0
+
+      # 1 = loss grows linearly with distance, above 1 = nearly lossless close in and steep far out,
+      # below 1 = most of the loss comes early and flattens out.
+      exponent: 1.0
+
+      # Loss used instead of the distance term when only a cross-dimensional tower covers
+      # the receiving end (it is in a different dimension from the tower). Percent.
+      crossDimensionLossPercent: 10.0
+
+      # Loss never goes above this. Percent.
+      maxLossPercent: 25.0
+
+      # Whether the Phoenix Tech Suite's tool charging from the network is subject to loss.
+      # The suit's own running costs (flight, rebirth, ...) are never reduced by loss.
+      applyToSuit: true
+
   # Tesla Range Extender: a multiblock that adds its own coverage radius to the network.
   # It only works while it is itself inside the coverage of a tower or another working extender,
   # so extenders can be chained outward from a tower.
@@ -335,45 +473,6 @@ towers:
 
     # Radius, in blocks, each working extender adds to the network around itself.
     rangeBlocks: 128
-
-  # Transmission loss. Energy moving between the team network and a hatch, linked machine, wireless
-  # charger or the suit's tool charging is scaled by the efficiency below, based on how far the
-  # receiving end is from the nearest tower or range extender covering it.
-  loss:
-    # Master switch. False means lossless transfer everywhere (no other loss setting matters).
-    # 
-    # loss % = min(maxLossPercent, baseLossPercent
-    #               + lossPercentPerUnit * (distance / distanceUnitBlocks) ^ exponent)
-    #   distance = blocks from the receiving end to the nearest covering tower or extender,
-    #   so extenders cut loss. If only a cross-dimensional tower covers it, crossDimensionLossPercent
-    #   is used instead of the distance term.
-    # A machine receives (100 - loss)% of what the network spends, and the network receives
-    # (100 - loss)% of what a generator sends.
-    enabled: true
-
-    # Flat loss on every transfer, even right next to a tower. Percent.
-    baseLossPercent: 0.0
-
-    # Extra loss per distanceUnitBlocks of distance (before the exponent). Percent.
-    lossPercentPerUnit: 5.0
-
-    # Distance, in blocks, that lossPercentPerUnit is measured per.
-    distanceUnitBlocks: 128.0
-
-    # 1 = loss grows linearly with distance, above 1 = nearly lossless close in and steep far out,
-    # below 1 = most of the loss comes early and flattens out.
-    exponent: 1.0
-
-    # Loss used instead of the distance term when only a cross-dimensional tower covers
-    # the receiving end (it is in a different dimension from the tower). Percent.
-    crossDimensionLossPercent: 10.0
-
-    # Loss never goes above this. Percent.
-    maxLossPercent: 50.0
-
-    # Whether the Phoenix Tech Suite's tool charging from the network is subject to loss.
-    # The suit's own running costs (flight, rebirth, ...) are never reduced by loss.
-    applyToSuit: true
 
   # Whether the Phoenix Tech Suite (flight, wireless tool charging, rebirth, ...) must be inside
   # the network's range to use the network. Has no effect on infinite-range towers.

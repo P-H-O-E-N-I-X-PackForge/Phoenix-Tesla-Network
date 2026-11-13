@@ -52,6 +52,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.T
 import net.phoenix_tesla_network.tesla.common.machine.singleblock.electric.TeslaWirelessChargerMachine;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.datagen.models.PhoenixMachineModels;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,32 +117,40 @@ public class PhoenixTeslaMachines {
                                                 PhoenixDynamicRenderHelpers::getTeslaTowerRenderer)))
                 .hasBER(true)
                 .tooltipBuilder((stack, list) -> {
-                    list.add(Component.literal("The pulsating heart of your Tesla Network.")
+                    list.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.the_pulsating_heart_of_your")
                             .withStyle(TeslaTowerMachine.NEBULA_HSL));
                     addTowerRangeLines(list, type.profile());
-                    list.add(Component.literal("Tesla Network is shared with your Team's other Tesla Towers"));
-                    list.add(Component.literal(
-                            "Tesla Network size is §7determined§f by the §7Tesla Battery§f Tier"));
+                    list.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.tesla_network_is_shared_with"));
+                    list.add(TeslaLang
+                            .tr("phoenix_tesla_network.phoenix_tesla_machines.tesla_network_size_is_determined"));
                 })
                 .register();
     }
 
     private static void addTowerRangeLines(List<Component> list, PhoenixTeslaConfigs.TowerProfile profile) {
-        MutableComponent range = Component.literal("Range: ").withStyle(ChatFormatting.GRAY);
+        MutableComponent range = TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.range")
+                .withStyle(ChatFormatting.GRAY);
         if (profile.infiniteRange) {
-            range.append(Component.literal("Infinite").withStyle(ChatFormatting.AQUA));
+            range.append(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.infinite")
+                    .withStyle(ChatFormatting.AQUA));
         } else {
-            range.append(Component.literal(profile.rangeBlocks + " Blocks").withStyle(ChatFormatting.AQUA));
-            range.append(Component.literal(" (extendable with Tesla Range Extenders)")
-                    .withStyle(ChatFormatting.GRAY));
+            range.append(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.blocks", profile.rangeBlocks)
+                    .withStyle(ChatFormatting.AQUA));
+            range.append(
+                    TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.extendable_with_tesla_range_extenders")
+                            .withStyle(ChatFormatting.GRAY));
         }
         list.add(range);
 
-        list.add(Component.literal("Interdimensional Transfer: ").withStyle(ChatFormatting.GRAY)
+        list.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.interdimensional_transfer")
+                .withStyle(ChatFormatting.GRAY)
                 .append(profile.crossDimension ?
-                        Component.literal("Allowed").withStyle(ChatFormatting.GREEN) :
-                        Component.literal("Not allowed").withStyle(ChatFormatting.RED)));
-        list.add(Component.literal("Allowed Tesla Batteries: ").withStyle(ChatFormatting.GRAY)
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.allowed")
+                                .withStyle(ChatFormatting.GREEN) :
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.not_allowed")
+                                .withStyle(ChatFormatting.RED)));
+        list.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.allowed_tesla_batteries")
+                .withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(TeslaTowerType.tierName(profile.minBatteryTier) + " - " +
                         TeslaTowerType.tierName(profile.maxBatteryTier)).withStyle(ChatFormatting.AQUA)));
     }
@@ -700,13 +709,14 @@ public class PhoenixTeslaMachines {
                                 .andThen(d -> d.addDynamicRenderer(PhoenixDynamicRenderHelpers::getTeslaLinkRenderer)))
                 .hasBER(true)
                 .tooltipBuilder((stack, list) -> {
-                    list.add(Component.literal("Extends the Range of your Tesla Network")
+                    list.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.extends_the_range_of_your")
                             .withStyle(TeslaTowerMachine.NEBULA_HSL));
                     list.add(
-                            Component.literal("Adds a radius of " + PhoenixTeslaConfigs.get().towers.relay.rangeBlocks +
-                                    " Blocks around itself").withStyle(ChatFormatting.GRAY));
-                    list.add(Component.literal(
-                            "Only works while in range from Tesla Tower's or other Range Extender's (chainable)"));
+                            TeslaLang
+                                    .tr("phoenix_tesla_network.phoenix_tesla_machines.adds_a_radius_of_blocks",
+                                            PhoenixTeslaConfigs.get().towers.relay.rangeBlocks)
+                                    .withStyle(ChatFormatting.GRAY));
+                    list.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.only_works_while_in_range"));
                 })
                 .register();
     }
@@ -925,10 +935,13 @@ public class PhoenixTeslaMachines {
                                         FormattingUtil.formatNumbers(GTValues.V[tier]),
                                         GTValues.VNF[tier]),
                                 Component.translatable("gtceu.universal.tooltip.amperage_in", 4),
-                                Component.literal("Wireless Range: ").withStyle(ChatFormatting.GRAY)
-                                        .append(Component.literal("Wherever the Tesla Network reaches")
+                                TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.wireless_range")
+                                        .withStyle(ChatFormatting.GRAY)
+                                        .append(TeslaLang.tr(
+                                                "phoenix_tesla_network.phoenix_tesla_machines.wherever_the_tesla_network_reaches")
                                                 .withStyle(ChatFormatting.AQUA)),
-                                Component.literal("Charges Armor and Tools from the Tesla Network")
+                                TeslaLang
+                                        .tr("phoenix_tesla_network.phoenix_tesla_machines.charges_armor_and_tools_from")
                                         .withStyle(ChatFormatting.GREEN))
                         .register(),
                 GTValues.ALL_TIERS);
