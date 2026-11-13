@@ -50,6 +50,7 @@ import net.phoenix_tesla_network.tesla.api.range.TeslaRange;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
@@ -957,8 +958,10 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                 data.putInt("rebirthCooldown", rebirthCooldown - 1);
                 if (rebirthCooldown % 20 == 0) {
                     int secondsLeft = rebirthCooldown / 20;
-                    player.displayClientMessage(Component.literal("§c⚡ REBIRTH RECHARGING: §e" + secondsLeft + "s")
-                            .withStyle(ChatFormatting.BOLD), true);
+                    player.displayClientMessage(
+                            TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.rebirth_recharging_s", secondsLeft)
+                                    .withStyle(ChatFormatting.BOLD),
+                            true);
                 }
             } else {
 
@@ -984,9 +987,11 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                     player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE,
                             SoundSource.PLAYERS, 0.5f, 1.2f);
 
-                    player.displayClientMessage(Component.literal("§6§l⚡ PHOENIX REBIRTH ACTIVATED ⚡"), true);
+                    player.displayClientMessage(
+                            TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.phoenix_rebirth_activated"), true);
                 } else {
-                    player.displayClientMessage(Component.literal("§c⚡ REBIRTH FAILED: §7Insufficient network energy!")
+                    player.displayClientMessage(TeslaLang
+                            .tr("phoenix_tesla_network.phoenix_tech_suite.rebirth_failed_insufficient_network_ener")
                             .withStyle(ChatFormatting.BOLD), true);
                 }
             }
@@ -1106,26 +1111,34 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
         boolean showTuning = fMode.equals("powered") || fMode.startsWith("creative");
         if (showTuning) {
-            this.HUD.newString(Component.literal("  » SPEED: " + speed + "/20").withStyle(ChatFormatting.GRAY));
-            this.HUD.newString(Component.literal("  » VERTICAL: " + vertical + "/20").withStyle(ChatFormatting.GRAY));
-            this.HUD.newString(Component.literal("  » DRIFT: " + drift + "/10").withStyle(ChatFormatting.GRAY));
+            this.HUD.newString(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.speed_20", speed)
+                    .withStyle(ChatFormatting.GRAY));
+            this.HUD.newString(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.vertical_20", vertical)
+                    .withStyle(ChatFormatting.GRAY));
+            this.HUD.newString(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.drift_10", drift)
+                    .withStyle(ChatFormatting.GRAY));
         }
 
         int sprint = nbt.contains("SprintSpeed") ? nbt.getInt("SprintSpeed") : 5;
         int jump = nbt.contains("JumpHeight") ? nbt.getInt("JumpHeight") : 5;
-        this.HUD.newString(Component.literal("  » SPRINT: " + sprint + "/20").withStyle(ChatFormatting.GRAY));
-        this.HUD.newString(Component.literal("  » JUMP: " + jump + "/20").withStyle(ChatFormatting.GRAY));
+        this.HUD.newString(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.sprint_20", sprint)
+                .withStyle(ChatFormatting.GRAY));
+        this.HUD.newString(
+                TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.jump_20", jump).withStyle(ChatFormatting.GRAY));
 
         if (nbt.getInt("TeslaChargingTick") > 0) {
-            this.HUD.newString(Component.literal("ᗯ WIRELESS CHARGING").withStyle(ChatFormatting.YELLOW));
+            this.HUD.newString(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.wireless_charging")
+                    .withStyle(ChatFormatting.YELLOW));
         }
 
         int rebirthCooldown = nbt.getInt("rebirthCooldown");
         if (rebirthCooldown > 0) {
-            this.HUD.newString(Component.literal("☠ REBIRTH: " + ((rebirthCooldown / 20) + 1) + "s")
-                    .withStyle(ChatFormatting.RED));
+            this.HUD.newString(
+                    TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.rebirth_s", ((rebirthCooldown / 20) + 1))
+                            .withStyle(ChatFormatting.RED));
         } else {
-            this.HUD.newString(Component.literal("❤ REBIRTH: READY").withStyle(ChatFormatting.GREEN));
+            this.HUD.newString(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.rebirth_ready")
+                    .withStyle(ChatFormatting.GREEN));
         }
 
         boolean networkIsOnline = nbt.getBoolean("TeslaNetworkOnline");
@@ -1133,14 +1146,16 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
         if (!networkIsOnline) {
 
             this.HUD.newString(
-                    Component.literal("⚡ NETWORK: OFFLINE").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+                    TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.network_offline")
+                            .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
         } else {
             String storedStr = nbt.getString("netStored");
             String capacityStr = nbt.getString("netCapacity");
 
             if (storedStr.isEmpty() || capacityStr.isEmpty()) {
                 this.HUD.newString(
-                        Component.literal("⚡ Syncing Network...").withStyle(ChatFormatting.GRAY,
+                        TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.syncing_network").withStyle(
+                                ChatFormatting.GRAY,
                                 ChatFormatting.ITALIC));
             } else {
                 try {
@@ -1259,7 +1274,7 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
 
         if (!hasEnergy) {
             player.displayClientMessage(
-                    Component.literal("§c⚡ DISCHARGE FAILED: §7No energy available!"),
+                    TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.discharge_failed_no_energy_available"),
                     true);
             return;
         }
@@ -1388,7 +1403,9 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
                         serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER, player.getX(), player.getY(),
                                 player.getZ(), 2, 0.1, 0.1, 0.1, 0);
 
-                        player.displayClientMessage(Component.literal("§6§l⚡ PHOENIX REBIRTH ACTIVATED ⚡"), true);
+                        player.displayClientMessage(
+                                TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.phoenix_rebirth_activated"),
+                                true);
                         return 0;
                     }
                 }
@@ -1425,12 +1442,12 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             java.util.UUID teamID = net.minecraft.client.Minecraft.getInstance().player.getUUID();
             var network = data.getOrCreate(teamID);
 
-            lines.add(Component.literal("Tesla Network Storage: ")
+            lines.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.tesla_network_storage")
                     .withStyle(net.minecraft.ChatFormatting.GOLD)
                     .append(Component.literal(formatTeslaEnergy(network.stored))
                             .withStyle(net.minecraft.ChatFormatting.WHITE)));
 
-            lines.add(Component.literal("Network Capacity: ")
+            lines.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.network_capacity")
                     .withStyle(net.minecraft.ChatFormatting.YELLOW)
                     .append(Component.literal(formatTeslaEnergy(network.capacity))
                             .withStyle(net.minecraft.ChatFormatting.GRAY)));
@@ -1453,14 +1470,15 @@ public class PhoenixTechSuite extends ArmorLogicSuite implements IStepAssist, Ge
             lines.add(Component.translatable("metaarmor.tooltip.freezing"));
             lines.add(Component.translatable("metaarmor.tooltip.wings"));
             lines.add(Component.translatable("metaarmor.tooltip.tesla_connection"));
-            lines.add(Component.literal("Press ").withStyle(ChatFormatting.GRAY)
+            lines.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.press").withStyle(ChatFormatting.GRAY)
                     .append(Component.keybind(SETTINGS_KEYBIND).withStyle(ChatFormatting.YELLOW))
-                    .append(Component.literal(" to open the suite settings").withStyle(ChatFormatting.GRAY)));
+                    .append(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.to_open_the_suite_settings")
+                            .withStyle(ChatFormatting.GRAY)));
 
             if (itemStack.hasTag()) {
                 assert itemStack.getTag() != null;
                 if (itemStack.getTag().getInt("TeslaChargingTick") > 0) {
-                    lines.add(Component.literal("⚡ Wireless Charging Active")
+                    lines.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tech_suite.wireless_charging_active")
                             .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
                 }
             }

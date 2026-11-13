@@ -54,6 +54,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.T
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.unique.UniqueWorkableElectricMultiblockMachine;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -154,12 +155,13 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                     introSequencePlayed = true;
 
                     player.displayClientMessage(
-                            Component.literal("We See You, We Know You.")
+                            TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.we_see_you_we_know")
                                     .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC),
                             true);
 
-                    player.sendSystemMessage(Component.literal("The Signal Has Begun.")
-                            .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
+                    player.sendSystemMessage(
+                            TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.the_signal_has_begun")
+                                    .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
 
                     int messageDelay = 100;
                 }
@@ -1019,7 +1021,9 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             }
 
             player.sendSystemMessage(
-                    Component.literal("Tower frequency set to: " + TeamUtils.getTeamName(ownerTeamUUID))
+                    TeslaLang
+                            .tr("phoenix_tesla_network.tesla_tower_machine.tower_frequency_set_to",
+                                    TeamUtils.getTeamName(ownerTeamUUID))
                             .withStyle(ChatFormatting.AQUA));
             return InteractionResult.SUCCESS;
         }
@@ -1042,8 +1046,9 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
                 }
 
                 syncToTeslaSavedData();
-                player.sendSystemMessage(Component.literal("Tower frequency copied to Binder.")
-                        .withStyle(ChatFormatting.GREEN));
+                player.sendSystemMessage(
+                        TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tower_frequency_copied_to_binder")
+                                .withStyle(ChatFormatting.GREEN));
                 return InteractionResult.SUCCESS;
             }
         }
@@ -1110,7 +1115,8 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
     @Override
     public void addDisplayText(List<Component> textList) {
         if (!isFormed()) {
-            textList.add(Component.literal("Tesla Network: Inactive").withStyle(ChatFormatting.RED));
+            textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tesla_network_inactive")
+                    .withStyle(ChatFormatting.RED));
             return;
         }
 
@@ -1119,11 +1125,11 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         Style GREEN = Style.EMPTY.withColor(ChatFormatting.GREEN);
         Style RED = Style.EMPTY.withColor(ChatFormatting.RED);
 
-        textList.add(Component.literal("Tesla Network: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tesla_network")
                 .append(Component.literal(isWorkingEnabled() ? "ONLINE" : "OFFLINE")
                         .withStyle(isWorkingEnabled() ? ChatFormatting.GREEN : ChatFormatting.RED)));
 
-        textList.add(Component.literal("Tower: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.tower")
                 .append(Component.literal(getTowerType().displayName()).withStyle(AQUA)));
 
         var profile = getTowerType().profile();
@@ -1133,20 +1139,21 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         } else {
             rangeText = profile.rangeBlocks + " blocks" + (profile.crossDimension ? ", all dimensions" : "");
         }
-        textList.add(Component.literal("Range: ").append(Component.literal(rangeText).withStyle(GOLD)));
+        textList.add(TeslaLang.tr("phoenix_tesla_network.phoenix_tesla_machines.range")
+                .append(Component.literal(rangeText).withStyle(GOLD)));
 
-        textList.add(Component.literal("Team: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.team")
                 .append(Component.literal(ownerTeamUUID == null ? "None" : TeamUtils.getTeamName(ownerTeamUUID))
                         .withStyle(AQUA)));
 
         if (energyBank != null) {
-            textList.add(Component.literal("Stored: ")
+            textList.add(TeslaLang.tr("jade.phoenix_tesla_network.tesla_stored")
                     .append(Component
                             .literal(formatTeslaValue(FormattingUtil.formatNumbers(energyBank.getStored()), false) +
                                     " EU")
                             .withStyle(GOLD)));
 
-            textList.add(Component.literal("Capacity: ")
+            textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.capacity")
                     .append(Component
                             .literal(formatTeslaValue(FormattingUtil.formatNumbers(energyBank.getCapacity()), false) +
                                     " EU")
@@ -1162,18 +1169,18 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             outputVal = team.lastNetOutput;
         }
 
-        textList.add(Component.literal("Total Input: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.total_input")
                 .append(Component
                         .literal("+" + formatTeslaValue(FormattingUtil.formatNumbers(inputVal), false) + " EU/t")
                         .withStyle(GREEN)));
 
-        textList.add(Component.literal("Total Output: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.total_output")
                 .append(Component
                         .literal("-" + formatTeslaValue(FormattingUtil.formatNumbers(outputVal), false) + " EU/t")
                         .withStyle(RED)));
 
         if (energyBank != null) {
-            textList.add(Component.literal("Battery Tier: ")
+            textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_tower_machine.battery_tier")
                     .append(Component.literal(GTValues.VN[energyBank.getHighestTier()]).withStyle(AQUA)));
         }
     }

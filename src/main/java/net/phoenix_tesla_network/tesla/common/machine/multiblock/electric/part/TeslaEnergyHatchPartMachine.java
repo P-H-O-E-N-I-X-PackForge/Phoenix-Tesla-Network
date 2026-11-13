@@ -13,7 +13,6 @@ import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -27,6 +26,7 @@ import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.TeslaW
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -335,12 +335,13 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
                             BigInteger.valueOf(energyContainer.getEnergyStored()),
                             getIO() == IO.OUT);
 
-                    player.sendSystemMessage(Component
-                            .literal("Tesla Hatch: Connected to frequency " + TeamUtils.getTeamName(ownerTeamUUID) +
-                                    "...")
+                    player.sendSystemMessage(TeslaLang.tr(
+                            "phoenix_tesla_network.tesla_energy_hatch_part_machine.tesla_hatch_connected_to_frequency",
+                            TeamUtils.getTeamName(ownerTeamUUID))
                             .withStyle(ChatFormatting.AQUA));
                 } else {
-                    player.sendSystemMessage(Component.literal("Tesla Hatch: Already synced to this frequency.")
+                    player.sendSystemMessage(TeslaLang
+                            .tr("phoenix_tesla_network.tesla_energy_hatch_part_machine.tesla_hatch_already_synced_to")
                             .withStyle(ChatFormatting.GRAY));
                 }
                 return InteractionResult.SUCCESS;

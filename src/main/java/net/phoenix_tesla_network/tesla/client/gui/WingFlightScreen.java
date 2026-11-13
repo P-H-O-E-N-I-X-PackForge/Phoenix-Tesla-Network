@@ -4,14 +4,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.phoenix_tesla_network.tesla.client.TeslaText;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.network.PhoenixNetwork;
 import net.phoenix_tesla_network.tesla.network.packet.UpdateWingSettingsPacket;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,7 @@ public class WingFlightScreen extends Screen {
     private final List<ClickRegion> clickRegions = new ArrayList<>();
 
     public WingFlightScreen() {
-        super(Component.literal("Wing Flight Control"));
+        super(TeslaLang.tr("phoenix_tesla_network.wing_flight_screen.wing_flight_control"));
         ItemStack chest = Minecraft.getInstance().player.getItemBySlot(EquipmentSlot.CHEST);
         CompoundTag tag = chest.getOrCreateTag();
         this.flightMode = tag.contains("FlightMode") ? tag.getString("FlightMode") : "basic";
@@ -151,7 +152,8 @@ public class WingFlightScreen extends Screen {
 
         drawPanel(gfx, left, top, W, currentH, PANEL_BG);
 
-        gfx.drawString(font, "Wing Flight Control", left + 8, top + 7, COLOR_TITLE, false);
+        gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight_screen.wing_flight_control"), left + 8,
+                top + 7, COLOR_TITLE, false);
 
         int modeBtnY = top + 22;
         drawButton(gfx, mouseX, mouseY, left + 7, modeBtnY, W - 14, 20, "Mode: " + getModeDisplayName(),
@@ -163,28 +165,34 @@ public class WingFlightScreen extends Screen {
 
         int headerY = top + 46;
         gfx.fill(left + 7, headerY, left + W - 7, headerY + 46, DISPLAY_BG);
-        gfx.drawString(font, "Current: " + getModeDisplayName(), left + 12, headerY + 5, getModeColor(), false);
+        gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.current", getModeDisplayName()),
+                left + 12, headerY + 5, getModeColor(), false);
         gfx.drawString(font, getDrainDescription(), left + 12, headerY + 17, COLOR_LABEL, false);
-        gfx.drawString(font, "Press ESC to save", left + 12, headerY + 29, 0xFF777777, false);
+        gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.press_esc_to_save"), left + 12,
+                headerY + 29, 0xFF777777, false);
 
         int rowY = top + 100;
         if (showSpeed) {
-            gfx.drawString(font, "Flight Speed", left + 8, rowY - 10, COLOR_LABEL, false);
+            gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.flight_speed"), left + 8, rowY - 10,
+                    COLOR_LABEL, false);
             renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_SPEED);
             rowY += 45;
         }
         if (showVertical) {
-            gfx.drawString(font, "Flight Vertical Speed", left + 8, rowY - 10, COLOR_LABEL, false);
+            gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.flight_vertical_speed"), left + 8,
+                    rowY - 10, COLOR_LABEL, false);
             renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_VERTICAL);
             rowY += 45;
         }
         if (showDrift) {
-            gfx.drawString(font, "Flight Drift", left + 8, rowY - 10, COLOR_LABEL, false);
+            gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.flight_drift"), left + 8, rowY - 10,
+                    COLOR_LABEL, false);
             renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_DRIFT);
             rowY += 45;
         }
         if (showKeepFlying) {
-            gfx.drawString(font, "Landing Behavior", left + 8, rowY - 10, COLOR_LABEL, false);
+            gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.landing_behavior"), left + 8,
+                    rowY - 10, COLOR_LABEL, false);
             drawButton(gfx, mouseX, mouseY, left + 7, rowY, W - 14, 20,
                     "Keep Flying After Landing: " + (keepFlyingOnLand ? "ON" : "OFF"),
                     keepFlyingOnLand ? COLOR_WINGED : COLOR_LABEL);
@@ -195,15 +203,18 @@ public class WingFlightScreen extends Screen {
             rowY += 45;
         }
 
-        gfx.drawString(font, "Sprint Speed", left + 8, rowY - 10, COLOR_LABEL, false);
+        gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.sprint_speed"), left + 8, rowY - 10,
+                COLOR_LABEL, false);
         renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_SPRINT);
         rowY += 45;
 
-        gfx.drawString(font, "Jump Boost  (0 = off)", left + 8, rowY - 10, COLOR_LABEL, false);
+        gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.jump_boost_0_off"), left + 8, rowY - 10,
+                COLOR_LABEL, false);
         renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_JUMP);
         rowY += 45;
 
-        gfx.drawString(font, "Step Height  (0 = vanilla)", left + 8, rowY - 10, COLOR_LABEL, false);
+        gfx.drawString(font, TeslaText.str("phoenix_tesla_network.wing_flight.step_height_0_vanilla"), left + 8,
+                rowY - 10, COLOR_LABEL, false);
         renderSliderRow(gfx, mouseX, mouseY, left, rowY, SLIDER_STEP);
 
         gfx.pose().popPose();

@@ -24,6 +24,7 @@ import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -181,7 +182,9 @@ public class TeslaRelayMachine extends WorkableElectricMultiblockMachine
             }
 
             player.sendSystemMessage(
-                    Component.literal("Range extender frequency set to: " + TeamUtils.getTeamName(ownerTeamUUID))
+                    TeslaLang
+                            .tr("phoenix_tesla_network.tesla_relay_machine.range_extender_frequency_set_to",
+                                    TeamUtils.getTeamName(ownerTeamUUID))
                             .withStyle(ChatFormatting.AQUA));
             return InteractionResult.SUCCESS;
         }
@@ -191,7 +194,8 @@ public class TeslaRelayMachine extends WorkableElectricMultiblockMachine
     @Override
     public void addDisplayText(@NotNull List<Component> textList) {
         if (!isFormed()) {
-            textList.add(Component.literal("Tesla Range Extender: Inactive").withStyle(ChatFormatting.RED));
+            textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.tesla_range_extender_inactive")
+                    .withStyle(ChatFormatting.RED));
             return;
         }
 
@@ -201,17 +205,19 @@ public class TeslaRelayMachine extends WorkableElectricMultiblockMachine
             active = isWorkingEnabled() && TeslaRange.isRelayActive(team, level.dimension(), getPos());
         }
 
-        textList.add(Component.literal("Tesla Range Extender: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.tesla_range_extender")
                 .append(Component.literal(active ? "EXTENDING" : "NOT CONNECTED")
                         .withStyle(active ? ChatFormatting.GREEN : ChatFormatting.RED)));
-        textList.add(Component.literal("Team: ")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.team")
                 .append(Component.literal(ownerTeamUUID == null ? "None" : TeamUtils.getTeamName(ownerTeamUUID))
                         .withStyle(ChatFormatting.AQUA)));
-        textList.add(Component.literal("Adds: ")
-                .append(Component.literal(PhoenixTeslaConfigs.get().towers.relay.rangeBlocks + " blocks")
+        textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.adds")
+                .append(TeslaLang
+                        .tr("phoenix_tesla_network.tesla_relay_machine.blocks",
+                                PhoenixTeslaConfigs.get().towers.relay.rangeBlocks)
                         .withStyle(ChatFormatting.GOLD)));
         if (!active) {
-            textList.add(Component.literal("Place it inside the range of a Tesla Tower or another working extender.")
+            textList.add(TeslaLang.tr("phoenix_tesla_network.tesla_relay_machine.place_it_inside_the_range")
                     .withStyle(ChatFormatting.GRAY));
         }
     }

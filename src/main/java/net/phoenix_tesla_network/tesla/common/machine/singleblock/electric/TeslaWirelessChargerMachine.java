@@ -38,6 +38,7 @@ import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import top.theillusivec4.curios.api.CuriosApi;
 
@@ -224,7 +225,10 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         List<UUID> nearbyUUIDs = nearby.stream().map(Player::getUUID).toList();
         for (Player p : nearby) {
             if (!playersInRange.contains(p.getUUID())) {
-                p.displayClientMessage(Component.literal("Tesla Field Connected").withStyle(ChatFormatting.AQUA), true);
+                p.displayClientMessage(
+                        TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.tesla_field_connected")
+                                .withStyle(ChatFormatting.AQUA),
+                        true);
                 playersInRange.add(p.getUUID());
             }
         }
@@ -232,7 +236,10 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
             if (!nearbyUUIDs.contains(uuid)) {
                 Player p = getLevel().getPlayerByUUID(uuid);
                 if (p != null)
-                    p.displayClientMessage(Component.literal("Tesla Field Disconnected").withStyle(ChatFormatting.GRAY),
+                    p.displayClientMessage(
+                            TeslaLang
+                                    .tr("phoenix_tesla_network.tesla_wireless_charger_machine.tesla_field_disconnected")
+                                    .withStyle(ChatFormatting.GRAY),
                             true);
                 return true;
             }
@@ -291,12 +298,16 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
         if (this.boundTeam != null && this.boundTeam.equals(stickTeam)) {
             unregisterFromNetwork();
             this.boundTeam = null;
-            player.sendSystemMessage(Component.literal("Charger Unbound").withStyle(ChatFormatting.YELLOW));
+            player.sendSystemMessage(
+                    TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.charger_unbound")
+                            .withStyle(ChatFormatting.YELLOW));
         } else {
             unregisterFromNetwork();
             this.boundTeam = stickTeam;
             registerToNetwork();
-            player.sendSystemMessage(Component.literal("Charger Synchronized").withStyle(ChatFormatting.LIGHT_PURPLE));
+            player.sendSystemMessage(
+                    TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.charger_synchronized")
+                            .withStyle(ChatFormatting.LIGHT_PURPLE));
         }
 
         this.markDirty();
@@ -312,21 +323,25 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
     }
 
     private void addDisplayText(List<Component> text) {
-        text.add(Component.literal(GTValues.VNF[getTier()] + " Wireless Charger").withStyle(ChatFormatting.GOLD,
-                ChatFormatting.BOLD));
+        text.add(TeslaLang
+                .tr("phoenix_tesla_network.tesla_wireless_charger_machine.wireless_charger", GTValues.VNF[getTier()])
+                .withStyle(ChatFormatting.GOLD,
+                        ChatFormatting.BOLD));
         text.add(Component.empty());
 
         if (boundTeam == null) {
-            text.add(Component.literal("STATUS: ").append(Component.literal("UNBOUND").withStyle(ChatFormatting.RED)));
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.status").append(TeslaLang
+                    .tr("phoenix_tesla_network.tesla_wireless_charger_machine.unbound").withStyle(ChatFormatting.RED)));
         } else {
-            text.add(Component.literal("NETWORK: ")
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.network")
                     .append(Component.literal(TeamUtils.getTeamName(boundTeam)).withStyle(ChatFormatting.AQUA)));
-            text.add(Component.literal("REACH: ")
-                    .append(Component.literal("Determined by Tesla Network")
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.reach")
+                    .append(TeslaLang
+                            .tr("phoenix_tesla_network.tesla_wireless_charger_machine.determined_by_tesla_network")
                             .withStyle(ChatFormatting.LIGHT_PURPLE)));
 
             String rate = com.gregtechceu.gtceu.utils.FormattingUtil.formatNumbers(lastTransferred);
-            text.add(Component.literal("OUTPUT: ")
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.output")
                     .append(Component.literal(rate + " EU/t").withStyle(ChatFormatting.GREEN)));
         }
     }
@@ -338,6 +353,6 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
 
     @Override
     public Component getTitle() {
-        return Component.literal("Tesla Field Generator");
+        return TeslaLang.tr("phoenix_tesla_network.tesla_wireless_charger_machine.tesla_field_generator");
     }
 }

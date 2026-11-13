@@ -15,7 +15,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.phoenix_tesla_network.tesla.client.TeslaText;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixArmorItem;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import static net.phoenix_tesla_network.tesla.api.gui.PhoenixGuiTextures.TESLA_BACKGROUND;
 
@@ -48,7 +50,8 @@ public class WingFlightGui {
 
         WidgetGroup root = new WidgetGroup(0, 0, W, H);
 
-        root.addWidget(new LabelWidget(8, 6, "§5Wing Flight Control"));
+        root.addWidget(
+                new LabelWidget(8, 6, TeslaText.str("phoenix_tesla_network.wing_flight_gui.wing_flight_control")));
 
         WidgetGroup header = new WidgetGroup(5, 18, W - 10, 46);
         header.setBackground(TESLA_BACKGROUND);
@@ -56,11 +59,15 @@ public class WingFlightGui {
             String mode = stack.getOrCreateTag().getString(NBT_MODE);
             boolean isPowered = MODE_POWERED.equals(mode);
 
-            text.add(Component.literal("Mode: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(isPowered ? "⚡ Powered" : "✦ Creative")
+            text.add(TeslaLang.tr("phoenix_tesla_network.wing_flight_gui.mode").withStyle(ChatFormatting.GRAY)
+                    .append(Component
+                            .literal(isPowered ? TeslaText.str("phoenix_tesla_network.wing_flight_gui.powered") :
+                                    TeslaText.str("phoenix_tesla_network.wing_flight_gui.creative"))
                             .withStyle(isPowered ? ChatFormatting.GOLD : ChatFormatting.LIGHT_PURPLE)));
 
-            text.add(Component.literal(isPowered ? "§7Drain: §c5,000 EU/t" : "§7Drain: §aNone (Creative)"));
+            text.add(Component
+                    .literal(isPowered ? TeslaText.str("phoenix_tesla_network.wing_flight_gui.drain_5_000_eu_t") :
+                            TeslaText.str("phoenix_tesla_network.wing_flight_gui.drain_none_creative")));
         }));
         root.addWidget(header);
 
@@ -74,15 +81,18 @@ public class WingFlightGui {
         }));
         String currentMode = tag.getString(NBT_MODE);
         root.addWidget(new LabelWidget(W / 2 - 55, btnY + 6,
-                MODE_POWERED.equals(currentMode) ? "§eSwitch to ✦ Creative Flight" : "§6Switch to ⚡ Powered Flight"));
+                MODE_POWERED.equals(currentMode) ?
+                        TeslaText.str("phoenix_tesla_network.wing_flight_gui.switch_to_creative_flight") :
+                        TeslaText.str("phoenix_tesla_network.wing_flight_gui.switch_to_powered_flight")));
 
-        root.addWidget(new LabelWidget(8, 102, "§7Flight Speed"));
+        root.addWidget(new LabelWidget(8, 102, TeslaText.str("phoenix_tesla_network.wing_flight_gui.flight_speed")));
         root.addWidget(buildStepControl(holder, player, stack, NBT_SPEED, 118, W));
 
-        root.addWidget(new LabelWidget(8, 158, "§7Flight Drift"));
+        root.addWidget(new LabelWidget(8, 158, TeslaText.str("phoenix_tesla_network.wing_flight_gui.flight_drift")));
         root.addWidget(buildStepControl(holder, player, stack, NBT_DRIFT, 174, W));
 
-        root.addWidget(new LabelWidget(8, H - 12, "§8Press Numpad9 or Esc to close"));
+        root.addWidget(new LabelWidget(8, H - 12,
+                TeslaText.str("phoenix_tesla_network.wing_flight_gui.press_numpad9_or_esc_to")));
 
         ui.widget(root);
         return ui;

@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import net.phoenix_tesla_network.tesla.network.packet.S2CCoverageSyncPacket;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import java.util.List;
 
@@ -64,17 +65,21 @@ public final class ClientCoverageData {
         }
 
         if (best == Double.MAX_VALUE) {
-            return Component.literal("Outside network coverage").withStyle(ChatFormatting.RED);
+            return TeslaLang.tr("phoenix_tesla_network.client_coverage_data.outside_network_coverage")
+                    .withStyle(ChatFormatting.RED);
         }
         if (!lossy) {
-            return Component.literal("Inside network coverage - lossless").withStyle(ChatFormatting.GREEN);
+            return TeslaLang.tr("phoenix_tesla_network.client_coverage_data.inside_network_coverage_lossless")
+                    .withStyle(ChatFormatting.GREEN);
         }
 
         ChatFormatting color = percent < 1f ? ChatFormatting.GREEN :
                 percent < 15f ? ChatFormatting.YELLOW : ChatFormatting.RED;
-        return Component.literal("Link loss here: ").withStyle(ChatFormatting.GRAY)
+        return TeslaLang.tr("phoenix_tesla_network.client_coverage_data.link_loss_here").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(String.format("%.1f%%", percent)).withStyle(color))
-                .append(Component.literal(" (" + Math.round(best) + " blocks from the nearest source)")
+                .append(TeslaLang
+                        .tr("phoenix_tesla_network.client_coverage_data.blocks_from_the_nearest_source",
+                                Math.round(best))
                         .withStyle(ChatFormatting.DARK_GRAY));
     }
 

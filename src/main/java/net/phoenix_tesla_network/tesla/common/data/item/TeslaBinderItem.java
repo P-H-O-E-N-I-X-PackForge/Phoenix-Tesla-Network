@@ -41,6 +41,7 @@ import net.phoenix_tesla_network.tesla.client.renderer.machine.TeslaHighlightRen
 import net.phoenix_tesla_network.tesla.common.machine.singleblock.electric.TeslaWirelessChargerMachine;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,9 +101,9 @@ public class TeslaBinderItem extends ComponentItem
 
                     if (isNowLinked) {
                         player.sendSystemMessage(
-                                Component.literal(machine instanceof BatteryBufferMachine ?
-                                        "Core Synchronized: Battery Buffer linked to soul frequency (charge only)." :
-                                        "Core Synchronized: Machine linked to soul frequency.")
+                                (machine instanceof BatteryBufferMachine ?
+                                        TeslaLang.tr("phoenix_tesla_network.binder.synced_buffer") :
+                                        TeslaLang.tr("phoenix_tesla_network.binder.synced_machine"))
                                         .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.ITALIC));
                         serverLevel.playSound(null, clickedPos, SoundEvents.BEACON_POWER_SELECT,
                                 SoundSource.PLAYERS, 1f, 1.5f);
@@ -120,7 +121,8 @@ public class TeslaBinderItem extends ComponentItem
                         }
 
                         player.sendSystemMessage(
-                                Component.literal("Connection Severed: Machine removed from soul network.")
+                                TeslaLang.tr(
+                                        "phoenix_tesla_network.tesla_binder_item.connection_severed_machine_removed_from")
                                         .withStyle(ChatFormatting.GRAY));
                         serverLevel.playSound(null, clickedPos, SoundEvents.BEACON_DEACTIVATE,
                                 SoundSource.PLAYERS, 1f, 0.8f);
@@ -130,13 +132,14 @@ public class TeslaBinderItem extends ComponentItem
                 } else {
 
                     player.sendSystemMessage(
-                            Component.literal("Binder is not initialized. Shift-Right Click the air first.")
+                            TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.binder_is_not_initialized_shift")
                                     .withStyle(ChatFormatting.RED));
                     return InteractionResult.FAIL;
                 }
             } else {
-                player.sendSystemMessage(Component.literal("Invalid Target: Machine has no internal soul-buffer.")
-                        .withStyle(ChatFormatting.RED));
+                player.sendSystemMessage(
+                        TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.invalid_target_machine_has_no")
+                                .withStyle(ChatFormatting.RED));
                 return InteractionResult.FAIL;
             }
         }
@@ -205,7 +208,7 @@ public class TeslaBinderItem extends ComponentItem
                     0.2, 0.02);
             player.playSound(SoundEvents.PLAYER_LEVELUP, 0.5f, 1.5f);
 
-            player.sendSystemMessage(Component.literal("Tesla frequency linked to: ")
+            player.sendSystemMessage(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.tesla_frequency_linked_to")
                     .withStyle(ChatFormatting.GREEN)
                     .append(Component.literal(teamName).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)));
         }
@@ -216,7 +219,8 @@ public class TeslaBinderItem extends ComponentItem
         if (stack.hasTag()) {
             assert stack.getTag() != null;
             if (stack.getTag().contains("TargetTeam")) {
-                return Component.literal("Tesla Binder (Bound)").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC);
+                return TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.tesla_binder_bound")
+                        .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC);
             }
         }
         return super.getName(stack);
@@ -228,22 +232,24 @@ public class TeslaBinderItem extends ComponentItem
         if (stack.hasTag() && Objects.requireNonNull(stack.getTag()).contains("OwnerName")) {
             int color = getAnimatedColor(0xA330FF, 0xFF66CC, 2000);
 
-            tooltip.add(Component.literal("Right-Click to open the Tesla Network UI.")
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.right_click_to_open_the")
                     .withStyle(Style.EMPTY.withColor(color)));
 
-            tooltip.add(Component.literal("Bound to Player: ").withStyle(ChatFormatting.GRAY)
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.bound_to_player")
+                    .withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(stack.getTag().getString("OwnerName"))
                             .withStyle(Style.EMPTY.withColor(color))));
 
             if (stack.getTag().contains("TeamName")) {
-                tooltip.add(Component.literal("Bound to Team: ").withStyle(ChatFormatting.GRAY)
+                tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.bound_to_team")
+                        .withStyle(ChatFormatting.GRAY)
                         .append(Component.literal(stack.getTag().getString("TeamName"))
                                 .withStyle(Style.EMPTY.withColor(color))));
             }
         } else {
-            tooltip.add(Component.literal("Currently not bound to a soul.")
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.currently_not_bound_to_a")
                     .withStyle(Style.EMPTY.withColor(0x8F00FF)));
-            tooltip.add(Component.literal("Shift + Right-Click to bind to your frequency.")
+            tooltip.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.shift_right_click_to_bind")
                     .withStyle(Style.EMPTY.withColor(0xA330FF)));
         }
     }
@@ -307,13 +313,14 @@ public class TeslaBinderItem extends ComponentItem
                 list.add(Component.literal(hardwareTitle).withStyle(titleColor, ChatFormatting.BOLD));
 
                 BlockPos p = BlockPos.of(hTag.getLong("pos"));
-                list.add(Component.literal("Location: ").withStyle(ChatFormatting.GRAY)
+                list.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.location").withStyle(ChatFormatting.GRAY)
                         .append(Component.literal(String.format("%d, %d, %d", p.getX(), p.getY(), p.getZ()))
                                 .withStyle(ChatFormatting.WHITE)));
 
                 if (!isCharger && hTag.contains("buf")) {
 
-                    list.add(Component.literal("Internal Buffer: ").withStyle(ChatFormatting.GRAY)
+                    list.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.internal_buffer")
+                            .withStyle(ChatFormatting.GRAY)
                             .append(Component.literal(compactTeslaValue(hTag.getString("buf")) + "EU")
                                     .withStyle(ChatFormatting.GOLD)));
                 }
@@ -337,7 +344,7 @@ public class TeslaBinderItem extends ComponentItem
                                 .withStyle(flowVal != 0 ? titleColor : ChatFormatting.WHITE)));
 
                 String statusText = (flowVal != 0) ? "OPERATIONAL" : "IDLE / NO LOAD";
-                list.add(Component.literal("Status: ").withStyle(ChatFormatting.GRAY)
+                list.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.status").withStyle(ChatFormatting.GRAY)
                         .append(Component.literal(statusText)
                                 .withStyle(flowVal != 0 ? titleColor : ChatFormatting.DARK_GRAY)));
             }));
@@ -359,22 +366,22 @@ public class TeslaBinderItem extends ComponentItem
         WidgetGroup header = new WidgetGroup(5, 18, windowWidth - 10, 80);
         header.setBackground(TESLA_BACKGROUND);
         header.addWidget(new ComponentPanelWidget(5, 4, text -> {
-            text.add(Component.literal("Network: ").withStyle(ChatFormatting.GRAY)
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.network").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(tag.getString("TeamName")).withStyle(ChatFormatting.AQUA)));
 
-            text.add(Component.literal("Stored: ").withStyle(ChatFormatting.GRAY)
+            text.add(TeslaLang.tr("jade.phoenix_tesla_network.tesla_stored").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(compactTeslaValue(tag.getString("StoredEU")) + "EU")
                             .withStyle(ChatFormatting.GOLD)));
 
-            text.add(Component.literal("Capacity: ").withStyle(ChatFormatting.GRAY)
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.capacity").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal(compactTeslaValue(tag.getString("CapacityEU")) + "EU")
                             .withStyle(ChatFormatting.YELLOW)));
 
-            text.add(Component.literal("Net Input: ").withStyle(ChatFormatting.GRAY)
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.net_input").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal("+" + compactTeslaValue(tag.getString("NetInput")) + "EU/t")
                             .withStyle(ChatFormatting.GREEN)));
 
-            text.add(Component.literal("Net Output: ").withStyle(ChatFormatting.GRAY)
+            text.add(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.net_output").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal("-" + compactTeslaValue(tag.getString("NetOutput")) + "EU/t")
                             .withStyle(ChatFormatting.RED)));
         }));

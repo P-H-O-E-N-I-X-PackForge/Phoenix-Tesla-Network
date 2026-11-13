@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
+import net.phoenix_tesla_network.tesla.utils.TeslaLang;
 
 import com.mojang.brigadier.CommandDispatcher;
 
@@ -34,13 +35,17 @@ public class TeslaDebugCommand {
         ServerLevel level = source.getLevel();
         TeslaTeamEnergyData data = TeslaTeamEnergyData.get(level);
 
-        source.sendSuccess(() -> Component.literal("=== TESLA NETWORK SYSTEM DEBUG ===").withStyle(ChatFormatting.GOLD,
-                ChatFormatting.BOLD), false);
+        source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.tesla_network_system_debug")
+                .withStyle(ChatFormatting.GOLD,
+                        ChatFormatting.BOLD),
+                false);
 
         var networks = data.getNetworksView();
 
-        source.sendSuccess(() -> Component.literal("Global Machine Registry:").withStyle(ChatFormatting.YELLOW,
-                ChatFormatting.UNDERLINE), false);
+        source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.global_machine_registry")
+                .withStyle(ChatFormatting.YELLOW,
+                        ChatFormatting.UNDERLINE),
+                false);
 
         int globalCount = 0;
         for (var entry : networks.entrySet()) {
@@ -51,26 +56,33 @@ public class TeslaDebugCommand {
                 UUID lookupTeam = data.getOwnerTeam(pos);
                 boolean verified = teamId.equals(lookupTeam);
 
-                source.sendSuccess(() -> Component.literal("  [LINKED] ")
+                source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.linked")
                         .append(Component.literal(pos.toShortString()).withStyle(ChatFormatting.WHITE))
                         .append(" -> Team: ")
                         .append(Component.literal(TeamUtils.getTeamName(teamId)).withStyle(ChatFormatting.AQUA))
-                        .append(verified ? Component.literal(" [VERIFIED]").withStyle(ChatFormatting.GREEN) :
-                                Component.literal(" [MAP MISSING]").withStyle(ChatFormatting.RED)),
+                        .append(verified ?
+                                TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.verified")
+                                        .withStyle(ChatFormatting.GREEN) :
+                                TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.map_missing")
+                                        .withStyle(ChatFormatting.RED)),
                         false);
                 globalCount++;
             }
         }
 
         if (globalCount == 0) {
-            source.sendSuccess(() -> Component.literal("  No machines currently registered in Global Map.")
-                    .withStyle(ChatFormatting.DARK_GRAY), false);
+            source.sendSuccess(
+                    () -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.no_machines_currently_registered_in")
+                            .withStyle(ChatFormatting.DARK_GRAY),
+                    false);
         }
 
         source.sendSuccess(() -> Component.literal("--------------------------------"), false);
 
         if (networks.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("No active team networks found.").withStyle(ChatFormatting.RED),
+            source.sendSuccess(
+                    () -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.no_active_team_networks_found")
+                            .withStyle(ChatFormatting.RED),
                     false);
             return 1;
         }
@@ -80,10 +92,13 @@ public class TeslaDebugCommand {
             TeslaTeamEnergyData.TeamEnergy teamData = entry.getValue();
             boolean online = data.isOnline(team);
 
-            MutableComponent teamHeader = Component.literal("Network: ")
+            MutableComponent teamHeader = TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.network")
                     .append(Component.literal(TeamUtils.getTeamName(team)).withStyle(ChatFormatting.AQUA))
-                    .append(online ? Component.literal(" [ONLINE]").withStyle(ChatFormatting.GREEN) :
-                            Component.literal(" [OFFLINE]").withStyle(ChatFormatting.RED));
+                    .append(online ?
+                            TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.online")
+                                    .withStyle(ChatFormatting.GREEN) :
+                            TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.offline")
+                                    .withStyle(ChatFormatting.RED));
             source.sendSuccess(() -> teamHeader, false);
 
             source.sendSuccess(() -> Component.literal("  EU: ").withStyle(ChatFormatting.GRAY)
@@ -97,29 +112,39 @@ public class TeslaDebugCommand {
                 if (now - lastSeen < 40) liveCount++;
             }
             final int finalLiveCount = liveCount;
-            source.sendSuccess(() -> Component.literal("  Live Heartbeats: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(String.valueOf(finalLiveCount)).withStyle(ChatFormatting.LIGHT_PURPLE)),
+            source.sendSuccess(
+                    () -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.live_heartbeats")
+                            .withStyle(ChatFormatting.GRAY)
+                            .append(Component.literal(String.valueOf(finalLiveCount))
+                                    .withStyle(ChatFormatting.LIGHT_PURPLE)),
                     false);
 
             if (!teamData.rangeNodes.isEmpty()) {
-                source.sendSuccess(() -> Component.literal("  Towers & Range Extenders:").withStyle(
-                        ChatFormatting.GRAY, ChatFormatting.ITALIC), false);
+                source.sendSuccess(() -> TeslaLang
+                        .tr("phoenix_tesla_network.tesla_debug_command.towers_range_extenders").withStyle(
+                                ChatFormatting.GRAY, ChatFormatting.ITALIC),
+                        false);
                 for (var node : teamData.rangeNodes.values()) {
                     source.sendSuccess(() -> Component.literal("    - ")
                             .append(Component.literal(node.type.name()).withStyle(ChatFormatting.AQUA))
                             .append(" " + node.pos.toShortString())
                             .append(Component.literal(" (" + node.dimension.location().getPath() + ")")
                                     .withStyle(ChatFormatting.DARK_GRAY))
-                            .append(node.working ? Component.literal(" [WORKING]").withStyle(ChatFormatting.GREEN) :
-                                    Component.literal(" [OFF]").withStyle(ChatFormatting.RED)),
+                            .append(node.working ?
+                                    TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.working")
+                                            .withStyle(ChatFormatting.GREEN) :
+                                    TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.off")
+                                            .withStyle(ChatFormatting.RED)),
                             false);
                 }
             }
 
             var hatches = data.getHatches(team);
             if (!hatches.isEmpty()) {
-                source.sendSuccess(() -> Component.literal("  Connected Hardware:").withStyle(ChatFormatting.GRAY,
-                        ChatFormatting.ITALIC), false);
+                source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.connected_hardware")
+                        .withStyle(ChatFormatting.GRAY,
+                                ChatFormatting.ITALIC),
+                        false);
                 for (var info : hatches) {
                     String typePrefix = info.isSoulLinked ? "[S]" : (info.isPhysicalOutput ? "[I]" : "[O]");
                     ChatFormatting typeColor = info.isSoulLinked ? ChatFormatting.LIGHT_PURPLE :
@@ -135,7 +160,8 @@ public class TeslaDebugCommand {
             }
 
             if (!teamData.activeChargers.isEmpty()) {
-                source.sendSuccess(() -> Component.literal("  Active Chargers:").withStyle(ChatFormatting.BLUE), false);
+                source.sendSuccess(() -> TeslaLang.tr("phoenix_tesla_network.tesla_debug_command.active_chargers")
+                        .withStyle(ChatFormatting.BLUE), false);
                 for (BlockPos cPos : teamData.activeChargers) {
                     source.sendSuccess(() -> Component.literal("    - " + cPos.toShortString())
                             .append(" Flow: " + teamData.machineDisplayFlow.getOrDefault(cPos, 0L) + " EU/t"), false);
