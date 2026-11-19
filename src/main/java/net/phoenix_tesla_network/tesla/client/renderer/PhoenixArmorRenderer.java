@@ -14,6 +14,9 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 public class PhoenixArmorRenderer extends GeoArmorRenderer<PhoenixArmorItem> {
 
+    /** Set while the wings are being drawn with their own texture. */
+    private boolean wingsPass = false;
+
     public PhoenixArmorRenderer(PhoenixArmorItem phoenixItem) {
         super(new PhoenixArmorModel(phoenixItem));
 
@@ -24,14 +27,22 @@ public class PhoenixArmorRenderer extends GeoArmorRenderer<PhoenixArmorItem> {
                                RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer,
                                float partialTick, int packedLight, int packedOverlay) {
                 if (getCurrentSlot() == EquipmentSlot.CHEST) {
+                    // the wings have their own texture, and the armor's texture has other things where the wings' UVs
+                    // are, so each pass only draws its own part: this one only the wings
+                    PhoenixArmorRenderer self = (PhoenixArmorRenderer) getRenderer();
+                    self.wingsPass = true;
                     ResourceLocation wingsTex = ResourceLocation.fromNamespaceAndPath("phoenix_tesla_network",
                             "textures/armor/phoenix_wings.png");
 
                     RenderType wingsRenderType = RenderType.armorCutoutNoCull(wingsTex);
 
-                    getRenderer().reRender(model, poseStack, bufferSource, animatable, wingsRenderType,
-                            bufferSource.getBuffer(wingsRenderType), partialTick, packedLight, packedOverlay,
-                            0xFFFFFFFF);
+                    try {
+                        getRenderer().reRender(model, poseStack, bufferSource, animatable, wingsRenderType,
+                                bufferSource.getBuffer(wingsRenderType), partialTick, packedLight, packedOverlay,
+                                0xFFFFFFFF);
+                    } finally {
+                        self.wingsPass = false;
+                    }
                 }
             }
         });
@@ -40,13 +51,42 @@ public class PhoenixArmorRenderer extends GeoArmorRenderer<PhoenixArmorItem> {
     @Override
     protected void applyBoneVisibilityBySlot(EquipmentSlot currentSlot) {
         setAllVisible(false);
+        // the belt is part of the leggings
+        for (String waist : new String[] { "bipedWaist", "armorWaist" }) {
+            boolean visible = currentSlot == EquipmentSlot.LEGS;
+            getGeoModel().getBone(waist).ifPresent(b -> {
+                b.setHidden(!visible);
+                b.setChildrenHidden(!visible);
+            });
+        }
         switch (currentSlot) {
             case CHEST -> {
-                setBoneVisible(this.body, true);
-                setBoneVisible(this.rightArm, true);
-                setBoneVisible(this.leftArm, true);
-                getGeoModel().getBone("wing_1").ifPresent(b -> b.setHidden(false));
-                getGeoModel().getBone("wing_2").ifPresent(b -> b.setHidden(false));
+                if (wingsPass) {
+                    // only the wings: the body and arms keep their bones but not their cubes
+                    for (String part : new String[] { "armorBody", "armorRightArm", "armorLeftArm" }) {
+                        getGeoModel().getBone(part).ifPresent(b -> {
+                            b.setHidden(true);
+                            b.setChildrenHidden(false);
+                        });
+                    }
+                    for (String wing : new String[] { "wing_1", "wing_2" }) {
+                        getGeoModel().getBone(wing).ifPresent(b -> {
+                            b.setHidden(false);
+                            b.setChildrenHidden(false);
+                        });
+                    }
+                } else {
+                    setBoneVisible(this.body, true);
+                    setBoneVisible(this.rightArm, true);
+                    setBoneVisible(this.leftArm, true);
+                    // the wings are drawn by the layer above, with their own texture, not with the armor's
+                    for (String wing : new String[] { "wing_1", "wing_2" }) {
+                        getGeoModel().getBone(wing).ifPresent(b -> {
+                            b.setHidden(true);
+                            b.setChildrenHidden(true);
+                        });
+                    }
+                }
             }
             case LEGS -> {
                 setBoneVisible(this.rightLeg, true);

@@ -50,8 +50,8 @@ public class PhoenixTeslaItems {
                 new ModularItemComponent(moduleSlots, GTValues.UV));
     }
 
-    public static ItemEntry<PhoenixTechArmorItem> PHOENIX_HELMET = REGISTRATE
-            .item("phoenix_helmet", p -> new PhoenixTechArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.HELMET, p))
+    public static ItemEntry<PhoenixArmorItem> PHOENIX_HELMET = REGISTRATE
+            .item("phoenix_helmet", p -> new PhoenixArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.HELMET, p))
             .lang("Phoenix Tech Suite Helmet")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.HEAD_ARMOR)
@@ -70,9 +70,9 @@ public class PhoenixTeslaItems {
             .onRegister(i -> suite(i, SLOTS_CHEST))
             .register();
 
-    public static ItemEntry<PhoenixTechArmorItem> PHOENIX_LEGGINGS = REGISTRATE
+    public static ItemEntry<PhoenixArmorItem> PHOENIX_LEGGINGS = REGISTRATE
             .item("phoenix_leggings",
-                    p -> new PhoenixTechArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.LEGGINGS, p))
+                    p -> new PhoenixArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.LEGGINGS, p))
             .lang("Phoenix Tech Suite Leggings")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.LEG_ARMOR)
@@ -80,8 +80,8 @@ public class PhoenixTeslaItems {
             .onRegister(i -> suite(i, SLOTS_SMALL))
             .register();
 
-    public static ItemEntry<PhoenixTechArmorItem> PHOENIX_BOOTS = REGISTRATE
-            .item("phoenix_boots", p -> new PhoenixTechArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.BOOTS, p))
+    public static ItemEntry<PhoenixArmorItem> PHOENIX_BOOTS = REGISTRATE
+            .item("phoenix_boots", p -> new PhoenixArmorItem(PHOENIX_MATERIAL, ArmorItem.Type.BOOTS, p))
             .lang("Phoenix Tech Suite Boots")
             .properties(p -> p.rarity(Rarity.EPIC))
             .tag(ItemTags.FOOT_ARMOR)

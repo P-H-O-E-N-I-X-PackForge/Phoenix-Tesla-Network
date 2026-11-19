@@ -9,7 +9,8 @@ import software.bernie.geckolib.model.DefaultedGeoModel;
 public class PhoenixArmorModel extends DefaultedGeoModel<PhoenixArmorItem> {
 
     public PhoenixArmorModel(PhoenixArmorItem item) {
-        super(BuiltInRegistries.ITEM.getKey(item));
+        // every piece of the set is drawn from the one model and texture; the renderer shows the part for its slot
+        super(ResourceLocation.fromNamespaceAndPath("phoenix_tesla_network", "phoenix_chestplate"));
     }
 
     @Override

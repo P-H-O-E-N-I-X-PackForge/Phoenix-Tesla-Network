@@ -487,7 +487,7 @@ public class TeslaBinderItem extends ComponentItem
             }
         }
 
-        String rawName = data.contains("name") ? data.getString("name") :
+        String rawName = data.contains("name") ? translateName(data.getString("name")) :
                 (type.equals("hatch") ? "Tesla Hatch" : (type.equals("charger") ? "Wireless Charger" : "Soul Machine"));
         String displayName = rawName.length() > 20 ? rawName.substring(0, 18) + ".." : rawName;
         final long finalFlowVal = flowVal;
@@ -630,7 +630,7 @@ public class TeslaBinderItem extends ComponentItem
             hardwareTitle = isUplink ? "Tesla Uplink" : "Tesla Downlink";
             titleColor = isUplink ? ChatFormatting.GREEN : ChatFormatting.RED;
         } else {
-            hardwareTitle = hTag.contains("name") ? hTag.getString("name") : "Soul Consumer";
+            hardwareTitle = hTag.contains("name") ? translateName(hTag.getString("name")) : "Soul Consumer";
             titleColor = ChatFormatting.LIGHT_PURPLE;
         }
 
@@ -655,7 +655,7 @@ public class TeslaBinderItem extends ComponentItem
             hardwareTitle = isUplink ? "Tesla Uplink" : "Tesla Downlink";
             titleColor = isUplink ? ChatFormatting.GREEN : ChatFormatting.RED;
         } else {
-            hardwareTitle = hTag.contains("name") ? hTag.getString("name") : "Soul Consumer";
+            hardwareTitle = hTag.contains("name") ? translateName(hTag.getString("name")) : "Soul Consumer";
             titleColor = ChatFormatting.LIGHT_PURPLE;
         }
 
@@ -794,7 +794,7 @@ public class TeslaBinderItem extends ComponentItem
                 if (mLevel != null && mLevel.isLoaded(mPos)) {
                     MetaMachine machine = MetaMachine.getMachine(mLevel, mPos);
                     if (machine != null) {
-                        String langVal = machine.getDefinition().getLangValue();
+                        String langVal = machine.getDefinition().getDescriptionId();
                         mTag.putString("name", langVal != null ? langVal : "Soul Consumer");
                         if (machine instanceof TieredEnergyMachine tiered && tiered.energyContainer != null) {
                             mTag.putString("buf", String.valueOf(tiered.energyContainer.getEnergyStored()));
@@ -825,7 +825,7 @@ public class TeslaBinderItem extends ComponentItem
                 if (machine == null) machine = MetaMachine.getMachine(overworld, cPos);
 
                 if (machine instanceof TeslaWirelessChargerMachine) {
-                    String langVal = machine.getDefinition().getLangValue();
+                    String langVal = machine.getDefinition().getDescriptionId();
                     cTag.putString("name", langVal != null ? langVal : "Wireless Charger");
                     cTag.putString("transfer", String.valueOf(team.machineDisplayFlow.getOrDefault(cPos, 0L)));
                     chargerList.add(cTag);
@@ -850,5 +850,11 @@ public class TeslaBinderItem extends ComponentItem
                 SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 0.5f, 2.0f);
 
         return true;
+    }
+
+    /** Names are sent as translation keys, the server has no lang files; plain text passes through. */
+    private static String translateName(String name) {
+        return net.minecraft.client.resources.language.I18n.exists(name) ?
+                net.minecraft.client.resources.language.I18n.get(name) : name;
     }
 }
