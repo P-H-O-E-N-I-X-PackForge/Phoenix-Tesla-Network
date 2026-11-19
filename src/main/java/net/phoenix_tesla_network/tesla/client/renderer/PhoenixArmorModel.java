@@ -1,6 +1,5 @@
 package net.phoenix_tesla_network.tesla.client.renderer;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixArmorItem;
 
