@@ -44,7 +44,7 @@ public class PhoenixTeslaConfigs {
     public static class BatteryConfigs {
 
         @Configurable
-        @Configurable.Comment({ "ULV Tesla Battery capacity, in EU. Default 960,000." })
+        @Configurable.Comment({ "ULV Tesla Battery capacity, in EU. Default 160,000." })
         @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
         public double ulvCapacity = 160_000.0;
 
@@ -64,9 +64,9 @@ public class PhoenixTeslaConfigs {
         public double hvCapacity = 57_600_000.0;
 
         @Configurable
-        @Configurable.Comment({ "EV Tesla Battery capacity, in EU. Default 37,500,000." })
+        @Configurable.Comment({ "EV Tesla Battery capacity, in EU. Default 375,000,000." })
         @Configurable.DecimalRange(min = 1.0, max = 1.0E30)
-        public double evCapacity = 37_500_000.0;
+        public double evCapacity = 375_000_000.0;
 
         @Configurable
         @Configurable.Comment({ "IV Tesla Battery capacity, in EU. Default 750,000,000." })
