@@ -200,9 +200,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> ULV_TESLA_STABILIZER = REGISTRATE
             .item("ulv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("ULV Tesla Stabilizer")
+            .lang("§8ULV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "ULV Tesla Stabilizer");
+                prov.add(ctx.get(), "§8ULV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-low-voltage wireless power.\nBarely a spark, but it counts.");
             })
@@ -211,9 +211,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> LV_TESLA_STABILIZER = REGISTRATE
             .item("lv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("LV Tesla Stabilizer")
+            .lang("§7LV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "LV Tesla Stabilizer");
+                prov.add(ctx.get(), "§7LV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for low-voltage wireless power.\nIs this even useful?");
             })
@@ -222,9 +222,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> MV_TESLA_STABILIZER = REGISTRATE
             .item("mv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("MV Tesla Stabilizer")
+            .lang("§bMV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "MV Tesla Stabilizer");
+                prov.add(ctx.get(), "§bMV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for medium-voltage wireless power.\nYou probably won't use this.");
             })
@@ -233,9 +233,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> HV_TESLA_STABILIZER = REGISTRATE
             .item("hv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("HV Tesla Stabilizer")
+            .lang("§6HV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "HV Tesla Stabilizer");
+                prov.add(ctx.get(), "§6HV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for high-voltage wireless power.\nOne could say, this is quite shocking!");
             })
@@ -244,9 +244,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> EV_TESLA_STABILIZER = REGISTRATE
             .item("ev_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("EV Tesla Stabilizer")
+            .lang("§5EV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "EV Tesla Stabilizer");
+                prov.add(ctx.get(), "§5EV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for extreme-voltage wireless power. \nRadical!");
             })
@@ -255,9 +255,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> IV_TESLA_STABILIZER = REGISTRATE
             .item("iv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("IV Tesla Stabilizer")
+            .lang("§9IV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "IV Tesla Stabilizer");
+                prov.add(ctx.get(), "§9IV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for insane-voltage wireless power.\nCrazy? I was crazy once.");
             })
@@ -266,9 +266,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> LuV_TESLA_STABILIZER = REGISTRATE
             .item("luv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("LuV Tesla Stabilizer")
+            .lang("§dLuV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "LuV Tesla Stabilizer");
+                prov.add(ctx.get(), "§dLuV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ludicrous-voltage wireless power.\nYour progress is quite impressive! Keep going!");
             })
@@ -277,9 +277,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> ZPM_TESLA_STABILIZER = REGISTRATE
             .item("zpm_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("ZPM Tesla Stabilizer")
+            .lang("§cZPM§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "ZPM Tesla Stabilizer");
+                prov.add(ctx.get(), "§cZPM§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for zero-point-module wireless power.\nWe getting sci-fi up in here.");
             })
@@ -288,9 +288,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> UV_TESLA_STABILIZER = REGISTRATE
             .item("uv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("UV Tesla Stabilizer")
+            .lang("§3UV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "UV Tesla Stabilizer");
+                prov.add(ctx.get(), "§3UV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultimate-voltage wireless power.\nIs this the ultimate? Not quite!");
             })
@@ -299,9 +299,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> UHV_TESLA_STABILIZER = REGISTRATE
             .item("uhv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("UHV Tesla Stabilizer")
+            .lang("§4UHV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "UHV Tesla Stabilizer");
+                prov.add(ctx.get(), "§4UHV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-high-voltage wireless power.\nIs this the peak of power? Or merely the beginning?");
             })
@@ -310,9 +310,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> UEV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
             .item("uev_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("UEV Tesla Stabilizer")
+            .lang("§aUEV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "UEV Tesla Stabilizer");
+                prov.add(ctx.get(), "§aUEV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-excessive-voltage wireless power.\nThis is well past excessive.");
             })
@@ -321,9 +321,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> UIV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
             .item("uiv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("UIV Tesla Stabilizer")
+            .lang("§2UIV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "UIV Tesla Stabilizer");
+                prov.add(ctx.get(), "§2UIV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-immense-voltage wireless power.\nThe cables are starting to glow.");
             })
@@ -332,9 +332,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> UXV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
             .item("uxv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("UXV Tesla Stabilizer")
+            .lang("§eUXV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "UXV Tesla Stabilizer");
+                prov.add(ctx.get(), "§eUXV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for ultra-extreme-voltage wireless power.\nAt this point, the stabilizer is the only thing holding reality together.");
             })
@@ -343,9 +343,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> OpV_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
             .item("opv_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("OpV Tesla Stabilizer")
+            .lang("§9§lOpV§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "OpV Tesla Stabilizer");
+                prov.add(ctx.get(), "§9§lOpV§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for overpowered-voltage wireless power.\nThe name says it all.");
             })
@@ -354,9 +354,9 @@ public class PhoenixTeslaItems {
 
     public static ItemEntry<TeslaStabilizerItem> MAX_TESLA_STABILIZER = !GTCEuAPI.isHighTier() ? null : REGISTRATE
             .item("max_tesla_stabilizer", TeslaStabilizerItem::new)
-            .lang("MAX Tesla Stabilizer")
+            .lang("§c§lMAX§r Tesla Stabilizer")
             .setData(ProviderType.LANG, (ctx, prov) -> {
-                prov.add(ctx.get(), "MAX Tesla Stabilizer");
+                prov.add(ctx.get(), "§c§lMAX§r Tesla Stabilizer");
                 prov.add(ctx.get().getDescriptionId() + ".tooltip",
                         "A stabilizing unit for maximum-voltage wireless power.\nThere is nothing beyond this.");
             })
