@@ -206,6 +206,10 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
     @Getter
     private boolean networkInRange = true;
 
+    /** False while no tower in range has a battery as good as this hatch's tier (see limitHatchesToBatteryTier). */
+    @Getter
+    private boolean tierServed = true;
+
     @Getter
     private long lastTransferRate = 0;
     @Getter
@@ -228,6 +232,10 @@ public class TeslaEnergyHatchPartMachine extends EnergyHatchPartMachine implemen
 
         networkInRange = TeslaRange.isInRange(teamData, sl.dimension(), getBlockPos());
         if (!networkInRange) return;
+
+        // no tower that reaches this hatch has a battery of its tier
+        tierServed = getTier() <= TeslaRange.maxHatchTier(teamData, sl.dimension(), getBlockPos());
+        if (!tierServed) return;
 
         teamData.markHatchActive(getBlockPos(), sl.getGameTime());
 

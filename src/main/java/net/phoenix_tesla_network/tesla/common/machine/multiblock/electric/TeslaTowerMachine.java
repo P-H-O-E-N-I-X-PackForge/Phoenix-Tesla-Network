@@ -17,6 +17,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.MaintenanceHatchPartMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
+import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.GradientUtil;
 
 import net.minecraft.ChatFormatting;
@@ -44,6 +45,7 @@ import net.phoenix_tesla_network.tesla.common.block.TeslaBatteryBlock;
 import net.phoenix_tesla_network.tesla.common.data.item.PhoenixTeslaItems;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.electric.part.TeslaEnergyHatchPartMachine;
 import net.phoenix_tesla_network.tesla.common.machine.multiblock.unique.UniqueWorkableElectricMultiblockMachine;
+import net.phoenix_tesla_network.tesla.configs.PhoenixTeslaConfigs;
 import net.phoenix_tesla_network.tesla.saveddata.TeslaTeamEnergyData;
 import net.phoenix_tesla_network.tesla.util.StackNbt;
 import net.phoenix_tesla_network.tesla.utils.TeamUtils;
@@ -230,6 +232,14 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         this.energyBank.rebuild(batteries);
 
         updateBatteryTier();
+
+        // the tower's own hatches: the best battery sets the highest tier that can use it
+        if (PhoenixTeslaConfigs.INSTANCE.features.limitHatchesToBatteryTier) {
+            inputs.removeIf(c -> GTUtil.getTierByVoltage(c.getInputVoltage()) > batteryTier);
+            outputs.removeIf(c -> GTUtil.getTierByVoltage(c.getOutputVoltage()) > batteryTier);
+            this.inputHatches = new EnergyContainerList(inputs);
+            this.outputHatches = new EnergyContainerList(outputs);
+        }
 
         if (!getLevel().isClientSide && ownerTeamUUID != null) {
             syncToTeslaSavedData();
@@ -793,7 +803,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
             TeslaTeamEnergyData.TeamEnergy teamData = data.getOrCreate(ownerTeamUUID);
 
             teamData.upsertNode(getRangeNodeType(), serverLevel.dimension(), getBlockPos(),
-                    this.energyBank.getCapacity(), isWorkingEnabled() && isFormed() && !isDuplicate);
+                    this.energyBank.getCapacity(), isWorkingEnabled() && isFormed() && !isDuplicate, batteryTier);
 
             BigInteger share = teamData.capacity.signum() > 0 ?
                     teamData.stored.multiply(this.energyBank.getCapacity()).divide(teamData.capacity) :
