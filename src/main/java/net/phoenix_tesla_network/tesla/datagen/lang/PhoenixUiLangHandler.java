@@ -66,6 +66,7 @@ public class PhoenixUiLangHandler {
         provider.add("phoenix_tesla_network.tesla_binder_item.net_output", "Net Output: ");
         provider.add("phoenix_tesla_network.tesla_binder_item.net_input", "Net Input: ");
         provider.add("phoenix_tesla_network.tesla_binder_item.capacity", "Capacity: ");
+        provider.add("phoenix_tesla_network.tesla_binder_item.highlight_in_world", "Highlight in-world");
         provider.add("phoenix_tesla_network.tesla_binder_item.status", "Status: ");
         provider.add("phoenix_tesla_network.tesla_binder_item.internal_buffer", "Internal Buffer: ");
         provider.add("phoenix_tesla_network.tesla_binder_item.location", "Location: ");

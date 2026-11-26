@@ -1013,6 +1013,7 @@
   "phoenix_tesla_network.tesla_binder_item.capacity": "Capacity: ",
   "phoenix_tesla_network.tesla_binder_item.connection_severed_machine_removed_from": "Connection Severed: Machine removed from soul network.",
   "phoenix_tesla_network.tesla_binder_item.currently_not_bound_to_a": "Currently not bound to a soul.",
+  "phoenix_tesla_network.tesla_binder_item.highlight_in_world": "Highlight in-world",
   "phoenix_tesla_network.tesla_binder_item.internal_buffer": "Internal Buffer: ",
   "phoenix_tesla_network.tesla_binder_item.invalid_target_machine_has_no": "Invalid Target: Machine has no internal soul-buffer.",
   "phoenix_tesla_network.tesla_binder_item.location": "Location: ",

@@ -114,6 +114,22 @@ legacyForge {
             programArguments.addAll('--refresh-dependencies')
             systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
         }
+        // two players on one machine, the same runs as on the 1.21.1 branch: the IDE keeps its run configurations
+        // when the branch changes, so both branches need the same names or a leftover one launches without the mod
+        client1 {
+            client()
+            sourceSet = sourceSets.main
+            systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
+            programArguments.addAll('--username', 'Player1')
+        }
+
+        client2 {
+            client()
+            sourceSet = sourceSets.main
+            systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
+            programArguments.addAll('--username', 'Player2')
+        }
+
         server {
             server()
             sourceSet = sourceSets.main

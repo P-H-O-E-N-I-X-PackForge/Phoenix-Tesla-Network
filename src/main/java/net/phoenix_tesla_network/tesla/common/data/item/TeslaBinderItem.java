@@ -354,7 +354,8 @@ public class TeslaBinderItem extends ComponentItem
             detailLayer.addWidget(new ButtonWidget(5, btnY, windowWidth - 10, 18, GuiTextures.BUTTON, c -> {
                 if (player.level().isClientSide)
                     TeslaHighlightRenderer.highlight(BlockPos.of(hTag.getLong("pos")), 200);
-            }));
+                else if (player instanceof ServerPlayer sp) sp.closeContainer();
+            }).setHoverTooltips(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.highlight_in_world")));
             detailLayer.addWidget(new LabelWidget(windowWidth / 2 - 45, btnY + 5, "§bHighlight Device"));
 
             mainLayer.setVisible(false);
@@ -387,47 +388,59 @@ public class TeslaBinderItem extends ComponentItem
         }));
         mainLayer.addWidget(header);
 
-        String[] filters = { "ALL", "[I]", "[O]", "[S]", "[C]" };
-        int btnWidth = 48;
-        for (int i = 0; i < filters.length; i++) {
-            int targetMode = i;
-            mainLayer.addWidget(new ButtonWidget(7 + (i * (btnWidth + 2)), 102, btnWidth, 18, GuiTextures.BUTTON, c -> {
-                stack.getOrCreateTag().putInt("FilterMode", targetMode);
-                if (player instanceof ServerPlayer sp) HeldItemUIFactory.INSTANCE.openUI(holder, sp);
-            }));
-            LabelWidget fl = new LabelWidget(7 + (i * (btnWidth + 2)) + (btnWidth / 2 - 8), 106, filters[i]);
-            if (filterMode == targetMode) fl.setTextColor(ChatFormatting.YELLOW.getColor());
-            mainLayer.addWidget(fl);
-        }
-
         DraggableScrollableWidgetGroup listGroup = new DraggableScrollableWidgetGroup(7, 125, windowWidth - 14, 165);
         listGroup.setBackground(GuiTextures.DISPLAY);
-        mainLayer.addWidget(listGroup);
 
         ListTag hatchData = tag.getList("HatchData", Tag.TAG_COMPOUND);
         ListTag machineData = tag.getList("MachineData", Tag.TAG_COMPOUND);
         ListTag chargerData = tag.getList("ChargerData", Tag.TAG_COMPOUND);
-        int currentY = 0;
 
-        for (int i = 0; i < hatchData.size(); i++) {
-            CompoundTag hTag = hatchData.getCompound(i);
-            boolean isInput = hTag.getBoolean("isOut");
-            if (filterMode == 0 || (filterMode == 1 && isInput) || (filterMode == 2 && !isInput)) {
-                currentY = addListRow(listGroup, hTag, player, openDetail, currentY, "hatch", windowWidth);
+        // the list of the chosen kind of device; picking another kind refills it where it is, so the screen is not
+        // closed and opened again (which put it back on the first view)
+        Consumer<Integer> fillList = mode -> {
+            listGroup.clearAllWidgets();
+            int currentY = 0;
+            for (int i = 0; i < hatchData.size(); i++) {
+                CompoundTag hTag = hatchData.getCompound(i);
+                boolean isInput = hTag.getBoolean("isOut");
+                if (mode == 0 || (mode == 1 && isInput) || (mode == 2 && !isInput)) {
+                    currentY = addListRow(listGroup, hTag, player, openDetail, currentY, "hatch", windowWidth);
+                }
             }
-        }
-        if (filterMode == 0 || filterMode == 3) {
-            for (int i = 0; i < machineData.size(); i++) {
-                currentY = addListRow(listGroup, machineData.getCompound(i), player, openDetail, currentY, "machine",
-                        windowWidth);
+            if (mode == 0 || mode == 3) {
+                for (int i = 0; i < machineData.size(); i++) {
+                    currentY = addListRow(listGroup, machineData.getCompound(i), player, openDetail, currentY,
+                            "machine", windowWidth);
+                }
             }
-        }
-        if (filterMode == 0 || filterMode == 4) {
-            for (int i = 0; i < chargerData.size(); i++) {
-                currentY = addListRow(listGroup, chargerData.getCompound(i), player, openDetail, currentY, "charger",
-                        windowWidth);
+            if (mode == 0 || mode == 4) {
+                for (int i = 0; i < chargerData.size(); i++) {
+                    currentY = addListRow(listGroup, chargerData.getCompound(i), player, openDetail, currentY,
+                            "charger", windowWidth);
+                }
             }
+        };
+
+        String[] filters = { "ALL", "[I]", "[O]", "[S]", "[C]" };
+        int btnWidth = 48;
+        List<LabelWidget> filterLabels = new ArrayList<>();
+        for (int i = 0; i < filters.length; i++) {
+            int targetMode = i;
+            mainLayer.addWidget(new ButtonWidget(7 + (i * (btnWidth + 2)), 102, btnWidth, 18, GuiTextures.BUTTON, c -> {
+                stack.getOrCreateTag().putInt("FilterMode", targetMode);
+                for (int k = 0; k < filterLabels.size(); k++) {
+                    filterLabels.get(k).setTextColor(k == targetMode ? ChatFormatting.YELLOW.getColor() : 0xFFFFFFFF);
+                }
+                fillList.accept(targetMode);
+            }));
+            LabelWidget fl = new LabelWidget(7 + (i * (btnWidth + 2)) + (btnWidth / 2 - 8), 106, filters[i]);
+            if (filterMode == targetMode) fl.setTextColor(ChatFormatting.YELLOW.getColor());
+            filterLabels.add(fl);
+            mainLayer.addWidget(fl);
         }
+
+        mainLayer.addWidget(listGroup);
+        fillList.accept(filterMode);
 
         ui.widget(mainLayer);
         ui.widget(detailLayer);
@@ -507,7 +520,8 @@ public class TeslaBinderItem extends ComponentItem
         int gearX = rowWidth - 18;
         row.addWidget(new ButtonWidget(gearX, 0, 18, 18, GuiTextures.BUTTON, c -> {
             if (player.level().isClientSide) TeslaHighlightRenderer.highlight(pos, 200);
-        }));
+            else if (player instanceof ServerPlayer sp) sp.closeContainer();
+        }).setHoverTooltips(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.highlight_in_world")));
         row.addWidget(new ImageWidget(gearX + 1, 1, 16, 16, GuiTextures.IO_CONFIG_COVER_SETTINGS));
 
         group.addWidget(row);
