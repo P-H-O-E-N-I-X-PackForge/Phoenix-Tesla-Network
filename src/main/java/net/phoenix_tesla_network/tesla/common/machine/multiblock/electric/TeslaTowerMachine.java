@@ -264,6 +264,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
             MetaMachine machine = MetaMachine.getMachine(targetLevel, targetPos);
             if (machine == null) continue;
+            if (!tierAllowed(team, dimKey, targetPos, machine)) continue;
 
             long injectedThisTick = 0;
 
@@ -449,6 +450,13 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
         }
     }
 
+    /** A linked machine (charger, battery buffer, generator...) above the best battery's tier is not served. */
+    private static boolean tierAllowed(TeslaTeamEnergyData.TeamEnergy team, ResourceKey<Level> dimension, BlockPos pos,
+                                       MetaMachine machine) {
+        return !(machine instanceof TieredEnergyMachine tiered) ||
+                TeslaRange.allowsTier(team, dimension, pos, tiered.getTier());
+    }
+
     private void pullFromSoulLinkedGenerators(ServerLevel level, TeslaTeamEnergyData.TeamEnergy team) {
         if (team.soulLinkedMachines.isEmpty()) return;
 
@@ -464,6 +472,7 @@ public class TeslaTowerMachine extends UniqueWorkableElectricMultiblockMachine
 
             MetaMachine machine = MetaMachine.getMachine(targetLevel, targetPos);
             if (machine == null) continue;
+            if (!tierAllowed(team, dimKey, targetPos, machine)) continue;
 
             // Battery buffers are charge-only. Their removeEnergy() can remove less than asked (per-battery
             // transfer limits, integer split across batteries), and counting the full ask as pulled is what

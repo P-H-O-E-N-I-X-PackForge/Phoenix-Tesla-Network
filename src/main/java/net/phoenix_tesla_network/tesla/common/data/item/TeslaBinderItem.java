@@ -519,9 +519,11 @@ public class TeslaBinderItem extends ComponentItem
         highlightButton.onMousePressed((context, button) -> {
             if (player.level().isClientSide) {
                 TeslaHighlightRenderer.highlight(pos, 200);
+                highlightButton.getScreen().close();
             }
             return true;
         })
+                .tooltip(t -> t.addLine(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.highlight_in_world")))
                 .background(GTGuiTextures.TOOL_COVER_SETTINGS)
                 .size(18);
         row.child(highlightButton.getThis());
@@ -574,10 +576,12 @@ public class TeslaBinderItem extends ComponentItem
                 CompoundTag hTag = resolveSelected(stack, selectedKey);
                 if (hTag != null) {
                     TeslaHighlightRenderer.highlight(BlockPos.of(hTag.getLong("pos")), 200);
+                    highlightDeviceButton.getScreen().close();
                 }
             }
             return true;
         })
+                .tooltip(t -> t.addLine(TeslaLang.tr("phoenix_tesla_network.tesla_binder_item.highlight_in_world")))
                 .background(GTGuiTextures.BUTTON)
                 .widthRel(1f)
                 .height(18)

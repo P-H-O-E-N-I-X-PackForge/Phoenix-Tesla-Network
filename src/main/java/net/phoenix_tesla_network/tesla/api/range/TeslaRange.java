@@ -102,6 +102,11 @@ public final class TeslaRange {
         return coverage(team).bestBatteryTier(dimension, pos);
     }
 
+    /** Whether the towers reaching {@code pos} can serve a machine of this tier (see limitHatchesToBatteryTier). */
+    public static boolean allowsTier(TeamEnergy team, ResourceKey<Level> dimension, BlockPos pos, int tier) {
+        return tier <= maxHatchTier(team, dimension, pos);
+    }
+
     public static boolean isInRange(TeslaTeamEnergyData data, UUID team, ResourceKey<Level> dimension, BlockPos pos) {
         TeamEnergy energy = data.getIfPresent(team);
         return energy == null || isInRange(energy, dimension, pos);

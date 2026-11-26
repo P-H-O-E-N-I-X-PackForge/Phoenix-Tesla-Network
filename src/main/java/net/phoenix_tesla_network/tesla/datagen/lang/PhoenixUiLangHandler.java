@@ -58,6 +58,7 @@ public class PhoenixUiLangHandler {
         provider.add("phoenix_tesla_network.tesla_binder_item.location", "\nLocation: ");
         provider.add("phoenix_tesla_network.tesla_binder_item.details", "%s Details");
         provider.add("phoenix_tesla_network.tesla_binder_item.highlight_device", "Highlight Device");
+        provider.add("phoenix_tesla_network.tesla_binder_item.highlight_in_world", "Highlight in-world");
         provider.add("phoenix_tesla_network.tesla_binder_item.back", "< Back");
         provider.add("phoenix_tesla_network.tesla_binder_item.net_output", "\nNet Output: ");
         provider.add("phoenix_tesla_network.tesla_binder_item.net_input", "\nNet Input: ");

@@ -109,6 +109,13 @@ public class TeslaWirelessChargerMachine extends TieredEnergyMachine
                 return;
             }
 
+            if (!TeslaRange.allowsTier(network, level.dimension(), getBlockPos(), getTier())) {
+                this.lastTransferred = 0L;
+                network.machineDisplayFlow.put(getBlockPos(), 0L);
+                changeState(State.IDLE);
+                return;
+            }
+
             if (network.stored.signum() <= 0) {
                 this.lastTransferred = 0L;
                 network.machineDisplayFlow.put(getBlockPos(), 0L);
