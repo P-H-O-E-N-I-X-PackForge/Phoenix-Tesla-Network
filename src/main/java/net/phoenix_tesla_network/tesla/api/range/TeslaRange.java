@@ -21,7 +21,7 @@ import java.util.*;
 public final class TeslaRange {
 
     private record Emitter(RangeNode source, ResourceKey<Level> dimension, BlockPos pos, double radiusSqr,
-                           boolean anyDimension, RangeNodeType lossType) {
+                           boolean anyDimension, RangeNodeType lossType, int batteryTier) {
 
         boolean covers(ResourceKey<Level> dim, BlockPos target) {
             if (!anyDimension && !dimension.equals(dim)) return false;
@@ -37,6 +37,15 @@ public final class TeslaRange {
                 if (emitter.covers(dim, target)) return true;
             }
             return false;
+        }
+
+        /** The best battery tier among the towers that reach {@code target}; -1 when none does. */
+        int bestBatteryTier(ResourceKey<Level> dim, BlockPos target) {
+            int best = -1;
+            for (Emitter emitter : emitters) {
+                if (emitter.covers(dim, target)) best = Math.max(best, emitter.batteryTier());
+            }
+            return best;
         }
 
         /**
@@ -81,6 +90,16 @@ public final class TeslaRange {
     public static boolean isInRange(TeamEnergy team, ResourceKey<Level> dimension, BlockPos pos) {
         if (!team.rangeManaged) return true;
         return coverage(team).covers(dimension, pos);
+    }
+
+    /**
+     * The highest hatch tier the towers reaching {@code pos} can serve: the best battery tier among them. No limit
+     * (a big number) when the team is not range managed or the limit is switched off in the config.
+     */
+    public static int maxHatchTier(TeamEnergy team, ResourceKey<Level> dimension, BlockPos pos) {
+        if (!PhoenixTeslaConfigs.get().features.limitHatchesToBatteryTier) return Integer.MAX_VALUE;
+        if (!team.rangeManaged) return Integer.MAX_VALUE;
+        return coverage(team).bestBatteryTier(dimension, pos);
     }
 
     public static boolean isInRange(TeslaTeamEnergyData data, UUID team, ResourceKey<Level> dimension, BlockPos pos) {
@@ -166,7 +185,7 @@ public final class TeslaRange {
                 if (!profile.enabled) continue;
                 double radiusSqr = profile.infiniteRange ? -1 : square(profile.rangeBlocks);
                 emitters.add(new Emitter(node, node.dimension, node.pos, radiusSqr, profile.crossDimension,
-                        node.type));
+                        node.type, node.batteryTier));
             } else if (cfg.relay.enabled) {
                 relays.add(node);
             }
@@ -199,7 +218,7 @@ public final class TeslaRange {
                 }
                 if (parent != null) {
                     emitters.add(new Emitter(relay, relay.dimension, relay.pos, relayRadiusSqr, false,
-                            parent.lossType()));
+                            parent.lossType(), parent.batteryTier()));
                     relayLossTypes.put(relay.key(), parent.lossType());
                     activeRelays.add(relay.key());
                     if (parent.dimension().equals(relay.dimension)) relayParents.put(relay.key(), parent.source());

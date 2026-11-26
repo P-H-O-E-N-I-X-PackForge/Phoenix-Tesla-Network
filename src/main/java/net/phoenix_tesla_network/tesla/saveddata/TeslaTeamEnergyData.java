@@ -111,6 +111,11 @@ public class TeslaTeamEnergyData extends SavedData {
 
         public boolean working;
 
+        /**
+         * The tier of the best battery in this tower; a hatch above it cannot use the tower. Unknown reads as no limit.
+         */
+        public int batteryTier = Integer.MAX_VALUE;
+
         public RangeNode(RangeNodeType type, ResourceKey<Level> dimension, BlockPos pos) {
             this.type = type;
             this.dimension = dimension;
@@ -144,6 +149,11 @@ public class TeslaTeamEnergyData extends SavedData {
 
         public boolean upsertNode(RangeNodeType type, ResourceKey<Level> dimension, BlockPos pos, BigInteger capacity,
                                   boolean working) {
+            return upsertNode(type, dimension, pos, capacity, working, Integer.MAX_VALUE);
+        }
+
+        public boolean upsertNode(RangeNodeType type, ResourceKey<Level> dimension, BlockPos pos, BigInteger capacity,
+                                  boolean working, int batteryTier) {
             String key = RangeNode.key(dimension, pos);
             RangeNode node = rangeNodes.get(key);
             boolean changed = false;
@@ -157,6 +167,10 @@ public class TeslaTeamEnergyData extends SavedData {
                 changed = true;
             }
             node.capacity = capacity;
+            if (node.batteryTier != batteryTier) {
+                node.batteryTier = batteryTier;
+                changed = true;
+            }
 
             if (type.isTower()) rangeManaged = true;
             if (changed) rangeVersion++;
@@ -276,6 +290,7 @@ public class TeslaTeamEnergyData extends SavedData {
                 entry.putString("d", node.dimension.location().toString());
                 entry.putString("cap", node.capacity.toString());
                 entry.putBoolean("working", node.working);
+                if (node.batteryTier != Integer.MAX_VALUE) entry.putInt("bt", node.batteryTier);
                 nodeList.add(entry);
             }
             tag.put("RangeNodes", nodeList);
@@ -323,6 +338,7 @@ public class TeslaTeamEnergyData extends SavedData {
                 RangeNode node = new RangeNode(type, dim, BlockPos.of(entry.getLong("p")));
                 node.capacity = entry.contains("cap") ? new BigInteger(entry.getString("cap")) : BigInteger.ZERO;
                 node.working = entry.getBoolean("working");
+                if (entry.contains("bt")) node.batteryTier = entry.getInt("bt");
                 e.rangeNodes.put(node.key(), node);
             }
             return e;

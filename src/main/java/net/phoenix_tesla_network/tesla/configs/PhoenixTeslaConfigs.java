@@ -434,6 +434,16 @@ public class PhoenixTeslaConfigs {
 
         @Configurable
         @Configurable.Comment({
+                "The tier of the best battery in a Tesla Tower decides which energy hatches can use it: a tower",
+                "whose best battery is HV only works with hatches up to HV, so an EV hatch needs an EV battery.",
+                "This holds for the hatches in the tower itself and for hatches that connect to it over the network",
+                "(a hatch is served by the towers that reach it, and needs one with a battery of its tier).",
+                "Set to false for no such limit. Default: true"
+        })
+        public boolean limitHatchesToBatteryTier = true;
+
+        @Configurable
+        @Configurable.Comment({
                 "Which Tesla laser hatch sizes exist. Needs a restart (and a world that used a larger set will",
                 "lose the hatches of any size you take away).",
                 "STANDARD: 256A, 1024A, 4096A.",
